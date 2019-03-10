@@ -14,7 +14,7 @@ endif
 
 if HAVE_WINDRES
 include $(top_srcdir)/build/windows/gimprc-plug-ins.rule
-file_rom_bin_RC = file-rom-bin.rc.o
+file-tilemap-export_RC = file-tilemap-export.rc.o
 endif
 
 AM_LDFLAGS = $(mwindows)
@@ -23,8 +23,8 @@ libexecdir = $(gimpplugindir)/plug-ins
 
 libexec_PROGRAMS = file-rom-bin
 
-file_rom_bin_SOURCES = \
-	file-rom-bin.c     \
+file-tilemap-export_SOURCES = \
+	file-tilemap-export.c     \
 	export-dialog.c    \
 	lib_rom_bin.c      \
 	read-rom-bin.c     \
@@ -60,4 +60,4 @@ LDADD = \
 	$(GTK_LIBS)		\
 	$(RT_LIBS)		\
 	$(INTLLIBS)		\
-	$(file_rom_bin_RC)
+	$(file-tilemap-export_RC)
