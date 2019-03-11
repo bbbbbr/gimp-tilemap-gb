@@ -24,12 +24,12 @@
 #include <libgimp/gimpui.h>
 
 // #include "lib_rom_bin.h"
-#include "write-tilemap-export.h"
-#include "export-dialog.h"
+#include "write-tilemap.h"
+// #include "export-dialog.h"
 
-const char SAVE_PROCEDURE[] = "file-tilemap-export-save";
+const char SAVE_PROCEDURE[] = "file-tilemap-save";
 
-const char BINARY_NAME[]    = "file-tilemap-export";
+const char BINARY_NAME[]    = "file-tilemap";
 
 // Predeclare our entrypoints
 static void query(void);
@@ -67,10 +67,10 @@ static void query(void)
         { GIMP_PDB_FLOAT,    "export_mode",  "Tilemap export format" }
     };
 
-    // Install the save procedure for ".bin" files (all formats)
+    // Install the save procedure for ".tmap" files (all formats)
     gimp_install_procedure(SAVE_PROCEDURE,
-                           "Export image to tilemap",
-                           "Export image to tilemap",
+                           "Save image to tilemap",
+                           "Save image to tilemap",
                            "--",
                            "Copyright --",
                            "2018",
@@ -148,10 +148,10 @@ static void run(const gchar * name,
               }
 */
               // TODO: Export function here
-              /*
-              status = write_rom_bin(param[3].data.d_string,
-                                     image_id, drawable_id, image_mode);
-`             */
+              status = write_tilemap(param[3].data.d_string,
+                                     image_id,
+                                     drawable_id,
+                                     image_mode);
 
               gimp_image_delete(image_id);
 

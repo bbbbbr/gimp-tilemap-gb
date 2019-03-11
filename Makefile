@@ -1,6 +1,6 @@
 # Predefined constants
 CC      = gcc
-TARGET  = file-tilemap-export
+TARGET  = file-tilemap
 SRC_DIR = src
 OBJ_DIR = obj
 CFLAGS  = $(shell pkg-config --cflags gtk+-2.0) \
