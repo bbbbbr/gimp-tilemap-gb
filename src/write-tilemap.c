@@ -24,15 +24,7 @@
 #include <string.h>
 #include <libgimp/gimp.h>
 
-// TODO: move into header file
-    enum image_depths {
-        IMG_BITDEPTH_INDEXED = 1,
-        IMG_BITDEPTH_INDEXED_ALPHA = 2,
-        IMG_BITDEPTH_LAST
-    };
-
-// --------------
-
+#include "lib_tilemap.h"
 
 int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, int image_mode)
 {
