@@ -1,5 +1,5 @@
 /*=======================================================================
-              ROM bin load / save plugin for the GIMP
+              TileMap & TileSet plugin for the GIMP
                  Copyright 2018 - Others & Nathan Osman (webp plugin base)
 
  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,16 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include "write-tilemap.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <libgimp/gimp.h>
 
+#include "write-tilemap.h"
 #include "lib_tilemap.h"
 
-int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, int image_mode)
+int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
 {
     int status;
 
@@ -34,37 +33,23 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, int i
     GimpPixelRgn rgn;
     GimpParasite * img_parasite;
 
-    // int              image_mode;
-    unsigned int     width;
-    unsigned int     height;
-    unsigned char  * p_data;
-    unsigned char    bytes_per_pixel;
-    int              size;
+    image_data source_img;
 
 
     FILE * file;
 
     status = 0; // Default to success
 
-/*
-    app_gfx_data   app_gfx;
-    app_color_data colorpal; // TODO: rename to app_colorpal?
-    rom_gfx_data   rom_gfx;
-
-    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
-
-    app_gfx.image_mode = image_mode;
-*/
-
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
 
     // Get the Bytes Per Pixel of the incoming app image
-    bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
+    source_img.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
 
+printf("write-tilemap.c: check bit depth %d\n", source_img.bytes_per_pixel);
     // Abort if it's not 1 or 2 bytes per pixel
     // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
-    if (bytes_per_pixel >= IMG_BITDEPTH_LAST) {
+    if (source_img.bytes_per_pixel > IMG_BITDEPTH_INDEXED_ALPHA) {
         return 0;
     }
 
@@ -78,37 +63,38 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, int i
 
 
     // Determine the array size for the app's image then allocate it
-    width   = drawable->width;
-    height  = drawable->height;
-    size    = drawable->width * drawable->height * bytes_per_pixel;
-    p_data  = malloc(size);
+    source_img.width      = drawable->width;
+    source_img.height     = drawable->height;
+    source_img.size       = drawable->width * drawable->height * source_img.bytes_per_pixel;
+    source_img.p_img_data = malloc(source_img.size);
 
     // Get the image data
     gimp_pixel_rgn_get_rect(&rgn,
-                            p_data,
+                            source_img.p_img_data,
                             0, 0,
                             drawable->width,
                             drawable->height);
 
 
 // TODO: EXPORT
-/*
-    status = export_process(&rom_gfx,
-                            &app_gfx);
-*/
+
+printf("write-tilemap.c: calling export\n");
+    status = tilemap_export_process(&source_img);
+
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
     if (status != 0) { };
 
 
     // Free the image data
-    free(p_data);
+    free(source_img.p_img_data);
 
     // Detach the drawable
     gimp_drawable_detach(drawable);
 
-
+// TODO: write data to file
+/*
     // Make sure that the write was successful
-    if(size == FALSE) {
+    if(source_img.size == FALSE) {
         free(p_data);
         return 0;
     }
@@ -124,6 +110,6 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, int i
     fwrite(p_data, size, 1, file);
     free(p_data);
     fclose(file);
-
+*/
     return 1;
 }

@@ -19,6 +19,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
@@ -106,6 +107,7 @@ static void run(const gchar * name,
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
+printf("file-tilemap.c: Start\n");
 
     if(!strcmp(name, SAVE_PROCEDURE))
     {
@@ -126,8 +128,10 @@ static void run(const gchar * name,
         image_id    = param[1].data.d_int32;
         drawable_id = param[2].data.d_int32;
 
+printf("file-tilemap.c: Export\n");
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
+printf("file-tilemap.c: Call Export\n");
         export_ret = gimp_export_image(&image_id,
                                        &drawable_id,
                                        "TMAP",
