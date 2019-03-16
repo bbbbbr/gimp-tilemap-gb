@@ -16,6 +16,7 @@
 
 #define TILE_ID_NOT_FOUND     -1
 #define TILE_ID_OUT_OF_SPACE  -2
+#define TILE_ID_FAILED_ENCODE -3
 
 enum image_modes {
     IMG_BITDEPTH_INDEXED = 1,
@@ -35,23 +36,29 @@ typedef struct {
     uint16_t tile_height;
     uint16_t map_width;
     uint16_t map_height;
-    uint32_t size;
+    uint32_t size;  // size in bytes
     uint32_t * p_data; // TODO: rename tile_id_list
 } tile_map_data;
 
 
 // Individual Tile from Tile Set
 typedef struct {
-    uint8_t * p_data;
     uint64_t  hash;
+    uint8_t   raw_bytes_per_pixel;
+    uint16_t  raw_width;
+    uint16_t  raw_height;
+    uint32_t  raw_size_bytes;     // size in bytes // TODO
+    uint32_t  encoded_size_bytes; // size in bytes
+    uint8_t * p_img_raw;
+    uint8_t * p_img_encoded;
 } tile_data;
 
 // Tile Set (composed of individual tiles)
 typedef struct {
-    uint8_t  tile_bytes_per_pixel;
+    uint8_t  tile_bytes_per_pixel; // TODO: convert me to tiles[n].raw_bytes_per_pixel, raw_width, raw_height
     uint16_t tile_width;
     uint16_t tile_height;
-    uint32_t tile_size;
+    uint32_t tile_size;  // size in bytes
     uint32_t tile_count;
     tile_data tiles[TILES_MAX_DEFAULT];
 } tile_set_data;
@@ -62,23 +69,27 @@ typedef struct {
     uint8_t    bytes_per_pixel;
     uint16_t   width;
     uint16_t   height;
-    uint32_t   size;
+    uint32_t   size;  // size in bytes
     uint8_t  * p_img_data;
 } image_data;
 
 
 void           tilemap_free_resources();
 static int32_t check_dimensions_valid(image_data * p_src_img);
-static void    copy_tile_into_buffer(image_data * p_src_img, uint8_t * p_tile, uint32_t img_buf_offset);
-int32_t        find_matching_tile(uint64_t hash_sig);
-uint8_t *      tile_encode(uint8_t bytes_per_pixel, uint8_t * p_src_tile);
-int32_t        register_new_tile(uint64_t hash_sig, uint8_t * p_tile);
 unsigned char  process_tiles(image_data * p_src_img);
 unsigned char  tilemap_export_process(image_data * p_src_img);
 int            tilemap_initialize(image_data * p_src_img);
+int32_t        tilemap_save(const int8_t * filename);
 
+// TODO: move us into a separate file (tile_ops.c/h)
+static void    tile_copy_into_buffer(image_data * p_src_img, tile_data tile, uint32_t img_buf_offset);
+int32_t        tile_find_matching(uint64_t hash_sig);
+int32_t        tile_encode(tile_data * p_tile, uint32_t image_mode);
+int32_t        tile_register_new(tile_data tile);
 
-static void print_tile_buffer(image_data * p_src_img, uint8_t * p_tile);
+// TODO: delete me
+static void tile_print_buffer_raw(tile_data tile);
+static void tile_print_buffer_encoded(tile_data tile);
 
 #endif // LIB_TILEMAP_HEADER
 

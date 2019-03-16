@@ -25,6 +25,8 @@
 #include "write-tilemap.h"
 #include "lib_tilemap.h"
 
+#include "lib_rom_bin.h"
+
 int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
 {
     int status;
@@ -82,7 +84,7 @@ printf("write-tilemap.c: calling export\n");
     status = tilemap_export_process(&source_img);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
-    if (status != 0) { };
+//    if (status != 0) { };
 
 
     // Free the image data
@@ -91,25 +93,11 @@ printf("write-tilemap.c: calling export\n");
     // Detach the drawable
     gimp_drawable_detach(drawable);
 
-// TODO: write data to file
-/*
-    // Make sure that the write was successful
-    if(source_img.size == FALSE) {
-        free(p_data);
-        return 0;
-    }
 
-    // Open the file
-    file = fopen(filename, "wb");
-    if(!file) {
-        free(p_data);
-        return 0;
-    }
+    if (status)
+        return tilemap_save(filename);
 
-    // Write the data and close it
-    fwrite(p_data, size, 1, file);
-    free(p_data);
-    fclose(file);
-*/
+    tilemap_free_resources();
+
     return 1;
 }
