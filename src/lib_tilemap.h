@@ -36,7 +36,7 @@ typedef struct {
     uint16_t tile_height;
     uint16_t map_width;
     uint16_t map_height;
-    uint32_t size;  // size in bytes
+    uint32_t size;
     uint32_t * p_data; // TODO: rename tile_id_list
 } tile_map_data;
 
@@ -90,6 +90,9 @@ int32_t        tile_register_new(tile_data tile);
 // TODO: delete me
 static void tile_print_buffer_raw(tile_data tile);
 static void tile_print_buffer_encoded(tile_data tile);
+
+char * get_filename_from_path(char * path);
+int32_t        tilemap_format_gbdk_c_source_save(const int8_t * filename);
 
 #endif // LIB_TILEMAP_HEADER
 
