@@ -10,14 +10,17 @@
 #include "tilemap_format_gbdk_c_source.h"
 
 
-#define STR_FILENAME_MAX 255
 
 // TODO: allow control of which bank they are written to
-
-int32_t tilemap_format_gbdk_c_source_save(const int8_t * filename, tile_map_data * tile_map, tile_set_data * tile_set) {
+// TOOD: bank in filename is hardwired right now ("map.b3.c")
+//
+int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data * tile_map, tile_set_data * tile_set) {
 
     int t,c;
     FILE * file;
+    // TODO: change char to int8_t
+    char path_without_filename[STR_FILENAME_MAX];
+
     char filename_tiles_c[STR_FILENAME_MAX];
     char filename_tiles_h[STR_FILENAME_MAX];
     char filename_map_c[STR_FILENAME_MAX];
@@ -25,11 +28,29 @@ int32_t tilemap_format_gbdk_c_source_save(const int8_t * filename, tile_map_data
 
 printf("Writing to gbdk C source files...\n");
 
+    // TODO: resume honoring requested filename for output
+/*
     snprintf(filename_tiles_c, STR_FILENAME_MAX, "%s.tiles.b3.c", filename);
     snprintf(filename_tiles_h, STR_FILENAME_MAX, "%s.tiles.h",    filename);
 
     snprintf(filename_map_c,   STR_FILENAME_MAX, "%s.map.b3.c", filename);
     snprintf(filename_map_h,   STR_FILENAME_MAX, "%s.map.h",    filename);
+*/
+    if (!get_path_without_filename(filename, path_without_filename, STR_FILENAME_MAX)) {
+      return (false);
+    }
+
+    snprintf(filename_tiles_c, STR_FILENAME_MAX, "%stiles.b3.c", path_without_filename);
+    snprintf(filename_tiles_h, STR_FILENAME_MAX, "%stiles.h",    path_without_filename);
+
+    snprintf(filename_map_c,   STR_FILENAME_MAX, "%smap.b3.c", path_without_filename);
+    snprintf(filename_map_h,   STR_FILENAME_MAX, "%smap.h",    path_without_filename);
+
+    printf("%s\n", filename_tiles_c);
+    printf("%s\n", filename_tiles_h);
+    printf("%s\n", filename_map_c);
+    printf("%s\n", filename_map_h);
+
 
 
 printf("// ==== TILE SET C SOURCE FILE ====\n");

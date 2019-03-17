@@ -11,7 +11,8 @@
 #include "tilemap_format_gbdk_c_source.h"
 
 
-char * get_filename_from_path(char * path)
+// TODO: fix up const / int8_t mixing
+const char * get_filename_from_path(const char * path)
 {
     size_t i;
 
@@ -22,6 +23,27 @@ char * get_filename_from_path(char * path)
     }
     return path;
 }
+
+int32_t get_path_without_filename(const char * path, char * path_only, uint32_t str_max)
+{
+    size_t i;
+
+   if (strlen(path) + 1 > str_max)
+        return false;
+
+   for(i = strlen(path) - 1; i; i--) {
+        if (path[i] == '/') {
+
+            memcpy(path_only, path, i+1 );
+            path_only[i+2] = '\0';
+            return true;
+        }
+    }
+
+    memcpy(path_only, path, strlen(path));
+    return true;
+}
+
 
 
 int32_t tilemap_export(const int8_t * filename,
