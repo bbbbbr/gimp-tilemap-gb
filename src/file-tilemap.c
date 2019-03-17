@@ -107,7 +107,7 @@ static void run(const gchar * name,
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
-printf("file-tilemap.c: Start\n");
+// printf("file-tilemap.c: Start\n");
 
     if(!strcmp(name, SAVE_PROCEDURE))
     {

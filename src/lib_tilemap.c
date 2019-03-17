@@ -6,9 +6,10 @@
 
 
 #include "lib_tilemap.h"
-#include "xtea.h"
-#include "lib_rom_bin.h"
+#include "tilemap_tiles.h"
+#include "tilemap_io.h"
 
+#include "xtea.h"
 
 // Globals
 tile_map_data tile_map;
@@ -16,9 +17,7 @@ tile_set_data tile_set;
 
 
 
-// TODO: Fix up all the dubious mixing of global and locals. Simplify code
-
-
+// TODO: Fix the dubious mixing of global and locals. Simplify code
 
 // TODO: support configurable tile size
 int tilemap_initialize(image_data * p_src_img) {
@@ -113,26 +112,22 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                 // Set buffer offset to upper left of current tile
                 img_buf_offset = (img_x + (img_y * tile_map.map_width)) * p_src_img->bytes_per_pixel;
-printf("Map Slot %d\n",map_slot);
-                tile_copy_into_buffer(p_src_img,
-                                      tile,
-                                      img_buf_offset);
+
+                tile_copy_tile_from_image(p_src_img,
+                                          &tile,
+                                          img_buf_offset);
 
                 // TODO! Don't hash transparent pixels? Have to overwrite second byte?
                 tile.hash = xtea_hash_u32((tile.raw_size_bytes + tile_size_bytes_hash_padding) / sizeof(uint32_t),
-                                           (uint32_t *)tile.p_img_raw);
+                                          (uint32_t *)tile.p_img_raw);
 
-                tile_id = tile_find_matching(tile.hash);
+                tile_id = tile_find_matching(tile.hash, &tile_set);
 
-// tile_print_buffer_raw(tile);
 
                 // Tile not found, create a new entry
                 if (tile_id == TILE_ID_NOT_FOUND) {
 
-                    tile_id = tile_register_new(tile);
-
-printf("///  New Tile\n");
-//tile_print_buffer_raw(tile_set.tiles[tile_id]);
+                    tile_id = tile_register_new(&tile, &tile_set);
 
                     if (tile_id <= TILE_ID_OUT_OF_SPACE) {
                         free(tile.p_img_raw);
@@ -143,9 +138,9 @@ printf("///  New Tile\n");
                 int32_t test;
                 test = tile_id;
 
-                tile_map.p_data[map_slot] = test; // = tile_id; // TODO: SOMETHING IS WRONG
+                tile_map.p_data[map_slot] = test; // = tile_id; // TODO: IMPORTANT, SOMETHING IS VERY WRONG
 
-printf("Map Slot %d: tile_id=%d tilemap[map_slot]=%d\n",map_slot, tile_id, tile_map.p_data[map_slot]);
+// printf("Map Slot %d: tile_id=%d tilemap[]=%d, %08lx\n",map_slot, tile_id, tile_map.p_data[map_slot], tile.hash);
                 map_slot++;
             }
         }
@@ -156,254 +151,10 @@ printf("Map Slot %d: tile_id=%d tilemap[map_slot]=%d\n",map_slot, tile_id, tile_
         return (false); // Failed to allocate buffer, exit
     }
 
-    if (tile_map.p_data)
-        free(tile_map.p_data);
-
     if (tile.p_img_raw)
         free(tile.p_img_raw);
 
     printf("Total Tiles=%d\n", tile_set.tile_count);
-
-uint32_t t;
-
-    // Write all the Tile Map data to a file
-    for (t = 0; t < tile_map.size; t++) {
-
-        printf( " %3d,", tile_map.p_data[t]);
-
-        if (t && (((t+1) % 16) == 0))
-            printf( "\n"); // Line break every 8 tiles
-
-        if (t && (((t+1) % 64) == 0))
-            printf( "\n"); // Bigger line break every 64 tiles
-    }
-
-
-}
-
-
-
-int32_t tile_register_new(tile_data t_tile) {
-
-    int32_t     tile_id;
-    tile_data * new_tile;
-
-// printf("tile_register_new %d\n",tile_set.tile_count);
-
-    if (tile_set.tile_count < TILES_MAX_DEFAULT) {
-
-        // Set tile id to the current tile
-        tile_id = tile_set.tile_count;
-
-        // Use an easier to read name for the new tile entry
-        new_tile = &tile_set.tiles[tile_id];
-
-        // Store hash and encoded image data into tile
-        new_tile->hash = t_tile.hash;
-        new_tile->encoded_size_bytes = 0;
-        new_tile->raw_bytes_per_pixel = t_tile.raw_bytes_per_pixel;
-        new_tile->raw_width           = t_tile.raw_width;
-        new_tile->raw_height          = t_tile.raw_height;
-
-        // Copy raw tile data into tile image buffer
-        new_tile->raw_size_bytes = t_tile.raw_size_bytes;
-        new_tile->p_img_raw = malloc(t_tile.raw_size_bytes);
-
-        if (new_tile->p_img_raw) {
-
-            memcpy(new_tile->p_img_raw,
-                   t_tile.p_img_raw,
-                   t_tile.raw_size_bytes);
-
-
-            // Copy encoded tile data into tile buffer
-            tile_encode(&tile_set.tiles[tile_id],
-                        BIN_MODE_SNESGB_2BPP);
-
-            if (tile_set.tiles[tile_id].encoded_size_bytes) {
-                // Move to new tile
-                tile_set.tile_count++;
-
-            } else // encoding failed
-                tile_id = TILE_ID_FAILED_ENCODE;
-
-        } else // malloc failed
-            tile_id = TILE_ID_OUT_OF_SPACE;
-    }
-    else
-        tile_id TILE_ID_OUT_OF_SPACE;
-
-printf("tile_register_new tile_id=%d\n",tile_id);
-
-    return (tile_id);
-}
-
-
-
-// TODO: consider moving this to a separate file (tile_ops.c/h? with copy/hash/etc)
-int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
-
-    app_gfx_data   app_gfx;
-    app_color_data colorpal; // TODO: rename to app_colorpal?
-    rom_gfx_data   rom_gfx;
-
-    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
-
-    // Set Encoding method and Bytes Per Pixel of the incoming tile image
-    app_gfx.image_mode = image_mode;
-
-    // Point app gfx info to the tile info and raw image buffer
-    app_gfx.bytes_per_pixel = p_tile->raw_bytes_per_pixel;
-
-    app_gfx.width   = tile_map.tile_width;
-    app_gfx.height  = tile_map.tile_height;
-    app_gfx.size    = tile_set.tile_width * tile_set.tile_height * tile_set.tile_bytes_per_pixel;
-    app_gfx.p_data  = p_tile->p_img_raw;
-
-
-
-/*
-    int32_t tile_y;
-    int32_t tile_x;
-    uint8_t * t_tile;
-    t_tile = app_gfx.p_data;
-
- printf("Encoding for \n");
-
-    // Iterate over each tile, top -> bottom, left -> right
-    for (tile_y = 0; tile_y < tile_map.tile_height; tile_y++) {
-        for (tile_x = 0; tile_x < tile_map.tile_width; tile_x++)
-        {
-            printf(" %2x", *(t_tile));
-
-            // Move to the next row
-            t_tile += p_tile->raw_bytes_per_pixel;
-        }
-        printf(" \n");
-    }
-
-printf(" \n");
-*/
-
-
-
-    // Abort if it's not 1 or 2 bytes per pixel
-    // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
-    if (app_gfx.bytes_per_pixel >= BIN_BITDEPTH_LAST)
-        return (FALSE);
-
-    // Encode tile data into tile buffer
-    rom_bin_encode(&rom_gfx,
-                   &app_gfx);
-
-
-    // Make sure that the write was successful
-    if(rom_gfx.size == FALSE) {
-
-        free(rom_gfx.p_data);
-        return (FALSE);
-
-    } else {
-
-        // Copy encoded tile
-        p_tile->p_img_encoded = malloc(rom_gfx.size);
-        memcpy(p_tile->p_img_encoded,
-               rom_gfx.p_data,
-               rom_gfx.size);
-
-        p_tile->encoded_size_bytes = rom_gfx.size;
-
-        free(rom_gfx.p_data);
-    }
-
-    return (TRUE);
-}
-
-
-
-int32_t tile_find_matching(uint64_t hash_sig) {
-
-    int c;
-
-    for (c = 0; c < tile_set.tile_count; c++) {
-        if (hash_sig == tile_set.tiles[c].hash) {
-            // found a matching tile, return it's ID
-            return(c);
-        }
-    }
-
-    // No matching tile found
-    return(TILE_ID_NOT_FOUND);
-}
-
-
-// TODO: change this so p_tile is of type tile_data and move bytes_per_pixel into tile_data
-static void tile_copy_into_buffer(image_data * p_src_img, tile_data tile, uint32_t img_buf_offset) {
-
-    int32_t tile_y;
-    int32_t image_width_bytes;
-    int32_t tile_width_bytes;
-
-    image_width_bytes = p_src_img->width  * p_src_img->bytes_per_pixel;
-    tile_width_bytes  = tile.raw_width    * tile.raw_bytes_per_pixel;
-
-    // Iterate over each tile, top -> bottom, left -> right
-    for (tile_y = 0; tile_y < tile.raw_height; tile_y++) {
-
-        // Copy a row of tile data into the temp tile buffer
-        memcpy(tile.p_img_raw,
-               p_src_img->p_img_data + img_buf_offset,
-               tile_width_bytes);
-
-        // Move to the next row in image
-        img_buf_offset += image_width_bytes;
-
-        // Move to next row in tile buffer
-        tile.p_img_raw += tile_width_bytes;
-    }
-}
-
-
-
-// TODO: DEBUG: REMOVE ME
-static void tile_print_buffer_raw(tile_data tile) {
-
-    int32_t tile_y;
-    int32_t tile_x;
-
-    printf("\n");
-
-    // Iterate over each tile, top -> bottom, left -> right
-    for (tile_y = 0; tile_y < tile.raw_height; tile_y++) {
-        for (tile_x = 0; tile_x < tile.raw_width; tile_x++) {
-
-            printf(" %2x", *(tile.p_img_raw));
-
-            // Move to the next row
-            tile.p_img_raw += tile.raw_bytes_per_pixel;
-        }
-        printf(" \n");
-    }
-
-    printf(" \n");
-}
-
-
-static void tile_print_buffer_encoded(tile_data tile) {
-
-    int32_t c;
-
-    printf("ENCODED:\n");
-
-    // Iterate over each tile, top -> bottom, left -> right
-    for (c = 0; c < tile.encoded_size_bytes; c++) {
-        printf(" %2x", *(tile.p_img_encoded));
-
-            // Move to the next row
-            tile.p_img_encoded++;
-    }
-
-    printf(" \n");
 }
 
 
@@ -440,273 +191,12 @@ void tilemap_free_resources() {
 }
 
 
-// ======================= FORMAT EXPORT SUPPORT (tilemap_io.c/h) ============
 
-int32_t tilemap_save(const int8_t * filename) {
 
+int32_t tilemap_save(const int8_t * filename, uint32_t export_format) {
 
-    int c;
-    FILE * file;
-
-    char filename_bin[255];
-    snprintf(filename_bin, 255, "%s.bin", filename);
-
-    // Open the file
-    file = fopen(filename_bin, "wb");
-    if(!file)
-        return (false);
-
-    // Write all the tile set data to a file
-    for (c = 0; c < tile_set.tile_count; c++) {
-
-printf("* Writing tile %d of %d : %d bytes\n", c +1, tile_set.tile_count, tile_set.tiles[c].encoded_size_bytes);
-
-        if (tile_set.tiles[c].p_img_encoded) {
-
-// tile_print_buffer_encoded(tile_set.tiles[c]);
-
-            fwrite(tile_set.tiles[c].p_img_encoded,
-                   tile_set.tiles[c].encoded_size_bytes,
-                   1, file);
-        }
-
-printf("OUTPUT tile %d\n", c);
-// tile_print_buffer_raw(tile_set.tiles[c]);
-
-            // TODO: hex output encoding
-            //if (tile_set.tiles[c].p_img_raw)
-    }
-
-    fclose(file);
-
-
-    tilemap_format_gbdk_c_source_save( filename);
-
-    return (true);
-}
-
-
-#define STR_FILENAME_MAX 255
-
-// TODO: allow control of which bank they are written to
-
-int32_t tilemap_format_gbdk_c_source_save(const int8_t * filename) {
-
-    int t,c;
-    FILE * file;
-    char filename_tiles_c[STR_FILENAME_MAX];
-    char filename_tiles_h[STR_FILENAME_MAX];
-    char filename_map_c[STR_FILENAME_MAX];
-    char filename_map_h[STR_FILENAME_MAX];
-
-printf("Writing to gbdk C source files...\n");
-
-    snprintf(filename_tiles_c, STR_FILENAME_MAX, "%s.tiles.b3.c", filename);
-    snprintf(filename_tiles_h, STR_FILENAME_MAX, "%s.tiles.h",    filename);
-
-    snprintf(filename_map_c,   STR_FILENAME_MAX, "%s.map.b3.c", filename);
-    snprintf(filename_map_h,   STR_FILENAME_MAX, "%s.map.h",    filename);
-
-
-    // ==== TILE SET C SOURCE FILE ====
-
-    // Open the file
-    file = fopen(filename_tiles_c, "w");
-    if(!file)
-        return (false);
-
-    //snprintf(str_header_info, STR_HEADER_MAX, "/*
-    fprintf(file, "/*\n\nFilename: %s \n\
-     \n\
-     Tile Source File\n\
-     \n\
-     Info:\n\
-      Form                 : All tiles as one unit\n\
-      Format               : Gameboy 4 color\n\
-      Compression          : None\n\
-      Counter              : None\n\
-      Tile size            : %d x %d\n\
-      Tiles                : 0 to %d\n\
-      \n\
-      Palette colors       : None\n\
-      SGB Palette          : None\n\
-      CGB Palette          : None\n\
-      \n\
-      Convert to metatiles : No\n\
-      \n\
-      This file was generated by: Gimp Tilemap Plugin\n\
-      \n\
-    */\n\
-      \n\
-    /* Start of tile array */\n\
-    const unsigned  char tiles[] =\n\
-    {\n", get_filename_from_path(filename_tiles_c),
-    tile_set.tile_width,
-    tile_set.tile_height,
-    tile_set.tile_count);
-
-    // Write all the tile set data to a file
-    for (t = 0; t < tile_set.tile_count; t++) {
-        // Write the tile if it has data
-        if (tile_set.tiles[t].p_img_encoded) {
-
-            for (c = 0; c < tile_set.tiles[t].encoded_size_bytes; c++) {
-                fprintf(file, " 0x%02x,", tile_set.tiles[t].p_img_encoded[c]);
-
-                if (c && (((c+1) % 8) == 0))
-                    fprintf(file, "\n"); // Periodic line break
-            }
-            fprintf(file, "\n"); // Line break between every tile
-        }
-    }
-
-    // Close the array
-    fprintf(file, " };\n");
-
-    // Close the file
-    fclose(file);
-
-
-
-    // ==== TILE SET C HEADER FILE ====
-
-    // Open the file
-    file = fopen(filename_tiles_h, "w");
-    if(!file)
-        return (false);
-
-    fprintf(file, "/*\n\nFilename: %s \n\
-    \n\
-    Tile Header File\n\
-    */\n\
-    \n\
-    /* Bank of tiles */\n\
-    #define tilesBank 0\n\
-    \n\
-    /* Start of tile array */\n\
-    extern unsigned char tiles[];\n\
-    \n",get_filename_from_path(filename_tiles_h));
-
-    // Close the file
-    fclose(file);
-
-
-
-
-    // ==== TILE MAP C SOURCE FILE ====
-
-    // Open the file
-    file = fopen(filename_map_c, "w");
-    if(!file)
-        return (false);
-
-    fprintf(file, "/*\n\nFilename: %s \n\
-    \n\
-    Map SOURCE File \n\
-    \n\
-     Info:\n\
-       Section       :\n\
-       Bank          : 0\n\
-       Map size      : %d x %d \n\
-       Tile set      : %s.gbr\n\
-       Plane count   : 1 plane (8 bits)\n\
-       Plane order   : Tiles are continues\n\
-       Tile offset   : 0\n\
-       Split data    : No\n\
-    \n\
-    This file was generated by: Gimp Tilemap Plugin\n\
-    */\n\
-    \n\
-    #define mapWidth %d\n\
-    #define mapHeight %d\n\
-    #define mapBank 0\n\
-    \n\
-    const unsigned char map[]=\n\
-    {\n",get_filename_from_path(filename_map_c),
-        tile_map.width_in_tiles,
-        tile_map.height_in_tiles,
-        get_filename_from_path(filename_map_c),
-        tile_map.width_in_tiles,
-        tile_map.height_in_tiles);
-
-    // Write all the Tile Map data to a file
-    for (t = 0; t < tile_map.size; t++) {
-
-        fprintf(file, " %3d,", tile_map.p_data[t]);
-
-        if (t && (((t+1) % 16) == 0))
-            fprintf(file, "\n"); // Line break every 8 tiles
-
-        if (t && (((t+1) % 64) == 0))
-            fprintf(file, "\n"); // Bigger line break every 64 tiles
-    }
-
-
-    // Close the array
-    fprintf(file, " };\n");
-
-    // Close the file
-    fclose(file);
-
-
-
-
-    // ==== TILE MAP C HEADER FILE ====
-
-    // Open the file
-    file = fopen(filename_map_h, "w");
-    if(!file)
-        return (false);
-
-    fprintf(file, "/*\n\nFilename: %s \n\
-    \n\
-    Map Include File \n\
-    \n\
-     Info:\n\
-       Section       :\n\
-       Bank          : 0\n\
-       Map size      : %d x %d\n\
-       Tile set      : %s.gbr\n\
-       Plane count   : 1 plane (8 bits)\n\
-       Plane order   : Tiles are continues\n\
-       Tile offset   : 0\n\
-       Split data    : No\n\
-    \n\
-    This file was generated by: Gimp Tilemap Plugin\n\
-    */\n\
-    \n\
-    #define mapWidth %d\n\
-    #define mapHeight %d\n\
-    #define mapBank 0\n\
-    \n\
-    extern unsigned char map[];\n\
-    \n",get_filename_from_path(filename_map_c),
-        tile_map.width_in_tiles,
-        tile_map.height_in_tiles,
-        get_filename_from_path(filename_map_c),
-        tile_map.width_in_tiles,
-        tile_map.height_in_tiles);
-
-    // Close the file
-    fclose(file);
-
-
-
-
-    return (true);
-}
-
-
-
-
-char * get_filename_from_path(char * path)
-{
-    size_t i;
-
-   for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == '/') {
-            return &path[i+1];
-        }
-    }
-    return path;
+    return( tilemap_export(filename,
+                           export_format,
+                           &tile_map,
+                           &tile_set) );
 }

@@ -18,6 +18,7 @@
 #define TILE_ID_OUT_OF_SPACE  -2
 #define TILE_ID_FAILED_ENCODE -3
 
+// App image bit depths/modes
 enum image_modes {
     IMG_BITDEPTH_INDEXED = 1,
     IMG_BITDEPTH_INDEXED_ALPHA = 2,
@@ -26,7 +27,12 @@ enum image_modes {
     IMG_BITDEPTH_LAST
 };
 
-
+// Export formats
+enum export_formats {
+    EXPORT_FORMAT_GBDK_C_SOURCE = 1,
+    EXPORT_FORMAT_GBMB_GBTD = 2,
+    EXPORT_FORMAT_LAST
+};
 
 // Tile Map
 typedef struct {
@@ -78,21 +84,10 @@ void           tilemap_free_resources();
 static int32_t check_dimensions_valid(image_data * p_src_img);
 unsigned char  process_tiles(image_data * p_src_img);
 unsigned char  tilemap_export_process(image_data * p_src_img);
-int            tilemap_initialize(image_data * p_src_img);
-int32_t        tilemap_save(const int8_t * filename);
+int32_t        tilemap_initialize(image_data * p_src_img);
+int32_t        tilemap_save(const int8_t * filename, uint32_t export_format);
 
-// TODO: move us into a separate file (tile_ops.c/h)
-static void    tile_copy_into_buffer(image_data * p_src_img, tile_data tile, uint32_t img_buf_offset);
-int32_t        tile_find_matching(uint64_t hash_sig);
-int32_t        tile_encode(tile_data * p_tile, uint32_t image_mode);
-int32_t        tile_register_new(tile_data tile);
 
-// TODO: delete me
-static void tile_print_buffer_raw(tile_data tile);
-static void tile_print_buffer_encoded(tile_data tile);
-
-char * get_filename_from_path(char * path);
-int32_t        tilemap_format_gbdk_c_source_save(const int8_t * filename);
 
 #endif // LIB_TILEMAP_HEADER
 

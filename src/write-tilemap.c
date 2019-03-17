@@ -29,7 +29,8 @@
 
 int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
 {
-    int status;
+    int32_t status;
+    int32_t export_format;
 
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
@@ -37,6 +38,7 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
     image_data source_img;
 
+    export_format = EXPORT_FORMAT_GBDK_C_SOURCE;
 
     FILE * file;
 
@@ -48,11 +50,13 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
     // Get the Bytes Per Pixel of the incoming app image
     source_img.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
 
-printf("write-tilemap.c: check bit depth %d\n", source_img.bytes_per_pixel);
+// TODO: why is this showing "1" even when the source image has an alpha mask and transparency.
+    // Is it due to the export functionality?
+printf("write-tilemap.c: bytes per pixel= %d\n", source_img.bytes_per_pixel);
     // Abort if it's not 1 or 2 bytes per pixel
     // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
     if (source_img.bytes_per_pixel > IMG_BITDEPTH_INDEXED_ALPHA) {
-        return 0;
+        return false;
     }
 
     // Get a pixel region from the layer
@@ -80,7 +84,6 @@ printf("write-tilemap.c: check bit depth %d\n", source_img.bytes_per_pixel);
 
 // TODO: EXPORT
 
-printf("write-tilemap.c: calling export\n");
     status = tilemap_export_process(&source_img);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
@@ -95,9 +98,11 @@ printf("write-tilemap.c: calling export\n");
 
 
     if (status)
-        return tilemap_save(filename);
+        status = tilemap_save(filename, export_format);
 
     tilemap_free_resources();
 
-    return 1;
+    return true;
 }
+
+
