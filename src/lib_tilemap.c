@@ -37,7 +37,10 @@ int tilemap_initialize(image_data * p_src_img) {
     // width x height in tiles (if every map tile is unique)
     tile_map.size = (tile_map.width_in_tiles * tile_map.height_in_tiles);
 
-    tile_map.p_data = malloc(tile_map.size * sizeof(uint32_t));
+    tile_map.p_data = malloc(tile_map.size * sizeof(int32_t));
+
+    if (!tile_map.p_data)
+            return(false);
 
 
     // Tile Set
@@ -46,14 +49,18 @@ int tilemap_initialize(image_data * p_src_img) {
     tile_set.tile_height = TILE_HEIGHT_DEFAULT;
     tile_set.tile_size   = tile_set.tile_width * tile_set.tile_height * tile_set.tile_bytes_per_pixel;
     tile_set.tile_count  = 0;
+
+    return (true);
 }
 
 
 
 unsigned char tilemap_export_process(image_data * p_src_img) {
 
-    if ( check_dimensions_valid(p_src_img) )
-        tilemap_initialize(p_src_img); // Success, prep for processing
+    if ( check_dimensions_valid(p_src_img) ) {
+        if (!tilemap_initialize(p_src_img)) // Success, prep for processing
+            return (false); // Signal failure and exit
+    }
     else
         return (false); // Signal failure and exit
 
@@ -125,29 +132,53 @@ printf("Map Slot %d\n",map_slot);
                     tile_id = tile_register_new(tile);
 
 printf("///  New Tile\n");
-tile_print_buffer_raw(tile_set.tiles[tile_id]);
+//tile_print_buffer_raw(tile_set.tiles[tile_id]);
 
-                    if (tile_id == TILE_ID_OUT_OF_SPACE) {
+                    if (tile_id <= TILE_ID_OUT_OF_SPACE) {
                         free(tile.p_img_raw);
                         return (false); // Ran out of tile space, exit
                     }
                 }
-                else
 
-                // TODO: insert tile id into tile map for current location
-                *(tile_map.p_data + map_slot) = tile_id;
+                int32_t test;
+                test = tile_id;
+
+                tile_map.p_data[map_slot] = test; // = tile_id; // TODO: SOMETHING IS WRONG
+
+printf("Map Slot %d: tile_id=%d tilemap[map_slot]=%d\n",map_slot, tile_id, tile_map.p_data[map_slot]);
                 map_slot++;
             }
         }
 
     } else { // else if (tile.p_img_raw) {
-        free(tile.p_img_raw);
+        if (tile_map.p_data)
+            free(tile_map.p_data);
         return (false); // Failed to allocate buffer, exit
     }
 
-    free(tile.p_img_raw);
+    if (tile_map.p_data)
+        free(tile_map.p_data);
+
+    if (tile.p_img_raw)
+        free(tile.p_img_raw);
 
     printf("Total Tiles=%d\n", tile_set.tile_count);
+
+uint32_t t;
+
+    // Write all the Tile Map data to a file
+    for (t = 0; t < tile_map.size; t++) {
+
+        printf( " %3d,", tile_map.p_data[t]);
+
+        if (t && (((t+1) % 16) == 0))
+            printf( "\n"); // Line break every 8 tiles
+
+        if (t && (((t+1) % 64) == 0))
+            printf( "\n"); // Bigger line break every 64 tiles
+    }
+
+
 }
 
 
@@ -231,7 +262,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
 
 
 
-
+/*
     int32_t tile_y;
     int32_t tile_x;
     uint8_t * t_tile;
@@ -252,7 +283,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
     }
 
 printf(" \n");
-
+*/
 
 
 
@@ -417,8 +448,11 @@ int32_t tilemap_save(const int8_t * filename) {
     int c;
     FILE * file;
 
+    char filename_bin[255];
+    snprintf(filename_bin, 255, "%s.bin", filename);
+
     // Open the file
-    file = fopen(filename, "wb");
+    file = fopen(filename_bin, "wb");
     if(!file)
         return (false);
 
@@ -429,7 +463,7 @@ printf("* Writing tile %d of %d : %d bytes\n", c +1, tile_set.tile_count, tile_s
 
         if (tile_set.tiles[c].p_img_encoded) {
 
-tile_print_buffer_encoded(tile_set.tiles[c]);
+// tile_print_buffer_encoded(tile_set.tiles[c]);
 
             fwrite(tile_set.tiles[c].p_img_encoded,
                    tile_set.tiles[c].encoded_size_bytes,
@@ -437,7 +471,7 @@ tile_print_buffer_encoded(tile_set.tiles[c]);
         }
 
 printf("OUTPUT tile %d\n", c);
-tile_print_buffer_raw(tile_set.tiles[c]);
+// tile_print_buffer_raw(tile_set.tiles[c]);
 
             // TODO: hex output encoding
             //if (tile_set.tiles[c].p_img_raw)
@@ -589,11 +623,11 @@ printf("Writing to gbdk C source files...\n");
     \n\
     const unsigned char map[]=\n\
     {\n",get_filename_from_path(filename_map_c),
-        tile_map.map_width,
-        tile_map.map_height,
+        tile_map.width_in_tiles,
+        tile_map.height_in_tiles,
         get_filename_from_path(filename_map_c),
-        tile_map.map_width,
-        tile_map.map_height);
+        tile_map.width_in_tiles,
+        tile_map.height_in_tiles);
 
     // Write all the Tile Map data to a file
     for (t = 0; t < tile_map.size; t++) {
@@ -647,11 +681,11 @@ printf("Writing to gbdk C source files...\n");
     \n\
     extern unsigned char map[];\n\
     \n",get_filename_from_path(filename_map_c),
-        tile_map.map_width,
-        tile_map.map_height,
+        tile_map.width_in_tiles,
+        tile_map.height_in_tiles,
         get_filename_from_path(filename_map_c),
-        tile_map.map_width,
-        tile_map.map_height);
+        tile_map.width_in_tiles,
+        tile_map.height_in_tiles);
 
     // Close the file
     fclose(file);

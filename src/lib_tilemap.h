@@ -37,7 +37,7 @@ typedef struct {
     uint16_t map_width;
     uint16_t map_height;
     uint32_t size;
-    uint32_t * p_data; // TODO: rename tile_id_list
+    int32_t * p_data; // TODO: rename tile_id_list
 } tile_map_data;
 
 
