@@ -1,7 +1,7 @@
 gimp tilemap generator and exporter plugin
 ===========
 
-GIMP plugin for exporting tilemaps and tilesets for console games
+GIMP plugin for exporting tilemaps and tilesets from an image. Current use is for gameboy console game development.
 
 Features
  * Tile deduplication
