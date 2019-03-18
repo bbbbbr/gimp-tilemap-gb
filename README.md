@@ -3,10 +3,13 @@ gimp tilemap generator and exporter plugin
 
 GIMP plugin for exporting tilemaps and tilesets for console games
 
-Tilemap export formats:
- * C (GBDK / ZGB)
+Features
+ * Tile deduplication
 
-Tileset export formats:
+Tile Map export formats:
+ * C Source (GBDK / ZGB)
+
+Tile Set export formats:
  * C (GBDK / ZGB)
 
 Supported formats:
