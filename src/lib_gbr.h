@@ -13,8 +13,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#ifndef ROM_BIN_FILE_HEADER
-#define ROM_BIN_FILE_HEADER
+#ifndef LIB_GBR_FILE_HEADER
+#define LIB_GBR_FILE_HEADER
 
 
 #define PASCAL_OBJECT_MAX_SIZE 65535
@@ -218,4 +218,4 @@ typedef struct {
 } pascal_file_object;
 
 
-#endif // ROM_BIN_FILE_HEADER
+#endif // LIB_GBR_FILE_HEADER
