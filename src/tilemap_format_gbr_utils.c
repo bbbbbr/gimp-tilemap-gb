@@ -51,6 +51,11 @@
 #define GBR_TILE_PAL_SIZE_MIN 6
 
 
+#define GBR_PALETTE_SIZE_4_COLORS_XBGR 4 * sizeof(uint32_t)
+#define GBR_PALETTE_COLOR_SET_SIZE     4 * GBR_PALETTE_SIZE_4_COLORS_XBGR
+#define GBR_PALETTE_COLOR_SETS_SIZE    4 * GBR_PALETTE_COLOR_SET_SIZE
+
+
 enum gbr_tilemap_layer {
     gbr_bkg    = 0x00,
     gbr_win    = 0x80,
@@ -66,14 +71,14 @@ enum gbr_tileset_colorset {
 };
 
 enum gbr_object_types {
-    gbr_producer      = 0x01,
-    gbr_tile_data     = 0x02,
-    gbr_tile_settings = 0x03,
-    gbr_tile_export   = 0x04,
-    gbr_tile_import   = 0x05,
-    gbr_palettes      = 0x0D,
-    gbr_tile_pal      = 0x0E,
-    gbr_deleted       = 0xFF
+    gbr_obj_producer      = 0x01,
+    gbr_obj_tile_data     = 0x02,
+    gbr_obj_tile_settings = 0x03,
+    gbr_obj_tile_export   = 0x04,
+    gbr_obj_tile_import   = 0x05,
+    gbr_obj_palettes      = 0x0D,
+    gbr_obj_tile_pal      = 0x0E,
+    gbr_obj_deleted       = 0xFF
 };
 
 
@@ -86,26 +91,19 @@ enum gbr_tileset_sgbpalettes {
 };
 
 
-enum gbr_tileset_sgbpalettes {
+enum gbr_tileset_splitorder {
     lrtb       = 0,
     horizontal = 0,
     tblr       = 1,
     vertical   = 1
 };
-    module TileSet
-      SPLIT_ORDER = {
-        :lrtb       => 0,
-        :horizontal => 0,
 
-        :tblr       => 1,
-        :vertical   => 1
-      }
 
 typedef struct {
     int8_t name[GBR_PRODUCER_NAME_SIZE_STR];
     int8_t version[GBR_PRODUCER_VERSION_SIZE_STR];
     int8_t info[GBR_PRODUCER_INFO_SIZE_STR];
-} gpr_producer;
+} gbr_producer;
 
 
 typedef struct {
@@ -113,10 +111,12 @@ typedef struct {
     uint16_t   width;
     uint16_t   height;
     uint16_t   count;
+               // tile_list: packed arrays width * height * count.
+               //            width & height can be up to 32 x 32 (0..31)
+    uint8_t    tile_list[PASCAL_OBJECT_MAX_SIZE];
     uint8_t    color_set[GBR_TILE_DATA_COLOLR_SET_SIZE];
-    uint8_t    p_data[PASCAL_OBJECT_MAX_SIZE];
     uint32_t   data_size;
-} gpr_tile_data;
+} gbr_tile_data;
 
 
 typedef struct {
@@ -129,9 +129,10 @@ typedef struct {
     uint16_t  split_height;
     uint32_t  split_order;
     uint8_t   color_set;
-    // bookmarks    Word(3)
-    // auto_update  Boolean
-} gpr_tile_settings;
+
+    uint32_t  bookmarks[3];
+    uint8_t   auto_update;
+} gbr_tile_settings;
 
 
 
@@ -157,7 +158,7 @@ typedef struct {
     uint8_t    split;
     uint32_t   block_size;
     uint8_t    sel_tab;
-} gpr_tile_export;
+} gbr_tile_export;
 
 
 typedef struct {
@@ -171,7 +172,7 @@ typedef struct {
     uint32_t  first_byte;
     uint8_t   binary_file_type;
 
-} gpr_tile_import;
+} gbr_tile_import;
 
 
 typedef struct {
@@ -180,7 +181,7 @@ typedef struct {
     uint8_t   colors[PASCAL_OBJECT_MAX_SIZE];
     uint16_t  sgb_count;
     uint8_t   sgb_colors[PASCAL_OBJECT_MAX_SIZE];
-} gpr_palettes;
+} gbr_palettes;
 
 typedef struct {
     uint16_t  id;
@@ -188,18 +189,18 @@ typedef struct {
     uint8_t   color_set[PASCAL_OBJECT_MAX_SIZE];
     uint16_t  sgb_count;
     uint8_t   sgb_color_set[PASCAL_OBJECT_MAX_SIZE];
-} gpr_tile_pal;
+} gbr_tile_pal;
 
 
 
 typedef struct {
-    gpr_producer      producer;
-    gpr_tile_data     tile_data;
-    gpr_tile_settings tile_settings;
-    gpr_tile_export   tile_export;
-    gpr_tile_import   tile_import;
-    gpr_palettes      palettes;
-    gpr_tile_pal      tile_pal;
+    gbr_producer      producer;
+    gbr_tile_data     tile_data;
+    gbr_tile_settings tile_settings;
+    gbr_tile_export   tile_export;
+    gbr_tile_import   tile_import;
+    gbr_palettes      palettes;
+    gbr_tile_pal      tile_pal;
 } gbr_record;
 
 
@@ -211,6 +212,33 @@ typedef struct {
     uint32_t   offset;
     uint8_t  * p_data;
 } pascal_file_object;
+
+
+
+
+
+int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index) {
+
+    int32_t offset;
+    int32_t tile_size;
+
+    // Find the starting of the tile in the tile list buffer
+    tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
+    offset = (tile_size * (tile_index - 1));
+
+    // Make sure the destination buffer is ok
+    if (!dest_buf)
+        return false;
+
+    // Make sure there is enough data for a complete tile in the source tile buffer
+    if ((tile_size * tile_index) > p_gbr->tile_data.data_size)
+      return false;
+
+
+    memcpy(dest_buf, &(p_gbr->tile_data.tile_list[offset]), tile_size);
+
+}
+
 
 
 int32_t gbr_read_header_key(FILE * p_file) {
@@ -292,10 +320,16 @@ void gbr_read_uint16(uint16_t * p_dest_val, pascal_file_object * p_obj) {
 
 void gbr_read_uint8(uint8_t * p_dest_val, pascal_file_object * p_obj) {
 
-    memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint8_t));
+    *p_dest_val = p_obj->p_data[ p_obj->offset ];
     p_obj->offset += sizeof(uint8_t);
 }
 
+
+void gbr_read_bool(uint8_t * p_dest_val, pascal_file_object * p_obj) {
+
+    *p_dest_val = p_obj->p_data[ p_obj->offset ] & 0x01;
+    p_obj->offset += sizeof(uint8_t);
+}
 
 
 int32_t gbr_object_producer_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
@@ -315,6 +349,11 @@ int32_t gbr_object_producer_decode(gbr_record * p_gbr, pascal_file_object * p_ob
 }
 
 
+
+// Tile: x,y,id = .tile_list[ .height
+//                            + (y * .width)
+//                            + (id * width * height) ]
+// TODO: change to int16_t? read about what is most efficient on 64 bit architectures
 int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
 
     if (p_obj->length_bytes < GBR_TILE_DATA_SIZE_MIN)
@@ -325,10 +364,13 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
     gbr_read_uint16(&p_gbr->tile_data.height,    p_obj);
     gbr_read_uint16(&p_gbr->tile_data.count,     p_obj);
     gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, GBR_TILE_DATA_COLOLR_SET_SIZE);
-    // TODO: How much to read here? does it include the color set or not?
-    // Save the remaining bytes to a buffer
-    p_gbr->tile_data.data_size = p_obj->length_bytes - p_obj->offset;
-    gbr_read_buf(p_gbr->tile_data.p_data, p_obj, p_gbr->tile_data.data_size);
+
+    p_gbr->tile_data.data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
+                                                        * p_gbr->tile_data.count;
+    // Read N Tiles of x Width x Height array of bytes, one byte per tile pixel
+    gbr_read_buf   ( p_gbr->tile_data.tile_list, p_obj, p_gbr->tile_data.data_size);
+
+
 
 
 printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n",
@@ -353,7 +395,7 @@ int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, pascal_file_object *
         return false;
 
     gbr_read_uint16(&p_gbr->tile_settings.tile_id,      p_obj);
-    gbr_read_uint8 (&p_gbr->tile_settings.simple,       p_obj);
+    gbr_read_bool  (&p_gbr->tile_settings.simple,       p_obj);
     gbr_read_uint8 (&p_gbr->tile_settings.flags,        p_obj);
     gbr_read_uint8 (&p_gbr->tile_settings.left_color,   p_obj);
     gbr_read_uint8 (&p_gbr->tile_settings.right_color,  p_obj);
@@ -361,9 +403,6 @@ int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, pascal_file_object *
     gbr_read_uint16(&p_gbr->tile_settings.split_height, p_obj);
     gbr_read_uint32(&p_gbr->tile_settings.split_order,  p_obj); // Should this be uint16? = 4294901760
     gbr_read_uint8 (&p_gbr->tile_settings.color_set,    p_obj);
-    // TODO: How much to read here? does it include the color set or not?
-    // Save the remaining bytes to a buffer
-    gbr_read_buf   ( p_gbr->tile_data.p_data,    p_obj, p_obj->length_bytes - p_obj->offset);
 
 
 printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
@@ -449,6 +488,29 @@ printf("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
 
 
 
+int32_t gbr_pal_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t pal_index) {
+
+    int32_t offset;
+
+    // Find the starting of the tile in the tile list buffer
+    offset = (GBR_PALETTE_SIZE_4_COLORS_XBGR * (pal_index - 1));
+
+    // Make sure the destination buffer is ok
+    if (!dest_buf)
+        return false;
+
+    // Make sure there is enough data for a complete tile in the source tile buffer
+    if ((GBR_PALETTE_SIZE_4_COLORS_XBGR * pal_index) > GBR_PALETTE_COLOR_SETS_SIZE)
+      return false;
+
+
+    memcpy(dest_buf,
+           &(p_gbr->palettes.colors[offset]),
+           GBR_PALETTE_SIZE_4_COLORS_XBGR);
+
+}
+
+
 
 int32_t gbr_object_palettes_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
 
@@ -458,22 +520,12 @@ int32_t gbr_object_palettes_decode(gbr_record * p_gbr, pascal_file_object * p_ob
 
             gbr_read_uint16(&p_gbr->palettes.id,         p_obj);
             gbr_read_uint16(&p_gbr->palettes.count,      p_obj);
-            gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, p_gbr->palettes.count); // TODO: this probably isn't working right
+            //gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, p_gbr->palettes.count); // TODO: this probably isn't working right
+            gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, GBR_PALETTE_COLOR_SETS_SIZE);
             gbr_read_uint16(&p_gbr->palettes.sgb_count,  p_obj);
             gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, p_gbr->palettes.sgb_count); // TODO: this probably isn't working right
+            gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_COLOR_SETS_SIZE);
 
-/*
-// TODO
-0
-OBJ: type=13, id=5, size=262 <--- -6 = 256 for palettes
-OBJ: type=0d, id=05, size=0106
-gbr_palettes
-PALEttes:
-1
-8
-29984
-
-*/
 
 printf("PALEttes:\n%d\n%d\n%d\n",
                                  p_gbr->palettes.id,
@@ -545,35 +597,35 @@ int32_t gbr_load(const int8_t * filename) {
 
                 switch (obj.type) {
                     // Process Object
-                    case gbr_producer: printf("gbr_producer\n");
+                    case gbr_obj_producer: printf("gbr_producer\n");
                                        gbr_object_producer_decode(&gbr, &obj);
                                        break;
 
-                    case gbr_tile_data: printf("gbr_tile_data\n");
+                    case gbr_obj_tile_data: printf("gbr_tile_data\n");
                                         gbr_object_tile_data_decode(&gbr, &obj);
                                         break;
 
-                    case gbr_tile_settings: printf("gbr_tile_settings\n");
+                    case gbr_obj_tile_settings: printf("gbr_tile_settings\n");
                                             gbr_object_tile_settings_decode(&gbr, &obj);
                                             break;
 
-                    case gbr_tile_export: printf("gbr_tile_export\n");
+                    case gbr_obj_tile_export: printf("gbr_tile_export\n");
                                           gbr_object_tile_export_decode(&gbr, &obj);
                                           break;
 
-                    case gbr_tile_import: printf("gbr_tile_import\n");
+                    case gbr_obj_tile_import: printf("gbr_tile_import\n");
                                           gbr_object_tile_import_decode(&gbr, &obj);
                                           break;
 
-                    case gbr_palettes: printf("gbr_palettes\n");
+                    case gbr_obj_palettes: printf("gbr_palettes\n");
                                        gbr_object_palettes_decode(&gbr, &obj);
                                        break;
 
-                    case gbr_tile_pal: printf("gbr_tile_pal\n");
+                    case gbr_obj_tile_pal: printf("gbr_tile_pal\n");
                                        gbr_object_tile_pal_decode(&gbr, &obj);
                                        break;
 
-                    case gbr_deleted: printf("gbr_deleted\n");
+                    case gbr_obj_deleted: printf("gbr_deleted\n");
                                       break;
                 }
             }
