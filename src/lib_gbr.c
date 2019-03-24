@@ -22,65 +22,12 @@ int32_t gbr_load(const int8_t * filename) {
     //
     if (status) {
         // Render the image from the loaded data
-        status = gbr_convert_to_image();
+        status = gbr_convert_to_image(&gbr, &image, &colors);
     }
 
     return status;
 };
 
-
-// Convert loaded .GBR data to an image
-int32_t gbr_convert_to_image() {
-
-    int16_t tile_id;
-    int32_t offset;
-
-    image.bytes_per_pixel = 1; // TODO: MAKE a #define
-
-    image.width = gbr.tile_data.width;
-    image.height = gbr.tile_data.height
-                 * gbr.tile_data.count;  // TODO: consider a wider image format?
-
-    // Calculate total image area based on
-    // tile width and height, and number of tiles
-    image.size = image.width * image.height * image.bytes_per_pixel;
-
-    // Allocate image buffer
-    image.p_img_data = malloc(image.size);
-
-    if (image.p_img_data) {
-
-        offset = 0;
-
-        // LOAD IMAGE
-        // Copy each tile into the image buffer
-        // TODO: FIXME this is linear for now and assumes an 8 x N dest image
-
-        for (tile_id=0; tile_id < gbr.tile_data.count; tile_id++) {
-//            printf("Tile:%d, offset=%d\n", tile_id, offset);
-            gbr_tile_get_buf(&image.p_img_data[offset],
-                             &gbr,
-                             tile_id);
-
-            offset+= gbr.tile_data.width * gbr.tile_data.height * image.bytes_per_pixel;
-        }
-
-        printf("image:%d x %d (%d x %d # %d) \n", image.width, image.height,
-                                                gbr.tile_data.width,
-                                                gbr.tile_data.height,
-                                                gbr.tile_data.count);
-
-        // LOAD COLOR MAP
-        colors.size = gbr.palettes.count * COLOR_DATA_BYTES_PER_COLOR;
-
-        printf("COLOR: size=%d\n", colors.size);
-        gbr_pal_get_buf(&(colors.pal[0]),
-                        &gbr);
-        return true;
-    }
-    else
-        return false;
-}
 
 
 

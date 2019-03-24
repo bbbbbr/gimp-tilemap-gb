@@ -4,6 +4,7 @@
 
 #include "lib_gbr_import.h"
 #include "lib_gbr_file_utils.h"
+#include "lib_gbr_ops.h"
 
 
 int32_t gbr_object_producer_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
@@ -224,3 +225,59 @@ printf("tile pal:\n%d\n%d\n%d\n",
   return true;
 }
 
+
+
+
+// Convert loaded .GBR data to an image
+int32_t gbr_convert_to_image(gbr_record * p_gbr, image_data * p_image, color_data * p_colors) {
+
+    int16_t tile_id;
+    int32_t offset;
+
+    p_image->bytes_per_pixel = 1; // TODO: MAKE a #define
+
+    p_image->width  = p_gbr->tile_data.width;
+    p_image->height = p_gbr->tile_data.height
+                    * p_gbr->tile_data.count;  // TODO: consider a wider image format?
+
+    // Calculate total image area based on
+    // tile width and height, and number of tiles
+    p_image->size = p_image->width * p_image->height * p_image->bytes_per_pixel;
+
+    // Allocate image buffer
+    p_image->p_img_data = malloc(p_image->size);
+
+    if (p_image->p_img_data) {
+
+        offset = 0;
+
+        // LOAD IMAGE
+        // Copy each tile into the image buffer
+        // TODO: FIXME this is linear for now and assumes an 8 x N dest image
+
+        for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
+//            printf("Tile:%d, offset=%d\n", tile_id, offset);
+            gbr_tile_get_buf(&p_image->p_img_data[offset],
+                             p_gbr,
+                             tile_id);
+
+            offset += p_gbr->tile_data.width * p_gbr->tile_data.height * p_image->bytes_per_pixel;
+        }
+
+        printf("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
+                                                  p_gbr->tile_data.width,
+                                                  p_gbr->tile_data.height,
+                                                  p_gbr->tile_data.count);
+
+        // LOAD COLOR MAP
+        // TODO: IMPORTANT: only load colors referenced in p_gbr->tile_data.tile_pal[4] ?
+        p_colors->size = p_gbr->palettes.count * COLOR_DATA_BYTES_PER_COLOR;
+
+        printf("COLOR: size=%d\n", p_colors->size);
+        gbr_pal_get_buf(&(p_colors->pal[0]),
+                        p_gbr);
+        return true;
+    }
+    else
+        return false;
+}
