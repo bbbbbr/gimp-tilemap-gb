@@ -117,7 +117,7 @@ int tilemap_read(const gchar * filename, int image_mode)
 
         gimp_image_set_colormap(new_image_id,
                                 &(p_loaded_colors->pal[0]),
-                                p_loaded_colors->size);
+                                p_loaded_colors->color_count);
     }
 
     // Get a pixel region from the layer

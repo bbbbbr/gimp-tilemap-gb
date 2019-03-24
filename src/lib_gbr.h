@@ -123,7 +123,8 @@ typedef struct {
                //            width & height can be up to 32 x 32 (0..31)
     uint8_t    tile_list[PASCAL_OBJECT_MAX_SIZE];
     uint8_t    color_set[GBR_TILE_DATA_COLOLR_SET_SIZE];
-    uint32_t   data_size;
+    uint32_t   pal_data_size;
+    uint32_t   tile_data_size;
 } gbr_tile_data;
 
 

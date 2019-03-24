@@ -4,7 +4,6 @@
 
 #include "lib_gbr.h"
 #include "lib_gbr_import.h"
-#include "lib_gbr_ops.h"
 #include "lib_gbr_file_utils.h"
 
 static image_data image;

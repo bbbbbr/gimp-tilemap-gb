@@ -36,6 +36,7 @@ int32_t gbr_pal_get_buf(uint8_t * dest_buf, gbr_record * p_gbr) {
 
 
 
+
 int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index) {
 
     int32_t offset;
@@ -53,13 +54,12 @@ int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_i
         return false;
 
     // Make sure there is enough data for a complete tile in the source tile buffer
-    if ((tile_size * tile_index) > p_gbr->tile_data.data_size)
-      return false;
+    if ((tile_size * tile_index) > p_gbr->tile_data.tile_data_size)
+        return false;
 
 
     memcpy(dest_buf, &(p_gbr->tile_data.tile_list[offset]), tile_size);
 
     return true;
 }
-
 

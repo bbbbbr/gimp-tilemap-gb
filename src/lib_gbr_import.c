@@ -39,13 +39,13 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
     gbr_read_uint16(&p_gbr->tile_data.height,    p_obj);
     gbr_read_uint16(&p_gbr->tile_data.count,     p_obj);
 
-    // TODO : Use colorset against palette?
-    gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, GBR_TILE_DATA_COLOLR_SET_SIZE);
+    p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOLR_SET_SIZE;
+    gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, p_gbr->tile_data.pal_data_size);
 
-    p_gbr->tile_data.data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
-                                                        * p_gbr->tile_data.count;
+    p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
+                                                             * p_gbr->tile_data.count;
     // Read N Tiles of x Width x Height array of bytes, one byte per tile pixel
-    gbr_read_buf   ( p_gbr->tile_data.tile_list, p_obj, p_gbr->tile_data.data_size);
+    gbr_read_buf   ( p_gbr->tile_data.tile_list, p_obj, p_gbr->tile_data.tile_data_size);
 
 /*
     int x;
@@ -61,7 +61,7 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
 
 
 
-printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n",
+printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
                                  p_gbr->tile_data.name,
                                  p_gbr->tile_data.height,
                                  p_gbr->tile_data.width,
@@ -70,7 +70,8 @@ printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n",
                                  p_gbr->tile_data.color_set[1],
                                  p_gbr->tile_data.color_set[2],
                                  p_gbr->tile_data.color_set[3],
-                                 p_gbr->tile_data.data_size);
+                                 p_gbr->tile_data.pal_data_size,
+                                 p_gbr->tile_data.tile_data_size);
 
   return true;
 }
@@ -270,14 +271,51 @@ int32_t gbr_convert_to_image(gbr_record * p_gbr, image_data * p_image, color_dat
                                                   p_gbr->tile_data.count);
 
         // LOAD COLOR MAP
-        // TODO: IMPORTANT: only load colors referenced in p_gbr->tile_data.tile_pal[4] ?
-        p_colors->size = p_gbr->palettes.count * COLOR_DATA_BYTES_PER_COLOR;
-
-        printf("COLOR: size=%d\n", p_colors->size);
-        gbr_pal_get_buf(&(p_colors->pal[0]),
-                        p_gbr);
+        gbr_load_tileset_palette(p_colors, p_gbr);
         return true;
     }
     else
         return false;
+}
+
+
+
+int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
+
+    uint16_t pal_index;
+    uint32_t pal_offset;
+    uint32_t buf_offset;
+
+    // Make sure there is enough space in destination palette buffer
+    if ((p_gbr->tile_data.pal_data_size * COLOR_DATA_BYTES_PER_COLOR) > (COLOR_DATA_PAL_SIZE))
+        return false;
+
+    // Set the destination color palette size based on tile list color set size
+    p_colors->color_count = p_gbr->tile_data.pal_data_size;
+    p_colors->size        = p_colors->color_count * COLOR_DATA_BYTES_PER_COLOR;
+
+
+    printf("COLOR: size=%d\n", p_colors->color_count);
+
+    buf_offset = 0;
+
+    // Load the palette colors for each entry in the tile list color set
+    for(pal_index = 0; pal_index < p_gbr->tile_data.pal_data_size; pal_index++) {
+
+        // Find the tile palette entry for the tile list color
+        pal_offset = p_gbr->tile_data.color_set[pal_index] * GBR_PALETTE_COLOR_SIZE;
+
+        // Load the color data into the destination palette
+        p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 0]; // R.0
+        p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 1]; // G.1
+        p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 2]; // B.2
+
+
+        printf(" --COLORS %d: %d) %2x, %2x, %2x, \n", pal_index, pal_offset,
+                                                p_colors->pal[buf_offset-3],
+                                                p_colors->pal[buf_offset-2],
+                                                p_colors->pal[buf_offset-1]);
+    }
+
+    return true;
 }

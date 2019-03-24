@@ -20,8 +20,9 @@
 
 
     typedef struct {
+        uint16_t color_count;
         uint16_t size;
-        uint8_t  pal[COLOR_DATA_PAL_SIZE]; // TODO control by #define
+        uint8_t  pal[COLOR_DATA_PAL_SIZE];
     } color_data;
 
 
