@@ -37,12 +37,25 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
     gbr_read_uint16(&p_gbr->tile_data.width,     p_obj);
     gbr_read_uint16(&p_gbr->tile_data.height,    p_obj);
     gbr_read_uint16(&p_gbr->tile_data.count,     p_obj);
+
+    // TODO : Use colorset against palette?
     gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, GBR_TILE_DATA_COLOLR_SET_SIZE);
 
     p_gbr->tile_data.data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
                                                         * p_gbr->tile_data.count;
     // Read N Tiles of x Width x Height array of bytes, one byte per tile pixel
     gbr_read_buf   ( p_gbr->tile_data.tile_list, p_obj, p_gbr->tile_data.data_size);
+
+/*
+    int x;
+    int y;
+    for (y = 0; y < p_gbr->tile_data.height; y++) {
+        for (x = 0; x < p_gbr->tile_data.width; x++) {
+            printf("%4x", p_gbr->tile_data.tile_list[x + (y * p_gbr->tile_data.width)]);
+        }
+        printf("\n");
+    }
+*/
 
 
 

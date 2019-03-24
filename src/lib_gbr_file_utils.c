@@ -60,31 +60,43 @@ void gbr_read_str(int8_t * p_dest_str, pascal_file_object * p_obj, uint32_t n_by
     memcpy(p_dest_str, &p_obj->p_data[ p_obj->offset ], n_bytes);
     p_dest_str[n_bytes + 1] = '\0';
     p_obj->offset += n_bytes;
+
+    printf("gbr_read_str @ %d\n", p_obj->offset);
 }
 
 void gbr_read_buf(int8_t * p_dest_buf, pascal_file_object * p_obj, uint32_t n_bytes) {
 
+    printf("gbr_read_buf @ %d -> ", p_obj->offset);
+
     // Copy string, add terminator, move offset to next data
-    memcpy(p_dest_buf, &p_obj->p_data[ p_obj->offset ], n_bytes);
+    memcpy(p_dest_buf, &(p_obj->p_data[ p_obj->offset ]), n_bytes);
     p_obj->offset += n_bytes;
+
+    printf("%d\n", p_obj->offset);
 }
 
 void gbr_read_uint32(uint32_t * p_dest_val, pascal_file_object * p_obj) {
 
     memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint32_t));
     p_obj->offset += sizeof(uint32_t);
+
+    printf("gbr_read_uint32 @ %d\n", p_obj->offset);
 }
 
 void gbr_read_uint16(uint16_t * p_dest_val, pascal_file_object * p_obj) {
 
     memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint16_t));
     p_obj->offset += sizeof(uint16_t);
+
+    printf("gbr_read_uint16 @ %d\n", p_obj->offset);
 }
 
 void gbr_read_uint8(uint8_t * p_dest_val, pascal_file_object * p_obj) {
 
     *p_dest_val = p_obj->p_data[ p_obj->offset ];
     p_obj->offset += sizeof(uint8_t);
+
+    printf("gbr_read_uint8 @ %d\n", p_obj->offset);
 }
 
 
@@ -92,4 +104,6 @@ void gbr_read_bool(uint8_t * p_dest_val, pascal_file_object * p_obj) {
 
     *p_dest_val = p_obj->p_data[ p_obj->offset ] & 0x01;
     p_obj->offset += sizeof(uint8_t);
+
+    printf("gbr_read_bool @ %d\n", p_obj->offset);
 }

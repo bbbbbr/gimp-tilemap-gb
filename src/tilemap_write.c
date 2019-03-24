@@ -22,8 +22,10 @@
 #include <string.h>
 #include <libgimp/gimp.h>
 
-#include "write-tilemap.h"
+#include "tilemap_write.h"
 #include "lib_tilemap.h"
+
+#include "image_info.h"
 
 #include "lib_rom_bin.h"
 

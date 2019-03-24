@@ -1,20 +1,6 @@
-/*=======================================================================
-              ROM bin load / save plugin for the GIMP
-                 Copyright 2018 - Others & Nathan Osman (webp plugin base)
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-=======================================================================*/
+//
+// file-tilemap.c
+//
 
 
 #include <string.h>
@@ -25,10 +11,15 @@
 #include <libgimp/gimpui.h>
 
 // #include "lib_rom_bin.h"
-#include "write-tilemap.h"
+#include "tilemap_write.h"
+#include "tilemap_read.h"
+
+#include "lib_tilemap.h"
+
 // #include "export-dialog.h"
 
 const char SAVE_PROCEDURE[] = "file-tilemap-save";
+const char LOAD_PROCEDURE_GBR[] = "file-load-gbr";
 
 const char BINARY_NAME[]    = "file-tilemap";
 
@@ -57,6 +48,12 @@ static void query(void)
         { GIMP_PDB_STRING, "raw-filename", "The name entered" }
     };
 
+    // Load return values
+    static const GimpParamDef load_return_values[] =
+    {
+        { GIMP_PDB_IMAGE, "image", "Output image" }
+    };
+
     // Save arguments
     static const GimpParamDef save_arguments[] =
     {
@@ -68,13 +65,29 @@ static void query(void)
         { GIMP_PDB_FLOAT,    "export_mode",  "Tilemap export format" }
     };
 
+    // Install the load procedure for ".GBR" files
+    gimp_install_procedure(LOAD_PROCEDURE_GBR,
+                           "Load GBR Game Boy tileset",
+                           "Load GBR Game Boy tileset",
+                           "--",
+                           "Copyright --",
+                           "2019",
+                           "GBR Game Boy tileset image",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+
     // Install the save procedure for ".tmap" files (all formats)
     gimp_install_procedure(SAVE_PROCEDURE,
                            "Save image to tilemap",
                            "Save image to tilemap",
                            "--",
                            "Copyright --",
-                           "2018",
+                           "2019",
                            "Tilemap & Tileset",
                            "INDEXED*",
                            GIMP_PLUGIN,
@@ -83,6 +96,9 @@ static void query(void)
                            save_arguments,
                            NULL);
 
+
+    // Register load handler for ".GBR" format files
+    gimp_register_load_handler(LOAD_PROCEDURE_GBR, "gbr", "");
 
     // Now register the save handlers
     gimp_register_save_handler(SAVE_PROCEDURE, "tmap", "");
@@ -107,9 +123,47 @@ static void run(const gchar * name,
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
-// printf("file-tilemap.c: Start\n");
 
-    if(!strcmp(name, SAVE_PROCEDURE))
+// Check to see if this is the load procedure
+    if( !strcmp(name, LOAD_PROCEDURE_GBR))
+    {
+        int new_image_id;
+        int image_mode = -1;
+
+        // Check to make sure all parameters were supplied
+        if(nparams != 3) {
+            return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+            return;
+        }
+
+
+        // Try to export the image
+        gimp_ui_init(BINARY_NAME, FALSE);
+
+
+        // Determine image file format by load type
+        if(!strcmp(name, LOAD_PROCEDURE_GBR)) {
+            image_mode = IMPORT_FORMAT_GBR;
+        }
+
+
+        // Now read the image
+        new_image_id = tilemap_read(param[1].data.d_string, image_mode);
+
+        // Check for an error
+        if(new_image_id == -1)
+        {
+            return_values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
+            return;
+        }
+
+        // Fill in the second return value
+        *nreturn_vals = 2;
+
+        return_values[1].type         = GIMP_PDB_IMAGE;
+        return_values[1].data.d_image = new_image_id;
+    }
+    else if(!strcmp(name, SAVE_PROCEDURE))
     {
         // This is the export procedure
 

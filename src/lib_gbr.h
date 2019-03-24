@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "image_info.h"
+
 #ifndef LIB_GBR_FILE_HEADER
 #define LIB_GBR_FILE_HEADER
 
@@ -54,10 +56,12 @@
 #define GBR_TILE_PAL_SIZE_MIN 6
 
 
-#define GBR_PALETTE_SIZE_4_COLORS_XBGR 4 * sizeof(uint32_t)
+#define GBR_PALETTE_COLOR_SIZE         sizeof(uint32_t)
+#define GBR_PALETTE_SIZE_4_COLORS_XBGR 4 * GBR_PALETTE_COLOR_SIZE
 #define GBR_PALETTE_COLOR_SET_SIZE     4 * GBR_PALETTE_SIZE_4_COLORS_XBGR
 #define GBR_PALETTE_COLOR_SETS         8
 #define GBR_PALETTE_COLOR_SETS_SIZE    GBR_PALETTE_COLOR_SETS * GBR_PALETTE_COLOR_SET_SIZE
+
 
 
 enum gbr_tilemap_layer {
@@ -187,6 +191,7 @@ typedef struct {
     uint8_t   sgb_colors[PASCAL_OBJECT_MAX_SIZE];
 } gbr_palettes;
 
+
 typedef struct {
     uint16_t  id;
     uint16_t  count;
@@ -216,6 +221,16 @@ typedef struct {
     uint32_t   offset;
     uint8_t  * p_data;
 } pascal_file_object;
+
+
+int32_t gbr_load(const int8_t * filename);
+image_data * gbr_get_image();
+color_data * gbr_get_colors();
+
+void gbr_free_resources(void);
+
+int32_t gbr_load_file(const int8_t * filename);
+int32_t gbr_convert_to_image();
 
 
 #endif // LIB_GBR_FILE_HEADER
