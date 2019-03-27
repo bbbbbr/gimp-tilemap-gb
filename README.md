@@ -16,7 +16,7 @@ Tile Set export formats:
  * GBR (Game Boy Tile Designer ( http://www.devrs.com/gb/hmgd/gbtd.html )
 
 Tile Set import formats:
- * GBR (Game Boy Tile Designer ( http://www.devrs.com/gb/hmgd/gbtd.html )
+ * GBR (Game Boy Tile Designer
 
 Supported formats:
  * GB 2bpp
