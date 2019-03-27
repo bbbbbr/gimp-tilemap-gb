@@ -11,6 +11,10 @@ Tile Map export formats:
 
 Tile Set export formats:
  * C (GBDK / ZGB)
+ * GBR (Game Boy Tile Designer ( http://www.devrs.com/gb/hmgd/gbtd.html )
+
+Tile Set import formats:
+ * GBR (Game Boy Tile Designer ( http://www.devrs.com/gb/hmgd/gbtd.html )
 
 Supported formats:
  * GB 2bpp
@@ -21,8 +25,6 @@ OS binaries available for:
 
 
 ## Acknowledgement:
- * Source uses some webp gimp plugin code from Nathan Osman (Copyright 2012)
- * Some format documentation from: https://mrclick.zophar.net/TilEd/download/consolegfx.txt
 
 
 ## Quick instructions:
