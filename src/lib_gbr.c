@@ -4,6 +4,7 @@
 
 #include "lib_gbr.h"
 #include "lib_gbr_import.h"
+#include "lib_gbr_export.h"
 #include "lib_gbr_file_utils.h"
 
 static image_data image;
@@ -13,16 +14,42 @@ static gbr_record gbr;
 
 
 int32_t gbr_load(const int8_t * filename) {
+
     int32_t status;
 
     // Load and parse the file
     status = gbr_load_file(filename);
 
-    //
     if (status) {
         // Render the image from the loaded data
-        status = gbr_convert_to_image(&gbr, &image, &colors);
+        status = gbr_convert_tileset_to_image(&gbr, &image, &colors);
     }
+
+    // TODO: Store imported GBR structure as metadata in GimpParasite? (then write out on export )
+
+    return status;
+};
+
+
+
+// TODO: Import calette color data?
+// TODO: Try to maintain palette color order? Store in Gimp Parasite?
+// TODO: ADD gbr_set_image for SOURCE image?
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors) {
+
+    int32_t status;
+
+    // Initialize shared GBR structure with defaults
+    gbr_export_set_defaults(&gbr);
+
+    // TODO: check
+    // TODO: MIN 16 tiles required in file?
+    // Convert the image data to tiles
+    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors);
+
+    // Load and parse the file
+    if (status)
+        status = gbr_save_file(filename);
 
     return status;
 };
@@ -44,6 +71,23 @@ color_data * gbr_get_colors() {
 }
 
 
+// TODO: maybe remove globals for these and just use reference passing to import/export?
+// TODO: these are deprecated
+void gbr_set_image(image_data * p_src_image) {
+
+    printf("gbr_set_image\n");
+    memcpy(&image, p_src_image, sizeof(image_data));
+}
+
+
+void gbr_set_colors(color_data * p_src_colors) {
+
+    printf("gbr_set_colors\n");
+    memcpy(&colors, p_src_colors, sizeof(color_data));
+}
+
+
+
 // Load and parse a .GBR file
 //
 int32_t gbr_load_file(const int8_t * filename) {
@@ -51,7 +95,6 @@ int32_t gbr_load_file(const int8_t * filename) {
     FILE               * p_file;
     pascal_file_object   obj;
     int32_t              status;
-//    gbr_record           gbr;
 
     obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
 
@@ -106,10 +149,10 @@ int32_t gbr_load_file(const int8_t * filename) {
                         case gbr_obj_deleted: printf("gbr_deleted\n");
                                           break;
                     }
-                }
-            }
-        }
-    }
+                } // end: while (gbr_read_object_from_file(&obj, p_file))
+            } // end: if gbr_write_version
+        } // end: if gbr_write_header_key
+    } // end: if ((p_file != NULL) && (obj.p_data))
 
     if (p_file)
         fclose(p_file);
@@ -120,6 +163,64 @@ int32_t gbr_load_file(const int8_t * filename) {
     return status;
 }
 
+
+
+// Save to a .GBR file
+//
+int32_t gbr_save_file(const int8_t * filename) {
+
+    FILE               * p_file;
+    pascal_file_object   obj;
+    int32_t              status;
+
+    obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
+
+    status = true;
+
+    // open the file
+    p_file = fopen(filename, "wb");
+
+    if ((p_file != NULL) && (obj.p_data)) {
+
+        if (gbr_write_header_key(p_file)) {
+
+            printf("Wrote Header\n");
+
+            if (gbr_write_version(p_file)) {
+
+                status = gbr_object_producer_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_tile_data_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_tile_settings_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_tile_export_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_tile_import_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_palettes_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbr_object_tile_pal_encode(&gbr, &obj);
+                    if (status) status = gbr_write_object_to_file(&obj, p_file);
+
+            } // end: if gbr_write_version
+        } // end: if gbr_write_header_key
+    } // end: if ((p_file != NULL) && (obj.p_data))
+
+    if (p_file)
+        fclose(p_file);
+
+    if (obj.p_data)
+        free(obj.p_data);
+
+    return status;
+}
 
 
 void gbr_free_resources(void) {

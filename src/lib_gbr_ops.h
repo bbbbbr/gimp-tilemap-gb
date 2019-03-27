@@ -10,4 +10,7 @@
 int32_t gbr_pal_get_buf(uint8_t * dest_buf, gbr_record * p_gbr);
 int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index);
 
-#endif
+int32_t gbr_pal_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t num_colors);
+int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index);
+
+#endif // LIB_GBR_OPS_FILE_HEADER

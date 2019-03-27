@@ -39,7 +39,7 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
     gbr_read_uint16(&p_gbr->tile_data.height,    p_obj);
     gbr_read_uint16(&p_gbr->tile_data.count,     p_obj);
 
-    p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOLR_SET_SIZE;
+    p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOR_SET_SIZE;
     gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, p_gbr->tile_data.pal_data_size);
 
     p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
@@ -63,8 +63,8 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_o
 
 printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
                                  p_gbr->tile_data.name,
-                                 p_gbr->tile_data.height,
                                  p_gbr->tile_data.width,
+                                 p_gbr->tile_data.height,
                                  p_gbr->tile_data.count,
                                  p_gbr->tile_data.color_set[0],
                                  p_gbr->tile_data.color_set[1],
@@ -90,9 +90,12 @@ int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, pascal_file_object *
     gbr_read_uint8 (&p_gbr->tile_settings.right_color,  p_obj);
     gbr_read_uint16(&p_gbr->tile_settings.split_width,  p_obj);
     gbr_read_uint16(&p_gbr->tile_settings.split_height, p_obj);
-    gbr_read_uint32(&p_gbr->tile_settings.split_order,  p_obj); // Should this be uint16? = 4294901760
+    gbr_read_uint8 (&p_gbr->tile_settings.split_order,  p_obj); // spec/source shows int32, but file parsing indicates int8
     gbr_read_uint8 (&p_gbr->tile_settings.color_set,    p_obj);
-
+    gbr_read_buf   ( (uint8_t *)p_gbr->tile_settings.bookmarks,
+                     p_obj,
+                     sizeof(uint16_t) * GBR_TILE_SETTINGS_BOOKMARK_COUNT);
+    gbr_read_uint8 (&p_gbr->tile_settings.auto_update,  p_obj);
 
 printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
                                  p_gbr->tile_settings.tile_id,
@@ -187,11 +190,27 @@ int32_t gbr_object_palettes_decode(gbr_record * p_gbr, pascal_file_object * p_ob
 
             gbr_read_uint16(&p_gbr->palettes.id,         p_obj);
             gbr_read_uint16(&p_gbr->palettes.count,      p_obj);
-//            gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, p_gbr->palettes.count); // TODO: this probably isn't working right
-            gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, GBR_PALETTE_COLOR_SETS_SIZE);
+/*
+0->248 (darkest -> lightest)
+
+0.. < count | 8
+  ClrSets[j] = Colors[j]  // ? = TGBColorSets
+
+    TGBColorType = x[8] [4] [4] = 128
+128 bytes = TGBColorSets -> TGBColorType x 8 -> TColor x 4 -> uint8 x 4 (XRGB)
+
+    array[0..7] of TGBColorType;
+      TGBColorType    = array [0..3] of TColor;
+        TColor : 4 x uint8t;
+
+0.. < count | 4
+  color sets
+
+
+  */
+            gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, GBR_PALETTE_CGB_SETS_SIZE);
             gbr_read_uint16(&p_gbr->palettes.sgb_count,  p_obj);
-//            gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, p_gbr->palettes.sgb_count); // TODO: this probably isn't working right
-            gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_COLOR_SETS_SIZE);
+            gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_SGB_SETS_ACTUAL_SIZE);
 
 
 printf("PALEttes:\n%d\n%d\n%d\n",
@@ -210,10 +229,12 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, pascal_file_object * p_ob
 
 
             gbr_read_uint16(&p_gbr->tile_pal.id,            p_obj);
-            gbr_read_uint16(&p_gbr->tile_pal.count,         p_obj);
+
             // It's supposed to be tile_pal_count * array of 16 bit ints
             // but instead it seems to be * array of 32 bit ints...?
+            gbr_read_uint16(&p_gbr->tile_pal.count,         p_obj);
             gbr_read_buf   ( p_gbr->tile_pal.color_set,     p_obj, p_gbr->tile_pal.count * (sizeof(uint16_t) * 2));
+
             gbr_read_uint16(&p_gbr->tile_pal.sgb_count,     p_obj);
             //gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, (p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2) + sizeof(uint16_t)); // Mystery extra 2 color_set reads?
             gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2));
@@ -230,7 +251,7 @@ printf("tile pal:\n%d\n%d\n%d\n",
 
 
 // Convert loaded .GBR data to an image
-int32_t gbr_convert_to_image(gbr_record * p_gbr, image_data * p_image, color_data * p_colors) {
+int32_t gbr_convert_tileset_to_image(gbr_record * p_gbr, image_data * p_image, color_data * p_colors) {
 
     int16_t tile_id;
     int32_t offset;
@@ -254,8 +275,6 @@ int32_t gbr_convert_to_image(gbr_record * p_gbr, image_data * p_image, color_dat
 
         // LOAD IMAGE
         // Copy each tile into the image buffer
-        // TODO: FIXME this is linear for now and assumes an 8 x N dest image
-
         for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
 //            printf("Tile:%d, offset=%d\n", tile_id, offset);
             gbr_tile_get_buf(&p_image->p_img_data[offset],
@@ -303,7 +322,7 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     for(pal_index = 0; pal_index < p_gbr->tile_data.pal_data_size; pal_index++) {
 
         // Find the tile palette entry for the tile list color
-        pal_offset = p_gbr->tile_data.color_set[pal_index] * GBR_PALETTE_COLOR_SIZE;
+        pal_offset = p_gbr->tile_data.color_set[pal_index] * GBR_PALETTE_TCOLOR_SIZE;
 
         // Load the color data into the destination palette
         p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 0]; // R.0

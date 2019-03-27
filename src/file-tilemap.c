@@ -18,7 +18,8 @@
 
 // #include "export-dialog.h"
 
-const char SAVE_PROCEDURE[] = "file-tilemap-save";
+const char SAVE_PROCEDURE_TMAP_C_SOURCE[] = "file-save-tilemap-c-source";
+const char SAVE_PROCEDURE_GBR[] = "file-save-gbr";
 const char LOAD_PROCEDURE_GBR[] = "file-load-gbr";
 
 const char BINARY_NAME[]    = "file-tilemap";
@@ -81,8 +82,8 @@ static void query(void)
                            load_return_values);
 
 
-    // Install the save procedure for ".tmap" files (all formats)
-    gimp_install_procedure(SAVE_PROCEDURE,
+    // Install the save procedure for ".TMAP" files (all formats)
+    gimp_install_procedure(SAVE_PROCEDURE_TMAP_C_SOURCE,
                            "Save image to tilemap",
                            "Save image to tilemap",
                            "--",
@@ -96,12 +97,28 @@ static void query(void)
                            save_arguments,
                            NULL);
 
+    // Install the save procedure for ".GBR" files (all formats)
+    gimp_install_procedure(SAVE_PROCEDURE_GBR,
+                           "Save GBR Game Boy tileset",
+                           "Save GBR Game Boy tileset",
+                           "--",
+                           "Copyright --",
+                           "2019",
+                           "GBR Game Boy tileset image",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
+
 
     // Register load handler for ".GBR" format files
     gimp_register_load_handler(LOAD_PROCEDURE_GBR, "gbr", "");
 
     // Now register the save handlers
-    gimp_register_save_handler(SAVE_PROCEDURE, "tmap", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_TMAP_C_SOURCE, "tmap", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_GBR, "gbr", "");
 }
 
 // The run function
@@ -163,7 +180,9 @@ static void run(const gchar * name,
         return_values[1].type         = GIMP_PDB_IMAGE;
         return_values[1].data.d_image = new_image_id;
     }
-    else if(!strcmp(name, SAVE_PROCEDURE))
+    else if( (!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) ||
+             (!strcmp(name, SAVE_PROCEDURE_GBR)) )
+
     {
         // This is the export procedure
 
@@ -182,15 +201,38 @@ static void run(const gchar * name,
         image_id    = param[1].data.d_int32;
         drawable_id = param[2].data.d_int32;
 
-printf("file-tilemap.c: Export\n");
+
+        printf("file-tilemap.c: Export\n");
+
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
-printf("file-tilemap.c: Call Export\n");
-        export_ret = gimp_export_image(&image_id,
-                                       &drawable_id,
-                                       "TMAP",
-                                       GIMP_EXPORT_CAN_HANDLE_INDEXED |
-                                       GIMP_EXPORT_CAN_HANDLE_ALPHA);
+
+        printf("file-tilemap.c: Call Export\n");
+
+
+        // Determine image file format by load type
+        if(!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) {
+
+            image_mode = EXPORT_FORMAT_GBDK_C_SOURCE;
+
+            export_ret = gimp_export_image(&image_id,
+                                           &drawable_id,
+                                           "TMAP",
+                                           GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                           GIMP_EXPORT_CAN_HANDLE_ALPHA);
+
+        } else
+        if(!strcmp(name, SAVE_PROCEDURE_GBR)) {
+
+            image_mode = EXPORT_FORMAT_GBR;
+
+            // TODO: ALPHA SUPPORT FOR GBR ?
+            export_ret = gimp_export_image(&image_id,
+                                           &drawable_id,
+                                           "GBR",
+                                           GIMP_EXPORT_CAN_HANDLE_INDEXED);
+        }
+
 
         switch(export_ret)
         {
@@ -205,7 +247,6 @@ printf("file-tilemap.c: Call Export\n");
                   return;
               }
 */
-              // TODO: Export function here
               status = write_tilemap(param[3].data.d_string,
                                      image_id,
                                      drawable_id,

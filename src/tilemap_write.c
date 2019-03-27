@@ -24,6 +24,7 @@
 
 #include "tilemap_write.h"
 #include "lib_tilemap.h"
+#include "lib_gbr.h"
 
 #include "image_info.h"
 
@@ -32,32 +33,39 @@
 int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
 {
     int32_t status;
-    int32_t export_format;
 
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
     GimpParasite * img_parasite;
 
-    image_data source_img;
+    image_data app_image;
+    color_data app_colors;
 
-    export_format = EXPORT_FORMAT_GBDK_C_SOURCE;
+    guchar * p_cmap_buf;
+    gint     cmap_num_colors;
 
     FILE * file;
 
-    status = 0; // Default to success
+
+
+    status = true; // Default to success
 
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
 
     // Get the Bytes Per Pixel of the incoming app image
-    source_img.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
+    app_image.bytes_per_pixel = (unsigned char)gimp_drawable_bpp(drawable_id);
 
 // TODO: why is this showing "1" even when the source image has an alpha mask and transparency.
+  // TODO: --> Maybe because of gimp_export_image?
     // Is it due to the export functionality?
-printf("write-tilemap.c: bytes per pixel= %d\n", source_img.bytes_per_pixel);
+
+    printf("write-tilemap.c: bytes per pixel= %d\n", app_image.bytes_per_pixel);
+
     // Abort if it's not 1 or 2 bytes per pixel
     // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
-    if (source_img.bytes_per_pixel > IMG_BITDEPTH_INDEXED_ALPHA) {
+    if (app_image.bytes_per_pixel > IMG_BITDEPTH_INDEXED_ALPHA) {
+
         return false;
     }
 
@@ -71,40 +79,64 @@ printf("write-tilemap.c: bytes per pixel= %d\n", source_img.bytes_per_pixel);
 
 
     // Determine the array size for the app's image then allocate it
-    source_img.width      = drawable->width;
-    source_img.height     = drawable->height;
-    source_img.size       = drawable->width * drawable->height * source_img.bytes_per_pixel;
-    source_img.p_img_data = malloc(source_img.size);
+    app_image.width      = drawable->width;
+    app_image.height     = drawable->height;
+    app_image.size       = drawable->width * drawable->height * app_image.bytes_per_pixel;
+    app_image.p_img_data = malloc(app_image.size);
 
     // Get the image data
     gimp_pixel_rgn_get_rect(&rgn,
-                            source_img.p_img_data,
+                            app_image.p_img_data,
                             0, 0,
                             drawable->width,
                             drawable->height);
 
 
-// TODO: EXPORT
+    // Load the color map and copy it to a working buffer
+    p_cmap_buf = gimp_image_get_colormap(image_id, &cmap_num_colors);
 
-    status = tilemap_export_process(&source_img);
+    if (p_cmap_buf) {
+        memcpy(app_colors.pal, p_cmap_buf, cmap_num_colors * 3);
+        app_colors.color_count = cmap_num_colors;
+    }
+    else
+        status = false;
+
+    printf("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 //    if (status != 0) { };
 
+    if (status) {
+        switch (image_mode) {
+            case EXPORT_FORMAT_GBDK_C_SOURCE:
+                status = tilemap_export_process(&app_image);
+                printf("tilemap_export_process: status= %d\n", status);
+
+                if (status)
+                    status = tilemap_save(filename, image_mode);
+                printf("tilemap_save: status= %d\n", status);
+
+                break;
+
+          case EXPORT_FORMAT_GBR:
+
+                status = gbr_save(filename, &app_image, &app_colors);
+                printf("gbr_save: status= %d\n", status);
+                break;
+        }
+    }
 
     // Free the image data
-    free(source_img.p_img_data);
+    if (app_image.p_img_data)
+        free(app_image.p_img_data);
 
     // Detach the drawable
     gimp_drawable_detach(drawable);
 
-
-    if (status)
-        status = tilemap_save(filename, export_format);
-
     tilemap_free_resources();
 
-    return true;
+    return (status);
 }
 
 

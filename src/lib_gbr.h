@@ -32,10 +32,11 @@
 
 #define GBR_TILE_DATA_NAME_SIZE       30
 #define GBR_TILE_DATA_NAME_SIZE_STR   GBR_TILE_DATA_NAME_SIZE + 1
-#define GBR_TILE_DATA_COLOLR_SET_SIZE 4
-#define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOLR_SET_SIZE
+#define GBR_TILE_DATA_COLOR_SET_SIZE 4
+#define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOR_SET_SIZE
 
 #define GBR_TILE_SETTINGS_SIZE        19
+#define GBR_TILE_SETTINGS_BOOKMARK_COUNT  3
 
 #define GBR_TILE_EXPORT_FILE_NAME_SIZE    128
 #define GBR_TILE_EXPORT_SECTION_NAME_SIZE 20
@@ -55,13 +56,17 @@
 #define GBR_PALETTES_SIZE_MIN 6
 #define GBR_TILE_PAL_SIZE_MIN 6
 
+#define GBR_TILE_PAL_ACTUAL_SIZE 512
+#define GBR_TILE_PAL_UNKNOWN_PADDING 6
 
-#define GBR_PALETTE_COLOR_SIZE         sizeof(uint32_t)
-#define GBR_PALETTE_SIZE_4_COLORS_XBGR 4 * GBR_PALETTE_COLOR_SIZE
-#define GBR_PALETTE_COLOR_SET_SIZE     4 * GBR_PALETTE_SIZE_4_COLORS_XBGR
-#define GBR_PALETTE_COLOR_SETS         8
-#define GBR_PALETTE_COLOR_SETS_SIZE    GBR_PALETTE_COLOR_SETS * GBR_PALETTE_COLOR_SET_SIZE
+#define GBR_COL_MAX 0xF8
 
+// 128 bytes = TGBColorSets -> TGBColorType x 8 -> TColor x 4 -> uint8 x 4 (XRGB)
+#define GBR_PALETTE_TCOLOR_SIZE         sizeof(uint32_t) // Pascal:TCOLOR
+#define GBR_PALETTE_TGBCOLORTYPE_SIZE  4 * GBR_PALETTE_TCOLOR_SIZE
+#define GBR_PALETTE_CGB_SETS_SIZE      8 * GBR_PALETTE_TGBCOLORTYPE_SIZE
+#define GBR_PALETTE_SGB_SETS_SIZE      4 * GBR_PALETTE_TGBCOLORTYPE_SIZE
+#define GBR_PALETTE_SGB_SETS_ACTUAL_SIZE      8 * GBR_PALETTE_TGBCOLORTYPE_SIZE // GBTD loads this as 4 but saves it with 8 sets (for 128 bytes)
 
 
 enum gbr_tilemap_layer {
@@ -122,7 +127,7 @@ typedef struct {
                // tile_list: packed arrays width * height * count.
                //            width & height can be up to 32 x 32 (0..31)
     uint8_t    tile_list[PASCAL_OBJECT_MAX_SIZE];
-    uint8_t    color_set[GBR_TILE_DATA_COLOLR_SET_SIZE];
+    uint8_t    color_set[GBR_TILE_DATA_COLOR_SET_SIZE];
     uint32_t   pal_data_size;
     uint32_t   tile_data_size;
 } gbr_tile_data;
@@ -136,10 +141,10 @@ typedef struct {
     uint8_t   right_color;
     uint16_t  split_width;
     uint16_t  split_height;
-    uint32_t  split_order;
+    uint8_t   split_order; // spec/source shows int32, but file parsing indicates int8
     uint8_t   color_set;
 
-    uint32_t  bookmarks[3];
+    uint16_t  bookmarks[GBR_TILE_SETTINGS_BOOKMARK_COUNT];
     uint8_t   auto_update;
 } gbr_tile_settings;
 
@@ -223,15 +228,17 @@ typedef struct {
     uint8_t  * p_data;
 } pascal_file_object;
 
-
-int32_t gbr_load(const int8_t * filename);
 image_data * gbr_get_image();
 color_data * gbr_get_colors();
+
+int32_t gbr_load(const int8_t * filename);
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
 
 void gbr_free_resources(void);
 
 int32_t gbr_load_file(const int8_t * filename);
-int32_t gbr_convert_to_image();
+int32_t gbr_save_file(const int8_t * filename);
+
 
 
 #endif // LIB_GBR_FILE_HEADER

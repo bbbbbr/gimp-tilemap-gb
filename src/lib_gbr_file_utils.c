@@ -20,13 +20,40 @@ int32_t gbr_read_header_key(FILE * p_file) {
 
 int32_t gbr_read_version(FILE * p_file) {
 
-    // Check to make sure the start of the file is "GBO"
+    // Check to make sure the version is "0"
     uint8_t version;
 
     if (fread(&version, 1, 1, p_file))
-        return true; // return success
+        if (version == 0x30)
+            return true; // return success
 
     // Return failed - didn't read version
+    return false;
+ }
+
+
+int32_t gbr_write_header_key(FILE * p_file) {
+
+    // Check to make sure the start of the file is "GBO"
+
+    int8_t sig[3] = {'G', 'B', 'O'};
+
+    if (fwrite(sig, 3, 1, p_file))
+        return true; // return success
+    else
+        return false; // // Return failed - didn't write header
+ }
+
+
+int32_t gbr_write_version(FILE * p_file) {
+
+    // Write default version to GBR file
+    int8_t version[3] = {'0'};
+
+    if (fwrite(version, 1, 1, p_file))
+        return true; // return success
+
+    // Return failed - didn't write version
     return false;
  }
 
@@ -52,6 +79,28 @@ int32_t gbr_read_object_from_file(pascal_file_object * p_obj, FILE * p_file) {
  }
 
 
+int32_t gbr_write_object_to_file(pascal_file_object * p_obj, FILE * p_file) {
+
+
+    if (fwrite(&(p_obj->type),        sizeof(p_obj->type),         1, p_file))
+        if (fwrite(&(p_obj->id),           sizeof(p_obj->id),           1, p_file))
+            if (fwrite(&(p_obj->length_bytes), sizeof(p_obj->length_bytes), 1, p_file)
+                && (p_obj->length_bytes <= PASCAL_OBJECT_MAX_SIZE) )
+                if (fwrite(p_obj->p_data,          p_obj->length_bytes,         1, p_file)) {
+                    printf("OBJ type=%d, id=%d, size=%d\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+                    printf("OBJ type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+                    return true;
+                }
+
+// printf(" FALSE type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+
+    // If all the above writes didn't complete then signal failure
+    return false;
+ }
+
+
+// =========  WRITE/EXPORT UTILITY FUNCTIONS =========
+
 
 // WARNING: Expects buffer size to be (n_bytes + 1) for appending null terminator
 void gbr_read_str(int8_t * p_dest_str, pascal_file_object * p_obj, uint32_t n_bytes) {
@@ -64,16 +113,18 @@ void gbr_read_str(int8_t * p_dest_str, pascal_file_object * p_obj, uint32_t n_by
     printf("gbr_read_str @ %d\n", p_obj->offset);
 }
 
+
 void gbr_read_buf(int8_t * p_dest_buf, pascal_file_object * p_obj, uint32_t n_bytes) {
 
     printf("gbr_read_buf @ %d -> ", p_obj->offset);
 
-    // Copy string, add terminator, move offset to next data
+    // Copy data, move offset to next data
     memcpy(p_dest_buf, &(p_obj->p_data[ p_obj->offset ]), n_bytes);
     p_obj->offset += n_bytes;
 
     printf("%d\n", p_obj->offset);
 }
+
 
 void gbr_read_uint32(uint32_t * p_dest_val, pascal_file_object * p_obj) {
 
@@ -83,6 +134,7 @@ void gbr_read_uint32(uint32_t * p_dest_val, pascal_file_object * p_obj) {
     printf("gbr_read_uint32 @ %d\n", p_obj->offset);
 }
 
+
 void gbr_read_uint16(uint16_t * p_dest_val, pascal_file_object * p_obj) {
 
     memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint16_t));
@@ -90,6 +142,7 @@ void gbr_read_uint16(uint16_t * p_dest_val, pascal_file_object * p_obj) {
 
     printf("gbr_read_uint16 @ %d\n", p_obj->offset);
 }
+
 
 void gbr_read_uint8(uint8_t * p_dest_val, pascal_file_object * p_obj) {
 
@@ -106,4 +159,89 @@ void gbr_read_bool(uint8_t * p_dest_val, pascal_file_object * p_obj) {
     p_obj->offset += sizeof(uint8_t);
 
     printf("gbr_read_bool @ %d\n", p_obj->offset);
+}
+
+
+// =========  WRITE/EXPORT UTILITY FUNCTIONS =========
+
+
+void gbr_write_padding(pascal_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbr_write_padding of %d @ %d -> ", n_bytes, p_obj->offset);
+
+    memset(&p_obj->p_data[ p_obj->offset ], 0x00, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("%d\n", p_obj->offset);
+
+    printf(" PAD type=%x, id=%x, size=%x\n, offset=%x", p_obj->type,
+                                                        p_obj->id,
+                                                        p_obj->length_bytes,
+                                                        p_obj->offset);
+}
+
+
+// WARNING: Expects source buffer size to be (n_bytes + 1) for appending null terminator
+void gbr_write_str(int8_t * p_src_str, pascal_file_object * p_obj, uint32_t n_bytes) {
+
+    // Copy string (without terminator), move offset to next data
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_str, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbr_write_str @ %d (nbytes=%d)\n", p_obj->offset, n_bytes);
+}
+
+
+void gbr_write_buf(int8_t * p_src_buf, pascal_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbr_write_buf @ %d -> ", p_obj->offset);
+
+    // Copy data, move offset to next data
+    memcpy(&(p_obj->p_data[ p_obj->offset ]), p_src_buf, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("%d\n", p_obj->offset);
+}
+
+
+void gbr_write_uint32(uint32_t * p_src_val, pascal_file_object * p_obj) {
+
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_val, sizeof(uint32_t));
+    p_obj->offset += sizeof(uint32_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbr_write_uint32 @ %d\n", p_obj->offset);
+}
+
+
+void gbr_write_uint16(uint16_t * p_src_val, pascal_file_object * p_obj) {
+
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_val, sizeof(uint16_t));
+    p_obj->offset += sizeof(uint16_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbr_write_uint16 @ %d\n", p_obj->offset);
+}
+
+
+void gbr_write_uint8(uint8_t * p_src_val, pascal_file_object * p_obj) {
+
+    p_obj->p_data[ p_obj->offset ] = *p_src_val;
+    p_obj->offset += sizeof(uint8_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbr_write_uint8 @ %d\n", p_obj->offset);
+}
+
+
+void gbr_write_bool(uint8_t * p_src_val, pascal_file_object * p_obj) {
+
+    p_obj->p_data[ p_obj->offset ] = *p_src_val & 0x01;
+    p_obj->offset += sizeof(uint8_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbr_write_bool @ %d\n", p_obj->offset);
 }

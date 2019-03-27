@@ -22,8 +22,9 @@
 
 
     enum import_formats {
-        IMPORT_FORMAT_GBR = 1,
-        IMPORT_FORMAT_GBTD = 2,  // TODO
+        IMPORT_FORMAT_GBDK_C_SOURCE = 1, // TODO
+        IMPORT_FORMAT_GBR,
+        IMPORT_FORMAT_GBTD,  // TODO
         IMPORT_FORMAT_LAST
     };
 
@@ -39,7 +40,8 @@
     // Export formats
     enum export_formats {
         EXPORT_FORMAT_GBDK_C_SOURCE = 1,
-        EXPORT_FORMAT_GBTD = 2,  // TODO
+        EXPORT_FORMAT_GBR,
+        EXPORT_FORMAT_GBTD,  // TODO
         EXPORT_FORMAT_LAST
     };
 
