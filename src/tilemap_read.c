@@ -66,17 +66,25 @@ int tilemap_read(const gchar * filename, int image_mode)
         return -1;
 */
 
+    switch (image_mode) {
+        case IMPORT_FORMAT_GBR:
+            status = gbr_load(filename);
+            if (status)
+                p_loaded_image = gbr_get_image();
 
-    if (image_mode == IMPORT_FORMAT_GBR) {
-        status = gbr_load(filename);
-    }
+            break;
+
+        case IMPORT_FORMAT_GBM:
+            // TODO: gbm load
+//            status = gbm_load(filename);
+//            if (status)
+//                p_loaded_image = gbm_get_image();
+            break;
+    } // switch (image_mode)
 
 
     // Check to make sure that the load was successful
-    if (status) {
-        p_loaded_image = gbr_get_image();
-    }
-    else {
+    if (!status) {
         printf("Image load failed \n");
 
         // Free allocated buffers / release resources
@@ -160,8 +168,17 @@ int tilemap_read(const gchar * filename, int image_mode)
 
 
     // Free allocated buffers / release resources
-    if (image_mode == IMPORT_FORMAT_GBR)
-        gbr_free_resources();
+    switch (image_mode) {
+        case IMPORT_FORMAT_GBR:
+            gbr_free_resources();
+            break;
+
+        case IMPORT_FORMAT_GBM:
+            // TODO: gbm free resources
+            gbr_free_resources();
+
+            break;
+    } // switch (image_mode)
 
 
     // Add the layer to the image

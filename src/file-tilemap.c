@@ -21,6 +21,8 @@
 const char SAVE_PROCEDURE_TMAP_C_SOURCE[] = "file-save-tilemap-c-source";
 const char SAVE_PROCEDURE_GBR[] = "file-save-gbr";
 const char LOAD_PROCEDURE_GBR[] = "file-load-gbr";
+const char SAVE_PROCEDURE_GBM[] = "file-save-gbm";
+const char LOAD_PROCEDURE_GBM[] = "file-load-gbm";
 
 const char BINARY_NAME[]    = "file-tilemap";
 
@@ -82,6 +84,22 @@ static void query(void)
                            load_return_values);
 
 
+    // Install the load procedure for ".GBM" files
+    gimp_install_procedure(LOAD_PROCEDURE_GBM,
+                           "Load GBM Game Boy tileset map",
+                           "Load GBM Game Boy tileset map",
+                           "--",
+                           "Copyright --",
+                           "2019",
+                           "GBM Game Boy tileset map image",
+                           NULL,
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(load_arguments),
+                           G_N_ELEMENTS(load_return_values),
+                           load_arguments,
+                           load_return_values);
+
+
     // Install the save procedure for ".TMAP" files (all formats)
     gimp_install_procedure(SAVE_PROCEDURE_TMAP_C_SOURCE,
                            "Save image to tilemap",
@@ -112,13 +130,29 @@ static void query(void)
                            save_arguments,
                            NULL);
 
+    // Install the save procedure for ".GBM" files (all formats)
+    gimp_install_procedure(SAVE_PROCEDURE_GBM,
+                           "Save GBM Game Boy tileset map",
+                           "Save GBM Game Boy tileset map",
+                           "--",
+                           "Copyright --",
+                           "2019",
+                           "GBM Game Boy tileset map image",
+                           "INDEXED*",
+                           GIMP_PLUGIN,
+                           G_N_ELEMENTS(save_arguments),
+                           0,
+                           save_arguments,
+                           NULL);
 
-    // Register load handler for ".GBR" format files
+    // Register load handlers
     gimp_register_load_handler(LOAD_PROCEDURE_GBR, "gbr", "");
+    gimp_register_load_handler(LOAD_PROCEDURE_GBM, "gbm", "");
 
     // Now register the save handlers
     gimp_register_save_handler(SAVE_PROCEDURE_TMAP_C_SOURCE, "tmap", "");
     gimp_register_save_handler(SAVE_PROCEDURE_GBR, "gbr", "");
+    gimp_register_save_handler(SAVE_PROCEDURE_GBM, "gbm", "");
 }
 
 // The run function
@@ -142,7 +176,8 @@ static void run(const gchar * name,
 
 
 // Check to see if this is the load procedure
-    if( !strcmp(name, LOAD_PROCEDURE_GBR))
+    if( (!strcmp(name, LOAD_PROCEDURE_GBR)) ||
+        (!strcmp(name, LOAD_PROCEDURE_GBM)) )
     {
         int new_image_id;
         int image_mode = -1;
@@ -161,7 +196,10 @@ static void run(const gchar * name,
         // Determine image file format by load type
         if(!strcmp(name, LOAD_PROCEDURE_GBR)) {
             image_mode = IMPORT_FORMAT_GBR;
+        } else if(!strcmp(name, LOAD_PROCEDURE_GBM)) {
+            image_mode = IMPORT_FORMAT_GBM;
         }
+
 
 
         // Now read the image
@@ -181,7 +219,8 @@ static void run(const gchar * name,
         return_values[1].data.d_image = new_image_id;
     }
     else if( (!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) ||
-             (!strcmp(name, SAVE_PROCEDURE_GBR)) )
+             (!strcmp(name, SAVE_PROCEDURE_GBR)) ||
+             (!strcmp(name, SAVE_PROCEDURE_GBM)))
 
     {
         // This is the export procedure
@@ -210,7 +249,11 @@ static void run(const gchar * name,
         printf("file-tilemap.c: Call Export\n");
 
 
+        // TODO: consolidate different format handling below
+
         // Determine image file format by load type
+        // Prepare app image for export in the desired format
+        // (if it's not indexed this will auto-convert it to that)
         if(!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) {
 
             image_mode = EXPORT_FORMAT_GBDK_C_SOURCE;
@@ -231,7 +274,18 @@ static void run(const gchar * name,
                                            &drawable_id,
                                            "GBR",
                                            GIMP_EXPORT_CAN_HANDLE_INDEXED);
+        } else
+        if(!strcmp(name, SAVE_PROCEDURE_GBM)) {
+
+            image_mode = EXPORT_FORMAT_GBM;
+
+            // TODO: ALPHA SUPPORT FOR GBM ?
+            export_ret = gimp_export_image(&image_id,
+                                           &drawable_id,
+                                           "GBM",
+                                           GIMP_EXPORT_CAN_HANDLE_INDEXED);
         }
+
 
 
         switch(export_ret)
@@ -247,6 +301,8 @@ static void run(const gchar * name,
                   return;
               }
 */
+              // This is the main call to convert and save the image
+              // in the desired output format
               status = write_tilemap(param[3].data.d_string,
                                      image_id,
                                      drawable_id,

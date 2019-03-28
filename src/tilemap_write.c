@@ -113,16 +113,30 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
                 status = tilemap_export_process(&app_image);
                 printf("tilemap_export_process: status= %d\n", status);
 
+
+                // TODO: Separate out GBDK_C_SOURCE file format handling to a seperate library
+                // gbdk_c_source_save
+                // gbdk_c_source_format.c
                 if (status)
                     status = tilemap_save(filename, image_mode);
                 printf("tilemap_save: status= %d\n", status);
-
                 break;
 
-          case EXPORT_FORMAT_GBR:
+            case EXPORT_FORMAT_GBR:
 
                 status = gbr_save(filename, &app_image, &app_colors);
                 printf("gbr_save: status= %d\n", status);
+                break;
+
+            case EXPORT_FORMAT_GBM:
+                status = tilemap_export_process(&app_image);
+                printf("(gbm) tilemap_export_process: status= %d\n", status);
+
+                if (status)
+                    // TODO:
+                    // Get processed Map tile set and map array
+                    // status = gbm_save(filename, image_mode);
+                printf("gbm_save: status= %d\n", status);
                 break;
         }
     }
