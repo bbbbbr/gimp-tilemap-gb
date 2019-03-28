@@ -29,6 +29,7 @@ const char BINARY_NAME[]    = "file-tilemap";
 // Predeclare our entrypoints
 static void query(void);
 static void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
+static int plugin_get_image_mode_from_string(const gchar * name);
 
 // Declare our plugin entry points
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -155,6 +156,29 @@ static void query(void)
     gimp_register_save_handler(SAVE_PROCEDURE_GBM, "gbm", "");
 }
 
+
+
+static int plugin_get_image_mode_from_string(const gchar * name) {
+
+    int image_mode;
+    image_mode = -1;
+
+    if (!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE))
+        // (!strcmp(name, LOAD_PROCEDURE_TMAP_C_SOURCE))
+        image_mode = EXPORT_FORMAT_GBDK_C_SOURCE;
+
+    else if ((!strcmp(name, SAVE_PROCEDURE_GBR)) ||
+             (!strcmp(name, LOAD_PROCEDURE_GBR)))
+        image_mode = EXPORT_FORMAT_GBR;
+
+    else if ((!strcmp(name, SAVE_PROCEDURE_GBM)) ||
+             (!strcmp(name, LOAD_PROCEDURE_GBM)) )
+        image_mode = EXPORT_FORMAT_GBM;
+
+    return image_mode;
+}
+
+
 // The run function
 static void run(const gchar * name,
          gint nparams,
@@ -169,18 +193,21 @@ static void run(const gchar * name,
 
     GimpRunMode   run_mode;
     run_mode      = param[0].data.d_int32;
+    int           image_mode;
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
+    image_mode = plugin_get_image_mode_from_string(name);
+
+    printf("image_mode=%d\n", image_mode);
 
 // Check to see if this is the load procedure
     if( (!strcmp(name, LOAD_PROCEDURE_GBR)) ||
         (!strcmp(name, LOAD_PROCEDURE_GBM)) )
     {
         int new_image_id;
-        int image_mode = -1;
 
         // Check to make sure all parameters were supplied
         if(nparams != 3) {
@@ -191,16 +218,6 @@ static void run(const gchar * name,
 
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
-
-
-        // Determine image file format by load type
-        if(!strcmp(name, LOAD_PROCEDURE_GBR)) {
-            image_mode = IMPORT_FORMAT_GBR;
-        } else if(!strcmp(name, LOAD_PROCEDURE_GBM)) {
-            image_mode = IMPORT_FORMAT_GBM;
-        }
-
-
 
         // Now read the image
         new_image_id = tilemap_read(param[1].data.d_string, image_mode);
@@ -227,7 +244,6 @@ static void run(const gchar * name,
 
         gint32 image_id, drawable_id;
         int status = 1;
-        int image_mode = -1;
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
@@ -254,39 +270,34 @@ static void run(const gchar * name,
         // Determine image file format by load type
         // Prepare app image for export in the desired format
         // (if it's not indexed this will auto-convert it to that)
-        if(!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) {
+        switch (image_mode) {
+            case EXPORT_FORMAT_GBDK_C_SOURCE:
+                export_ret = gimp_export_image(&image_id,
+                                               &drawable_id,
+                                               "TMAP",
+                                               GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                               GIMP_EXPORT_CAN_HANDLE_ALPHA);
+                break;
 
-            image_mode = EXPORT_FORMAT_GBDK_C_SOURCE;
+            case EXPORT_FORMAT_GBR:
+                // TODO: ALPHA SUPPORT FOR GBR ?
+                export_ret = gimp_export_image(&image_id,
+                                               &drawable_id,
+                                               "GBR",
+                                               GIMP_EXPORT_CAN_HANDLE_INDEXED);
+                break;
 
-            export_ret = gimp_export_image(&image_id,
-                                           &drawable_id,
-                                           "TMAP",
-                                           GIMP_EXPORT_CAN_HANDLE_INDEXED |
-                                           GIMP_EXPORT_CAN_HANDLE_ALPHA);
-
-        } else
-        if(!strcmp(name, SAVE_PROCEDURE_GBR)) {
-
-            image_mode = EXPORT_FORMAT_GBR;
-
-            // TODO: ALPHA SUPPORT FOR GBR ?
-            export_ret = gimp_export_image(&image_id,
-                                           &drawable_id,
-                                           "GBR",
-                                           GIMP_EXPORT_CAN_HANDLE_INDEXED);
-        } else
-        if(!strcmp(name, SAVE_PROCEDURE_GBM)) {
-
-            image_mode = EXPORT_FORMAT_GBM;
-
-            // TODO: ALPHA SUPPORT FOR GBM ?
-            export_ret = gimp_export_image(&image_id,
-                                           &drawable_id,
-                                           "GBM",
-                                           GIMP_EXPORT_CAN_HANDLE_INDEXED);
+            case EXPORT_FORMAT_GBM:
+                // TODO: ALPHA SUPPORT FOR GBM ?
+                export_ret = gimp_export_image(&image_id,
+                                               &drawable_id,
+                                               "GBM",
+                                               GIMP_EXPORT_CAN_HANDLE_INDEXED);
+                break;
         }
 
 
+        printf("export_ret=%d\n", export_ret);
 
         switch(export_ret)
         {

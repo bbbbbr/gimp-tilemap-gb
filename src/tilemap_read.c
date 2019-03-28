@@ -15,6 +15,26 @@
 
 #include "lib_gbr.h"
 
+static void tilemap_write_free_resources(int image_mode);
+
+static void tilemap_write_free_resources(int image_mode) {
+
+    // Free allocated buffers / release resources
+    switch (image_mode) {
+        case IMPORT_FORMAT_GBR:
+            gbr_free_resources();
+            break;
+
+        case IMPORT_FORMAT_GBM:
+            // TODO: gbm free resources
+            //gbr_free_resources();
+            //gbm_free_resources();
+
+            break;
+    }
+}
+
+
 int tilemap_read(const gchar * filename, int image_mode)
 {
     int status = 1;
@@ -88,10 +108,7 @@ int tilemap_read(const gchar * filename, int image_mode)
         printf("Image load failed \n");
 
         // Free allocated buffers / release resources
-        if (image_mode == IMPORT_FORMAT_GBR)
-            gbr_free_resources();
-
-        printf("Image load failed: free complete \n");
+        tilemap_write_free_resources(image_mode);
 
         return -1;
     }
@@ -167,18 +184,8 @@ int tilemap_read(const gchar * filename, int image_mode)
     gimp_drawable_detach(drawable);
 
 
-    // Free allocated buffers / release resources
-    switch (image_mode) {
-        case IMPORT_FORMAT_GBR:
-            gbr_free_resources();
-            break;
-
-        case IMPORT_FORMAT_GBM:
-            // TODO: gbm free resources
-            gbr_free_resources();
-
-            break;
-    } // switch (image_mode)
+    // Release any resources used during processing
+    tilemap_write_free_resources(image_mode);
 
 
     // Add the layer to the image
