@@ -31,11 +31,14 @@ int32_t get_path_without_filename(const char * path, char * path_only, uint32_t 
    if (strlen(path) + 1 > str_max)
         return false;
 
-   for(i = strlen(path) - 1; i; i--) {
+    // Walk backwards in string until first path slash is found
+    for(i = strlen(path) - 1; i; i--) {
         if (path[i] == '/') {
 
-            memcpy(path_only, path, i+1 );
-            path_only[i+2] = '\0';
+            // Add + 1 to copy length since array index is zero based
+            memcpy(path_only, path, i+1);
+            // Add string terminator in the next character out
+            path_only[i+1] = '\0';
             return true;
         }
     }
