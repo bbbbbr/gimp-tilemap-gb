@@ -87,40 +87,41 @@ int32_t gbm_load_file(const int8_t * filename) {
                 // Read objects from the file until it's finished
                 while (gbm_read_object_from_file(&obj, p_file)) {
 
-                    printf("OBJ: type=%d, id=%d, size=%d\n", obj.id, obj.object_id, obj.length_bytes);
-                    printf("OBJ: type=%02x, id=%02x, size=%04x\n", obj.id, obj.object_id, obj.length_bytes);
+                    //printf("OBJ: type=%d, id=%d, size=%d\n", obj.id, obj.object_id, obj.length_bytes);
+                    printf("GBM OBJ: type=%02x, object_id=%02x, master_id=%02x, size=%04x\n",
+                           obj.id, obj.object_id, obj.master_id, obj.length_bytes);
 
-                    switch (obj.id) {
+                    switch (obj.object_id) {
                         // Process Object
-                        case gbr_obj_producer: printf("gbr_producer\n");
+                        case gbr_obj_producer: printf("gbm_producer\n");
                                           //status = gbr_object_producer_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_data: printf("gbr_tile_data\n");
+                        case gbr_obj_tile_data: printf("gbm_tile_data\n");
                                           //status = gbr_object_tile_data_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_settings: printf("gbr_tile_settings\n");
+                        case gbr_obj_tile_settings: printf("gbm_tile_settings\n");
                                           //status = gbr_object_tile_settings_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_export: printf("gbr_tile_export\n");
+                        case gbr_obj_tile_export: printf("gbm_tile_export\n");
                                           //status = gbr_object_tile_export_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_import: printf("gbr_tile_import\n");
+                        case gbr_obj_tile_import: printf("gbm_tile_import\n");
                                           //status = gbr_object_tile_import_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_palettes: printf("gbr_palettes\n");
+                        case gbr_obj_palettes: printf("gbm_palettes\n");
                                           //status = gbr_object_palettes_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_pal: printf("gbr_tile_pal\n");
+                        case gbr_obj_tile_pal: printf("gbm_tile_pal\n");
                                           //status = gbr_object_tile_pal_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_deleted: printf("gbr_deleted\n");
+                        case gbr_obj_deleted: printf("gbm_deleted\n");
                                           break;
                     }
                 } // end: while (gbr_read_object_from_file(&obj, p_file))

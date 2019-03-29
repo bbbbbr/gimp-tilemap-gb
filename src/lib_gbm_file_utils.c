@@ -65,7 +65,7 @@ int32_t gbm_write_version(FILE * p_file) {
 
 int32_t gbm_read_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
 
-printf("ftell: %ld\n", ftell(p_file));
+// printf("ftell: %ld\n", ftell(p_file));
 
     // Read in the object properties, and then it's data buffer
     if ((fread(g_obj->marker,                   sizeof(g_obj->marker),       1, p_file))
@@ -86,7 +86,7 @@ printf("ftell: %ld\n", ftell(p_file));
                                 g_obj->offset = 0;
                                 return true;
                             }
-printf("ftell: %ld\n", ftell(p_file));
+    printf("ftell: %ld\n", ftell(p_file));
 
     printf("GBM FALSE type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
 
