@@ -2,16 +2,16 @@
 // lib_gbm.c
 //
 
-#include "lib_gbr.h"
 #include "lib_gbm.h"
-// #include "lib_gbr_import.h"
-// #include "lib_gbr_export.h"
+#include "lib_gbm.h"
+#include "lib_gbm_import.h"
+#include "lib_gbm_export.h"
 #include "lib_gbm_file_utils.h"
 
 static image_data image;
 static color_data colors;
 
-static gbr_record gbr;
+static gbm_record gbm;
 
 
 
@@ -60,7 +60,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
 
 
-// Load and parse a .GBR file
+// Load and parse a .GBM file
 //
 int32_t gbm_load_file(const int8_t * filename) {
 
@@ -68,7 +68,7 @@ int32_t gbm_load_file(const int8_t * filename) {
     gbm_file_object      obj;
     int32_t              status;
 
-    obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
+    obj.p_data = malloc(GBM_OBJECT_MAX_SIZE);
 
     status = true;
 
@@ -94,47 +94,47 @@ int32_t gbm_load_file(const int8_t * filename) {
                     switch (obj.id) {
                         // Process Object
                         case gbm_obj_producer: printf("gbm_producer\n");
-                                          //status = gbr_object_producer_decode(&gbr, &obj);
+                                          status = gbm_object_producer_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_map: printf("gbm_obj_map\n");
-                                          //status = gbr_object_tile_data_decode(&gbr, &obj);
-                                          break;
-
-                        case gbm_obj_tile_data: printf("gbm_obj_tile_data\n");
-                                          //status = gbr_object_tile_settings_decode(&gbr, &obj);
+                                          status = gbm_object_map_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_map_prop: printf("gbm_obj_map_prop\n");
-                                          //status = gbr_object_tile_export_decode(&gbr, &obj);
+                                          status = gbm_object_map_prop_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_prop_data: printf("gbm_obj_prop_data\n");
-                                          //status = gbr_object_tile_import_decode(&gbr, &obj);
+                                          status = gbm_object_prop_data_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_prop_default: printf("gbm_obj_prop_default\n");
-                                          //status = gbr_object_palettes_decode(&gbr, &obj);
+                                          status = gbm_object_prop_default_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_map_settings: printf("gbm_obj_map_settings\n");
-                                          //status = gbr_object_tile_pal_decode(&gbr, &obj);
+                                          status = gbm_object_map_settings_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_prop_colors: printf("gbm_obj_prop_colors\n");
-                                          //status = gbr_object_tile_pal_decode(&gbr, &obj);
+                                          status = gbm_object_prop_colors_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_map_export: printf("gbm_obj_map_export\n");
-                                          //status = gbr_object_tile_pal_decode(&gbr, &obj);
+                                          status = gbm_object_map_export_decode(&gbm, &obj);
+                                          break;
+
+                        case gbm_obj_tile_data: printf("gbm_obj_tile_data\n");
+                                          status = gbm_object_tile_data_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_deleted: printf("gbm_deleted\n");
                                           break;
                     }
-                } // end: while (gbr_read_object_from_file(&obj, p_file))
-            } // end: if gbr_write_version
-        } // end: if gbr_write_header_key
+                } // end: while (gbm_read_object_from_file(&obj, p_file))
+            } // end: if gbm_write_version
+        } // end: if gbm_write_header_key
     } // end: if ((p_file != NULL) && (obj.p_data))
 
     if (p_file)
@@ -148,16 +148,16 @@ int32_t gbm_load_file(const int8_t * filename) {
 
 
 
-// Save to a .GBR file
+// Save to a .gbm file
 //
 int32_t gbm_save_file(const int8_t * filename) {
 
 
-    FILE               * p_file;
-    pascal_file_object   obj;
-    int32_t              status;
-/*
-    obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
+    FILE            * p_file;
+    gbm_file_object   obj;
+    int32_t           status;
+
+    obj.p_data = malloc(GBM_OBJECT_MAX_SIZE);
 
     status = true;
 
@@ -172,29 +172,35 @@ int32_t gbm_save_file(const int8_t * filename) {
 
             if (gbm_write_version(p_file)) {
 
-                status = gbr_object_producer_encode(&gbr, &obj);
+                status = gbm_object_producer_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_tile_data_encode(&gbr, &obj);
+                if (status) status = gbm_object_map_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_tile_settings_encode(&gbr, &obj);
+                if (status) status = gbm_object_map_prop_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_tile_export_encode(&gbr, &obj);
+                if (status) status = gbm_object_prop_data_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_tile_import_encode(&gbr, &obj);
+                if (status) status = gbm_object_prop_default_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_palettes_encode(&gbr, &obj);
+                if (status) status = gbm_object_map_settings_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                if (status) status = gbr_object_tile_pal_encode(&gbr, &obj);
+                if (status) status = gbm_object_prop_colors_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-            } // end: if gbr_write_version
-        } // end: if gbr_write_header_key
+                if (status) status = gbm_object_map_export_encode(&gbm, &obj);
+                    if (status) status = gbm_write_object_to_file(&obj, p_file);
+
+                if (status) status = gbm_object_tile_data_encode(&gbm, &obj);
+                    if (status) status = gbm_write_object_to_file(&obj, p_file);
+
+            } // end: if gbm_write_version
+        } // end: if gbm_write_header_key
     } // end: if ((p_file != NULL) && (obj.p_data))
 
     if (p_file)
@@ -202,7 +208,7 @@ int32_t gbm_save_file(const int8_t * filename) {
 
     if (obj.p_data)
         free(obj.p_data);
-*/
+
     return status;
 }
 

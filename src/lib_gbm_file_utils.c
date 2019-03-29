@@ -75,7 +75,7 @@ int32_t gbm_read_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
                 if (fread(&(g_obj->master_id),      sizeof(g_obj->master_id),       1, p_file))
                     if (fread(&(g_obj->crc),         sizeof(g_obj->crc),             1, p_file))
                         if (fread(&(g_obj->length_bytes), sizeof(g_obj->length_bytes), 1, p_file)
-                            && (g_obj->length_bytes <= PASCAL_OBJECT_MAX_SIZE) )
+                            && (g_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
                             if (g_obj->length_bytes == 0) {
 //                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
                                 g_obj->offset = 0;
@@ -96,7 +96,7 @@ int32_t gbm_read_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
 
 
 
-int32_t gbm_write_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
+int32_t gbm_write_object_to_file(gbm_file_object * g_obj, FILE * p_file) {
 
     // Read in the object properties, and then it's data buffer
     if (fwrite(&(gbm_object_marker[0]),           sizeof(g_obj->marker),       1, p_file))
@@ -105,7 +105,7 @@ int32_t gbm_write_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
                 if (fwrite(&(g_obj->master_id),      sizeof(g_obj->master_id),       1, p_file))
                     if (fwrite(&(g_obj->crc),         sizeof(g_obj->crc),             1, p_file))
                         if (fwrite(&(g_obj->length_bytes), sizeof(g_obj->length_bytes), 1, p_file)
-                            && (g_obj->length_bytes <= PASCAL_OBJECT_MAX_SIZE) )
+                            && (g_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
                             if (g_obj->length_bytes == 0) {
 //                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
                                 g_obj->offset = 0;
