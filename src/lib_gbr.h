@@ -234,7 +234,20 @@ typedef struct {
     uint32_t   length_bytes;
     uint32_t   offset;
     uint8_t  * p_data;
-} pascal_file_object;
+} pascal_file_object; // TODO: rename to gbr_file_object
+
+
+typedef struct {
+    uint8_t   marker[6];    // Should match "HPJMTL"
+    uint16_t  id;
+    uint16_t  object_id;
+    uint16_t  master_id;
+    uint32_t  crc;          // Always zero
+    uint32_t  length_bytes; // "size"
+    uint32_t  offset;
+    uint8_t  * p_data;
+} gbm_file_object;
+
 
 image_data * gbr_get_image();
 color_data * gbr_get_colors();
@@ -246,7 +259,6 @@ void gbr_free_resources(void);
 
 int32_t gbr_load_file(const int8_t * filename);
 int32_t gbr_save_file(const int8_t * filename);
-
 
 
 #endif // LIB_GBR_FILE_HEADER

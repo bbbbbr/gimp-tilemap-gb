@@ -25,6 +25,7 @@
 #include "tilemap_write.h"
 #include "lib_tilemap.h"
 #include "lib_gbr.h"
+#include "lib_gbm.h"
 
 #include "image_info.h"
 

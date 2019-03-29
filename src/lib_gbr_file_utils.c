@@ -4,6 +4,7 @@
 
 #include "lib_gbr_file_utils.h"
 
+
 int32_t gbr_read_header_key(FILE * p_file) {
 
     // Check to make sure the start of the file is "GBO"

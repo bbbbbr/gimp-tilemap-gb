@@ -14,6 +14,7 @@
 #include "image_info.h"
 
 #include "lib_gbr.h"
+#include "lib_gbm.h"
 
 static void tilemap_write_free_resources(int image_mode);
 
@@ -96,9 +97,10 @@ int tilemap_read(const gchar * filename, int image_mode)
 
         case IMPORT_FORMAT_GBM:
             // TODO: gbm load
-//            status = gbm_load(filename);
+            status = gbm_load(filename);
 //            if (status)
 //                p_loaded_image = gbm_get_image();
+            status = false;
             break;
     } // switch (image_mode)
 
