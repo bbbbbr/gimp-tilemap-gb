@@ -91,37 +91,45 @@ int32_t gbm_load_file(const int8_t * filename) {
                     printf("GBM OBJ: type=%02x, object_id=%02x, master_id=%02x, size=%04x\n",
                            obj.id, obj.object_id, obj.master_id, obj.length_bytes);
 
-                    switch (obj.object_id) {
+                    switch (obj.id) {
                         // Process Object
-                        case gbr_obj_producer: printf("gbm_producer\n");
+                        case gbm_obj_producer: printf("gbm_producer\n");
                                           //status = gbr_object_producer_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_data: printf("gbm_tile_data\n");
+                        case gbm_obj_map: printf("gbm_obj_map\n");
                                           //status = gbr_object_tile_data_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_settings: printf("gbm_tile_settings\n");
+                        case gbm_obj_tile_data: printf("gbm_obj_tile_data\n");
                                           //status = gbr_object_tile_settings_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_export: printf("gbm_tile_export\n");
+                        case gbm_obj_map_prop: printf("gbm_obj_map_prop\n");
                                           //status = gbr_object_tile_export_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_import: printf("gbm_tile_import\n");
+                        case gbm_obj_prop_data: printf("gbm_obj_prop_data\n");
                                           //status = gbr_object_tile_import_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_palettes: printf("gbm_palettes\n");
+                        case gbm_obj_prop_default: printf("gbm_obj_prop_default\n");
                                           //status = gbr_object_palettes_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_pal: printf("gbm_tile_pal\n");
+                        case gbm_obj_map_settings: printf("gbm_obj_map_settings\n");
                                           //status = gbr_object_tile_pal_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_deleted: printf("gbm_deleted\n");
+                        case gbm_obj_prop_colors: printf("gbm_obj_prop_colors\n");
+                                          //status = gbr_object_tile_pal_decode(&gbr, &obj);
+                                          break;
+
+                        case gbm_obj_map_export: printf("gbm_obj_map_export\n");
+                                          //status = gbr_object_tile_pal_decode(&gbr, &obj);
+                                          break;
+
+                        case gbm_obj_deleted: printf("gbm_deleted\n");
                                           break;
                     }
                 } // end: while (gbr_read_object_from_file(&obj, p_file))

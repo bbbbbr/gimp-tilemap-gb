@@ -84,22 +84,14 @@ enum gbr_tileset_colorset {
 };
 
 enum gbr_object_types {
-    gbr_obj_producer       = 0x01,
-    gbr_obj_tile_data      = 0x02,
-    gbr_obj_tile_settings  = 0x03,
-    gbr_obj_tile_export    = 0x04,
-    gbr_obj_tile_import    = 0x05,
-    gbr_obj_movie_settings = 0x06,
-    gbr_obj_movie_data     = 0x07,
-    gbr_obj_map_data       = 0x08,
-    gbr_obj_map_pro        = 0x09,
-    gbr_obj_map_export     = 0x0A,
-    gbr_obj_map_default_tile_prop =  0x0B,
-    gbr_obj_map_settings   = 0x0C,
-    gbr_obj_palettes       = 0x0D,
-    gbr_obj_tile_pal       = 0x0E,
-    gbr_obj_prop_colors    = 0x0F,
-    gbr_obj_deleted        = 0xFF
+    gbr_obj_producer      = 0x01,
+    gbr_obj_tile_data     = 0x02,
+    gbr_obj_tile_settings = 0x03,
+    gbr_obj_tile_export   = 0x04,
+    gbr_obj_tile_import   = 0x05,
+    gbr_obj_palettes      = 0x0D,
+    gbr_obj_tile_pal      = 0x0E,
+    gbr_obj_deleted       = 0xFF
 };
 
 
