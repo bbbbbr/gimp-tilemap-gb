@@ -18,23 +18,175 @@
 #ifndef LIB_GBM_FILE_HEADER
 #define LIB_GBM_FILE_HEADER
 
-#define GBM_OBJECT_MAX_SIZE 65535
+#define GBM_PRODUCER_NAME_SIZE    128
+#define GBM_PRODUCER_VERSION_SIZE 10
+#define GBM_PRODUCER_INFO_SIZE    128
+#define GBM_PRODUCER_SIZE  GBM_PRODUCER_NAME_SIZE + GBM_PRODUCER_VERSION_SIZE + GBM_PRODUCER_INFO_SIZE
+
+// TODO: inspect strings and determine if all the + 1 _STR stuff can be remove (are strings always null terminated in data file despite being pascal/delphi?)
+#define GBM_PRODUCER_NAME_SIZE_STR    GBM_PRODUCER_NAME_SIZE    + 1 // space for trailing \0
+#define GBM_PRODUCER_VERSION_SIZE_STR GBM_PRODUCER_VERSION_SIZE + 1
+#define GBM_PRODUCER_INFO_SIZE_STR    GBM_PRODUCER_INFO_SIZE    + 1
+
+#define GBM_MAP_NAME_SIZE      128
+#define GBM_MAP_TILE_FILE_SIZE 256
+
+#define GBM_MAP_SIZE           20 + GBM_MAP_NAME_SIZE + GBM_MAP_TILE_FILE_SIZE
+
+#define GBM_OBJECT_MAX_SIZE 65535 // This may not be true, it's just for convenience :)
+
+#define GBM_MAP_TILE_DATA_RECORDS_SIZE  GBM_OBJECT_MAX_SIZE
+
+#define MAP_TILE_DATA_TILE_NUM 0x0001FF //.0-8
+#define MAP_TILE_DATA_RESERVED 0x3FFE00 //.9-21
+#define MAP_TILE_DATA_FLIP_H   0x400000 //.24
+#define MAP_TILE_DATA_FLIP_V   0x800000 //.23
+
+#define GBM_MAP_PROP_NAME_SIZE 32
+
+#define GBM_MAP_SETTINGS_BOOKMARK_COUNT 3
+#define GBM_MAP_SETTINGS_BOOKMARK_SIZE  GBM_MAP_SETTINGS_BOOKMARK_COUNT * sizeof(uint32_t)
+
+#define GBM_MAP_SETTINGS_MIN_SIZE    29 + GBM_MAP_SETTINGS_BOOKMARK_SIZE
+
+#define GBM_MAP_PROP_COLORS_COLORS_COUNT 2
+#define GBM_MAP_PROP_COLORS_COLORS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 // uint24
+
+#define GBM_MAP_EXPORT_FILE_NAME_SIZE    255
+#define GBM_MAP_EXPORT_SECTION_NAME_SIZE 40
+#define GBM_MAP_EXPORT_LABEL_NAME_SIZE   40
+
+#define GBM_MAP_EXPORT_SIZE 19 + GBM_MAP_EXPORT_FILE_NAME_SIZE + GBM_MAP_EXPORT_SECTION_NAME_SIZE + GBM_MAP_EXPORT_LABEL_NAME_SIZE
+
+#define GBM_MAP_EXPORT_PROPS_COUNT 2  // It's possible this should be larger
+#define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 // uint24
+
+
 
 enum gbm_object_types {
-    gbm_obj_producer     = 0x01,
-    gbm_obj_map          = 0x02,
-    gbm_obj_tile_data    = 0x03,
-    gbm_obj_map_prop     = 0x04,
-    gbm_obj_prop_data    = 0x05,
-    gbm_obj_prop_default = 0x06,
-    gbm_obj_map_settings = 0x07,
-    gbm_obj_prop_colors  = 0x08,
-    gbm_obj_map_export   = 0x09,
-    gbm_obj_deleted      = 0xFFFF,
+    gbm_obj_producer        = 0x01,
+    gbm_obj_map             = 0x02,
+    gbm_obj_map_tile_data   = 0x03,
+    gbm_obj_map_prop        = 0x04,
+    gbm_obj_prop_data       = 0x05,
+    gbm_obj_prop_default    = 0x06,
+    gbm_obj_map_settings    = 0x07,
+    gbm_obj_prop_colors     = 0x08,
+    gbm_obj_map_export      = 0x09,
+    gbm_obj_map_export_prop = 0x0A,
+    gbm_obj_deleted         = 0xFFFF,
 };
 
+
 typedef struct {
-    uint8_t SHIMSHIM; // TODO: replace me
+    int8_t name[GBM_PRODUCER_NAME_SIZE_STR];
+    int8_t version[GBM_PRODUCER_VERSION_SIZE_STR];
+    int8_t info[GBM_PRODUCER_INFO_SIZE_STR];
+} gbm_producer;
+
+
+typedef struct {
+    int8_t   name[GBM_MAP_NAME_SIZE];
+    uint32_t width;
+    uint32_t height;
+    uint32_t prop_count;
+    int8_t   tile_file[GBM_MAP_TILE_FILE_SIZE];
+    uint32_t tile_count;
+    uint32_t prop_color_count;
+} gbm_map;
+
+
+typedef struct {
+    uint8_t   records[GBM_MAP_TILE_DATA_RECORDS_SIZE];  // uint24
+} gbm_map_tile_data;
+
+
+typedef struct {
+    uint32_t p_type;
+    uint32_t size;
+    int8_t   name[GBM_MAP_PROP_NAME_SIZE];
+} gbm_map_prop;
+
+
+typedef struct {
+    uint8_t  data[GBM_OBJECT_MAX_SIZE];
+} gbm_map_prop_data;
+
+
+typedef struct {
+    uint8_t  data[GBM_OBJECT_MAX_SIZE];
+} gbm_map_prop_default;
+
+
+typedef struct {
+    uint32_t  form_width;
+    uint32_t  form_height;
+    uint8_t   form_maximized; // bool
+
+    uint8_t   info_panel;     // bool
+    uint8_t   grid;           // bool
+    uint8_t   double_markers; // bool
+    uint8_t   prop_colors;    // bool
+
+    uint16_t  zoom;
+    uint16_t  color_set;
+    uint32_t  bookmarks[GBM_MAP_SETTINGS_BOOKMARK_COUNT]; // uint32
+
+    uint32_t  block_fill_pattern;
+    uint32_t  block_fill_width;
+    uint32_t  block_fill_height;
+
+    // uint8_t   auto_update; // bool MAYBE NOTE PRESENT?
+} gbm_map_settings;
+
+
+typedef struct {
+    uint8_t   colors[GBM_MAP_PROP_COLORS_COLORS_SIZE];  // uint24
+} gbm_map_prop_colors;
+
+
+typedef struct {
+    int8_t   file_name[GBM_MAP_EXPORT_FILE_NAME_SIZE];
+    uint8_t  file_type;
+    int8_t   section_name[GBM_MAP_EXPORT_SECTION_NAME_SIZE];
+    int8_t   label_name[GBM_MAP_EXPORT_LABEL_NAME_SIZE];
+    uint8_t  bank;
+
+    uint16_t  plane_count;
+    uint16_t  plane_order;
+    uint16_t  map_layout;
+
+    uint8_t   split;      // bool
+    uint32_t  split_size;
+    uint8_t   split_bank; // bool
+
+    uint8_t   sel_tab;
+
+    uint16_t  prop_count;
+
+    uint16_t  tile_offset;
+} gbm_map_export;
+
+
+typedef struct {
+    uint8_t   props[GBM_MAP_EXPORT_PROPS_SIZE];  // uint24
+} gbm_map_export_prop;
+
+
+
+
+
+typedef struct {
+    gbm_producer         producer;
+    gbm_map              map;
+    gbm_map_tile_data    map_tile_data;
+    gbm_map_prop         map_prop;         // Doesn't seem to be used
+    gbm_map_prop_data    map_prop_data;    // Doesn't seem to be used
+    gbm_map_prop_default map_prop_default; // Doesn't seem to be used
+    gbm_map_settings     map_settings;
+    gbm_map_prop_colors  map_prop_colors;
+    gbm_map_export       map_export;
+    gbm_map_export_prop  map_export_prop;
 } gbm_record;
 
 

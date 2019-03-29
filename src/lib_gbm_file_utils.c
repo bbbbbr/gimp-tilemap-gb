@@ -124,3 +124,150 @@ int32_t gbm_write_object_to_file(gbm_file_object * g_obj, FILE * p_file) {
  }
 
 
+
+// =========  WRITE/EXPORT UTILITY FUNCTIONS =========
+
+
+// WARNING: Expects buffer size to be (n_bytes + 1) for appending null terminator
+void gbm_read_str(int8_t * p_dest_str, gbm_file_object * p_obj, uint32_t n_bytes) {
+
+    // Copy string, add terminator, move offset to next data
+    memcpy(p_dest_str, &p_obj->p_data[ p_obj->offset ], n_bytes);
+    p_dest_str[n_bytes + 1] = '\0';
+    p_obj->offset += n_bytes;
+
+    printf("gbm_read_str @ %d\n", p_obj->offset);
+}
+
+
+void gbm_read_buf(int8_t * p_dest_buf, gbm_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbm_read_buf @ %d -> ", p_obj->offset);
+
+    // Copy data, move offset to next data
+    memcpy(p_dest_buf, &(p_obj->p_data[ p_obj->offset ]), n_bytes);
+    p_obj->offset += n_bytes;
+
+    printf("%d\n", p_obj->offset);
+}
+
+
+void gbm_read_uint32(uint32_t * p_dest_val, gbm_file_object * p_obj) {
+
+    memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint32_t));
+    p_obj->offset += sizeof(uint32_t);
+
+    printf("gbm_read_uint32 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_read_uint16(uint16_t * p_dest_val, gbm_file_object * p_obj) {
+
+    memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint16_t));
+    p_obj->offset += sizeof(uint16_t);
+
+    printf("gbm_read_uint16 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_read_uint8(uint8_t * p_dest_val, gbm_file_object * p_obj) {
+
+    *p_dest_val = p_obj->p_data[ p_obj->offset ];
+    p_obj->offset += sizeof(uint8_t);
+
+    printf("gbm_read_uint8 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_read_bool(uint8_t * p_dest_val, gbm_file_object * p_obj) {
+
+    *p_dest_val = p_obj->p_data[ p_obj->offset ] & 0x01;
+    p_obj->offset += sizeof(uint8_t);
+
+    printf("gbm_read_bool @ %d\n", p_obj->offset);
+}
+
+
+// =========  WRITE/EXPORT UTILITY FUNCTIONS =========
+
+
+void gbm_write_padding(gbm_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbm_write_padding of %d @ %d -> ", n_bytes, p_obj->offset);
+
+    memset(&p_obj->p_data[ p_obj->offset ], 0x00, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("%d\n", p_obj->offset);
+
+    printf(" PAD id=%x, object_id=%x, size=%x\n, offset=%x", p_obj->id,
+                                                        p_obj->object_id,
+                                                        p_obj->length_bytes,
+                                                        p_obj->offset);
+}
+
+
+// WARNING: Expects source buffer size to be (n_bytes + 1) for appending null terminator
+void gbm_write_str(int8_t * p_src_str, gbm_file_object * p_obj, uint32_t n_bytes) {
+
+    // Copy string (without terminator), move offset to next data
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_str, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbm_write_str @ %d (nbytes=%d)\n", p_obj->offset, n_bytes);
+}
+
+
+void gbm_write_buf(int8_t * p_src_buf, gbm_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbm_write_buf @ %d -> ", p_obj->offset);
+
+    // Copy data, move offset to next data
+    memcpy(&(p_obj->p_data[ p_obj->offset ]), p_src_buf, n_bytes);
+    p_obj->offset += n_bytes;
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("%d\n", p_obj->offset);
+}
+
+
+void gbm_write_uint32(uint32_t * p_src_val, gbm_file_object * p_obj) {
+
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_val, sizeof(uint32_t));
+    p_obj->offset += sizeof(uint32_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbm_write_uint32 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_write_uint16(uint16_t * p_src_val, gbm_file_object * p_obj) {
+
+    memcpy(&p_obj->p_data[ p_obj->offset ], p_src_val, sizeof(uint16_t));
+    p_obj->offset += sizeof(uint16_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbm_write_uint16 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_write_uint8(uint8_t * p_src_val, gbm_file_object * p_obj) {
+
+    p_obj->p_data[ p_obj->offset ] = *p_src_val;
+    p_obj->offset += sizeof(uint8_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbm_write_uint8 @ %d\n", p_obj->offset);
+}
+
+
+void gbm_write_bool(uint8_t * p_src_val, gbm_file_object * p_obj) {
+
+    p_obj->p_data[ p_obj->offset ] = *p_src_val & 0x01;
+    p_obj->offset += sizeof(uint8_t);
+    p_obj->length_bytes = p_obj->offset;
+
+    printf("gbm_write_bool @ %d\n", p_obj->offset);
+}

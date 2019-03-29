@@ -101,6 +101,10 @@ int32_t gbm_load_file(const int8_t * filename) {
                                           status = gbm_object_map_decode(&gbm, &obj);
                                           break;
 
+                        case gbm_obj_map_tile_data: printf("gbm_obj_map_tile_data\n");
+                                          status = gbm_object_map_tile_data_decode(&gbm, &obj);
+                                          break;
+
                         case gbm_obj_map_prop: printf("gbm_obj_map_prop\n");
                                           status = gbm_object_map_prop_decode(&gbm, &obj);
                                           break;
@@ -125,8 +129,8 @@ int32_t gbm_load_file(const int8_t * filename) {
                                           status = gbm_object_map_export_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_tile_data: printf("gbm_obj_tile_data\n");
-                                          status = gbm_object_tile_data_decode(&gbm, &obj);
+                        case gbm_obj_map_export_prop: printf("gbm_obj_map_export_prop\n");
+                                          status = gbm_object_map_export_prop_decode(&gbm, &obj);
                                           break;
 
                         case gbm_obj_deleted: printf("gbm_deleted\n");
@@ -196,8 +200,11 @@ int32_t gbm_save_file(const int8_t * filename) {
                 if (status) status = gbm_object_map_export_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
+                    // TODO : map_tile_data rename and move up
                 if (status) status = gbm_object_tile_data_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
+
+                    /// TODO: gbm_obj_map_export_prop
 
             } // end: if gbm_write_version
         } // end: if gbm_write_header_key
