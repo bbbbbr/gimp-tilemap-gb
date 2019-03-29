@@ -45,7 +45,7 @@
 #define GBM_MAP_PROP_NAME_SIZE 32
 
 #define GBM_MAP_SETTINGS_BOOKMARK_COUNT 3
-#define GBM_MAP_SETTINGS_BOOKMARK_SIZE  GBM_MAP_SETTINGS_BOOKMARK_COUNT * sizeof(uint32_t)
+#define GBM_MAP_SETTINGS_BOOKMARK_SIZE  GBM_MAP_SETTINGS_BOOKMARK_COUNT * sizeof(uint16_t)
 
 #define GBM_MAP_SETTINGS_MIN_SIZE    29 + GBM_MAP_SETTINGS_BOOKMARK_SIZE
 
@@ -130,7 +130,7 @@ typedef struct {
 
     uint16_t  zoom;
     uint16_t  color_set;
-    uint32_t  bookmarks[GBM_MAP_SETTINGS_BOOKMARK_COUNT]; // uint32
+    uint16_t  bookmarks[GBM_MAP_SETTINGS_BOOKMARK_COUNT]; // uint32
 
     uint32_t  block_fill_pattern;
     uint32_t  block_fill_width;

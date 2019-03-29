@@ -105,9 +105,9 @@ int32_t gbm_object_map_settings_decode(gbm_record * p_gbm, gbm_file_object * p_o
     gbm_read_uint16(&p_gbm->map_settings.zoom, p_obj);
     gbm_read_uint16(&p_gbm->map_settings.color_set, p_obj);
 
-    gbm_read_uint32(&(p_gbm->map_settings.bookmarks[0]), p_obj);
-    gbm_read_uint32(&(p_gbm->map_settings.bookmarks[1]), p_obj);
-    gbm_read_uint32(&(p_gbm->map_settings.bookmarks[2]), p_obj);
+    gbm_read_uint16(&(p_gbm->map_settings.bookmarks[0]), p_obj);
+    gbm_read_uint16(&(p_gbm->map_settings.bookmarks[1]), p_obj);
+    gbm_read_uint16(&(p_gbm->map_settings.bookmarks[2]), p_obj);
 
     gbm_read_uint32(&p_gbm->map_settings.block_fill_pattern, p_obj);
     gbm_read_uint32(&p_gbm->map_settings.block_fill_width, p_obj);
