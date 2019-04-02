@@ -242,5 +242,6 @@ void gbr_free_resources(void);
 int32_t gbr_load_file(const int8_t * filename);
 int32_t gbr_save_file(const int8_t * filename);
 
+gbr_record * gbr_get_ptr(void);
 
 #endif // LIB_GBR_FILE_HEADER

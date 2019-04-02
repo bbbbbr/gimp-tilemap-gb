@@ -56,6 +56,11 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
 
 
 
+gbr_record * gbr_get_ptr(void) {
+    return &(gbr);
+}
+
+
 
 image_data * gbr_get_image() {
 

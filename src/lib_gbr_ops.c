@@ -71,13 +71,14 @@ int32_t gbr_pal_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t num_colo
 }
 
 
+// TODO: FIXME this is making assumptions about bytes per pixel = 1 in both SOURCE and DEST buffers
 
 int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index) {
 
     int32_t offset;
     int32_t tile_size;
 
-    // Find the starting of the tile in the tile list buffer
+    // Find the start of the tile in the tile list buffer
     tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
     //offset = (tile_size * (tile_index - 1));
 
@@ -138,3 +139,62 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
     return true;
 }
 
+
+
+
+
+// Expects
+// * An image that is an even multiple of tile_data.width
+// *  Is sized based on map width in tiles x tile_size / same for height
+//
+// map_x, map_y: these are in tile coordinates! not pixel locations
+int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr, uint16_t tile_index, uint16_t map_x, uint16_t map_y) {
+
+    int32_t tile_offset;
+    int32_t tile_size;
+    int32_t image_offset;
+    int32_t image_copy_end;
+    int16_t row;
+
+    // Find the start of the tile in the tile list buffer
+    tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
+
+    tile_offset = (tile_size * tile_index);
+
+    image_offset = (((map_y * p_gbr->tile_data.width) * p_image->width) +
+                    (map_x * p_gbr->tile_data.width)) * p_image->bytes_per_pixel;
+
+    image_copy_end = image_offset
+                     + ((p_gbr->tile_data.height -1) * p_image->width * p_image->bytes_per_pixel)
+                     + (p_gbr->tile_data.width * p_image->bytes_per_pixel);
+
+
+    // Make sure the destination buffer is ok
+    if (!p_image->p_img_data)
+        return false;
+
+    // Make sure there is enough data for a complete tile in the source tile buffer
+    if ((tile_size * tile_index) > p_gbr->tile_data.tile_data_size)
+        return false;
+
+    // Make sure there is enough room in the destination image for the tile
+    if (image_copy_end > p_image->size)
+        return false;
+
+    // TODO: support more than 1 BPP in destination images?
+    if (p_image->bytes_per_pixel != 1)
+        return false;
+
+    // Copy each row of the tile to the desired row location in the image
+    for(row = 0; row < p_gbr->tile_data.height; row++) {
+        memcpy(&(p_image->p_img_data[image_offset]),
+               &(p_gbr->tile_data.tile_list[tile_offset]),
+               p_gbr->tile_data.width);
+
+        // Advance to next tile and image row locations
+        tile_offset += p_gbr->tile_data.width;
+        image_offset += p_image->width * p_image->bytes_per_pixel;
+    }
+
+    return true;
+}

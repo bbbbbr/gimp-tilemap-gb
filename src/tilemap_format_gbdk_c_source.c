@@ -7,6 +7,7 @@
 
 #include "lib_tilemap.h"
 #include "tilemap_io.h"
+#include "tilemap_path_ops.h"
 #include "tilemap_format_gbdk_c_source.h"
 
 

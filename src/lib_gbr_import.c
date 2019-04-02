@@ -267,6 +267,9 @@ int32_t gbr_convert_tileset_to_image(gbr_record * p_gbr, image_data * p_image, c
     p_image->size = p_image->width * p_image->height * p_image->bytes_per_pixel;
 
     // Allocate image buffer
+    if (p_image->p_img_data)
+        free (p_image->p_img_data);
+
     p_image->p_img_data = malloc(p_image->size);
 
     if (p_image->p_img_data) {

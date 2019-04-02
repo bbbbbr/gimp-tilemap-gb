@@ -8,6 +8,11 @@
 #include "lib_gbm_export.h"
 #include "lib_gbm_file_utils.h"
 
+#include "image_info.h"
+#include "lib_gbr.h"
+
+#include "tilemap_path_ops.h"
+
 static image_data image;
 static color_data colors;
 
@@ -15,22 +20,59 @@ static gbm_record gbm;
 
 
 
-
 int32_t gbm_load(const int8_t * filename) {
 
     int32_t status;
 
-    printf("gbm_load\n");
+    image_data * p_tile_image;
+    color_data * p_tile_colors;
+    gbr_record * p_gbr;
+
+    // TODO: change char to int8_t?
+    char path_without_filename[STR_FILENAME_MAX];
+    char gbr_path[STR_FILENAME_MAX];
+
+    if (!get_path_without_filename(filename, path_without_filename, STR_FILENAME_MAX))
+      return (false);
+
+    printf("**gbm_load\n");
+
     // Load and parse the file
     status = gbm_load_file(filename);
-/*
-    if (status) {
-        // Render the image from the loaded data
-        status = gbr_convert_tileset_to_image(&gbr, &image, &colors);
+
+    // If the map file loaded then try to load
+    // the tile file (.GBR) that it references
+    if(status) {
+        snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  path_without_filename, gbm.map.tile_file);
+        printf("calling gbr load:%s:\n", gbr_path);
+        status = gbr_load(gbr_path);
     }
+    else
+        printf("Load GBM failed\n");
+
+    if (status) {
+        p_gbr = gbr_get_ptr();
+//            p_tile_image = gbr_get_image(); //TODO: maybe don't need?
+        p_tile_colors = gbr_get_colors();
+
+        // copy colors if possible, otherwise signal failure
+        if (p_tile_colors)
+            memcpy(&colors, p_tile_colors, sizeof(color_data));
+        else
+            status = false;
+
+        // Render the image from the loaded data
+        // TODO: The use of p_gbr here is crossing some boundaries that maybe shouldn't be
+        if (status)
+            status = gbm_convert_map_to_image(&gbm, p_gbr, &image);
+   }
+/*
 
     // TODO: Store imported GBR structure as metadata in GimpParasite? (then write out on export )
+
+    // TODO: Open the loaded tiles as a separate image?
 */
+
     return status;
 };
 
@@ -221,8 +263,47 @@ int32_t gbm_save_file(const int8_t * filename) {
 
 
 
+image_data * gbm_get_image() {
+
+    printf("gbm_get_image\n");
+    return &image;
+}
+
+
+color_data * gbm_get_colors() {
+
+    printf("gbm_get_colors\n");
+    return &colors;
+}
+
+
+// TODO: maybe remove globals for these and just use reference passing to import/export?
+// TODO: these are deprecated
+void gbm_set_image(image_data * p_src_image) {
+
+ // TODO: implement
+    printf("gbm_set_image\n");
+//    memcpy(&image, p_src_image, sizeof(image_data));
+}
+
+
+void gbm_set_colors(color_data * p_src_colors) {
+
+ // TODO: implement
+    printf("gbm_set_colors\n");
+//    memcpy(&colors, p_src_colors, sizeof(color_data));
+}
+
+
+
 void gbm_free_resources(void) {
 
     if (image.p_img_data)
         free(image.p_img_data);
+
+    // Free any resources of the tile file used when loading the map
+    gbr_free_resources();
 };
+
+
+

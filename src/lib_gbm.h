@@ -37,11 +37,6 @@
 
 #define GBM_MAP_TILE_DATA_RECORDS_SIZE  GBM_OBJECT_MAX_SIZE
 
-#define MAP_TILE_DATA_TILE_NUM 0x0001FF //.0-8
-#define MAP_TILE_DATA_RESERVED 0x3FFE00 //.9-21
-#define MAP_TILE_DATA_FLIP_H   0x400000 //.24
-#define MAP_TILE_DATA_FLIP_V   0x800000 //.23
-
 #define GBM_MAP_PROP_NAME_SIZE 32
 
 #define GBM_MAP_SETTINGS_BOOKMARK_COUNT 3
@@ -62,6 +57,21 @@
 #define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 // uint24
 
 
+#define GBM_MAP_TILE_RECORD_SIZE  3 // 24 bits per record
+// TODO: original pascal says bits 0..8 ~ 0-511, but uses 0x3FF. Which is right?
+#define GBM_MAP_TILE_NUM      0x0001FF //.0-8
+#define GBM_MAP_TILE_RESERVED 0x3FFE00 //.9-21
+#define GBM_MAP_TILE_FLIP_H   0x400000 //.24
+#define GBM_MAP_TILE_FLIP_V   0x800000 //.23
+#define GBM_MAP_TILE_FLIP_H_BYTE   0x40 //.24
+#define GBM_MAP_TILE_FLIP_V_BYTE   0x80 //.24
+
+typedef struct {
+    uint16_t num;
+    uint8_t  flip_h;
+    uint8_t  flip_v;
+} gbm_tile_record;
+
 
 enum gbm_object_types {
     gbm_obj_producer        = 0x01,
@@ -76,6 +86,7 @@ enum gbm_object_types {
     gbm_obj_map_export_prop = 0x0A,
     gbm_obj_deleted         = 0xFFFF,
 };
+
 
 
 typedef struct {
@@ -97,6 +108,7 @@ typedef struct {
 
 
 typedef struct {
+    uint32_t  length_bytes;
     uint8_t   records[GBM_MAP_TILE_DATA_RECORDS_SIZE];  // uint24
 } gbm_map_tile_data;
 
@@ -201,10 +213,18 @@ typedef struct {
     uint8_t  * p_data;
 } gbm_file_object;
 
+
+image_data * gbm_get_image();
+color_data * gbm_get_colors();
+
+void gbm_free_resources(void);
+
 int32_t gbm_load(const int8_t * filename);
 int32_t gbm_load_file(const int8_t * filename);
 int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
 int32_t gbm_save_file(const int8_t * filename);
+
+
 
 
 #endif // LIB_GBM_FILE_HEADER

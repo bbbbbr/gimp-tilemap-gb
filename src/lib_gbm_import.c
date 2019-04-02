@@ -8,6 +8,134 @@
 #include "lib_gbm_file_utils.h"
 
 
+
+
+// TODO: what is the trailing data from 2160 -> 4800 bytes?
+/*
+
+    p_gbm->map_tile_data
+
+// TODO: Palette is encoded?
+          k := (TileMap.Data[(i*TileMap.Width)+j].Tile and $03FF);
+          k := k + (TileMap.Data[(i*TileMap.Width)+j].Flags shl (22-4));
+
+          k := k + ((TileMap.Data[(i*TileMap.Width)+j].Palette and $0F) shl 10);
+          k := k + ((TileMap.Data[(i*TileMap.Width)+j].Palette and $0700) shl (16-8));
+*/
+
+
+
+gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) {
+
+    uint16_t index;
+
+    gbm_tile_record tile;
+
+    index = (x + (y * p_gbm->map.width)) * GBM_MAP_TILE_RECORD_SIZE;
+
+    if ((index + 2) > p_gbm->map_tile_data.length_bytes) {
+        tile.num = 0xFFFF;
+        return tile;  // TODO: use/signal proper failure return code here
+    }
+
+    tile.flip_h = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_H_BYTE;
+    tile.flip_v = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_V_BYTE;
+
+    tile.num = ((uint16_t)p_gbm->map_tile_data.records[index+2] |
+               ((uint16_t)p_gbm->map_tile_data.records[index+1] << 8)) & GBM_MAP_TILE_NUM;
+
+        printf(" %d", tile.num);
+        if ((x % p_gbm->map.width) == 0) printf("\n");
+
+    return tile;
+
+}
+
+// TODO: remove once debugging is complete
+void gbm_map_tiles_print(gbm_record * p_gbm) {
+
+    uint16_t x, y;
+    uint16_t index;
+
+    gbm_tile_record tile;
+
+    index = 0;
+    for (y=0; y < p_gbm->map.height; y++) {
+        for (x=0; x < p_gbm->map.width; x++)
+
+            tile = gbm_map_tile_get_xy(p_gbm, x, y);
+            index++;
+
+            printf(" %d", tile.num);
+            if ((index % p_gbm->map.width) == 0) printf("\n");
+
+        }
+}
+
+
+
+
+int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_data * p_image) {
+
+    uint16_t map_x, map_y;
+    gbm_tile_record tile;
+    int32_t status;
+
+    status = true; // default to success
+
+    // Init image
+    p_image->bytes_per_pixel = 1; // TODO: MAKE a #define
+
+    p_image->width  = p_gbm->map.width * p_gbr->tile_data.width;
+    p_image->height = p_gbm->map.height * p_gbr->tile_data.height;
+
+    // Calculate total image area based on
+    // tile width and height, and number of tiles
+    p_image->size = p_image->width * p_image->height * p_image->bytes_per_pixel;
+
+printf("gbm_convert_map_to_image: %dx%d @ size%d\n", p_image->width,
+                                                     p_image->height,
+                                                     p_image->size);
+
+    // Allocate image buffer, free if needed beforehand
+    if (p_image->p_img_data)
+        free (p_image->p_img_data);
+
+    p_image->p_img_data = malloc(p_image->size);
+
+
+    // Create the image from tiles
+    if (p_image->p_img_data) {
+
+        // Loop through tile map, get tile number and copy respective tiles into image
+        for (map_y=0; map_y < p_gbm->map.height; map_y++) {
+            for (map_x=0; map_x < p_gbm->map.width; map_x++) {
+
+                tile = gbm_map_tile_get_xy(p_gbm, map_x, map_y);
+
+                if (status)
+                    status = gbr_tile_copy_to_image(p_image,
+                                                    p_gbr,
+                                                    tile.num,
+                                                    map_x, map_y);
+            } // for .. map_x
+        } // for.. map_y
+    } else {
+        // Signal failure if image pointer not allocated
+        status = false;
+    }
+
+
+    // Return success
+    return status;
+}
+
+
+
+
+//////////////
+
+
 int32_t gbm_object_producer_decode(gbm_record * p_gbm, gbm_file_object * p_obj) {
 
     if (p_obj->length_bytes != GBM_PRODUCER_SIZE)
@@ -62,6 +190,11 @@ int32_t gbm_object_map_tile_data_decode(gbm_record * p_gbm, gbm_file_object * p_
     // Map Tile Data is an array of uint24, just read them as 3 x uint8
     // The tile records take all of the data in the object
     gbm_read_buf( p_gbm->map_tile_data.records, p_obj, p_obj->length_bytes);
+    p_gbm->map_tile_data.length_bytes = p_obj->length_bytes;
+
+    printf("----- DECODE MAP TILES -----\n");
+    gbm_map_tiles_print(p_gbm);
+
     return true;
 }
 
