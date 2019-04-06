@@ -35,6 +35,8 @@
 #define GBR_TILE_DATA_COLOR_SET_SIZE 4
 #define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOR_SET_SIZE
 
+#define GBR_TILE_DATA_MIN_TILE_BYTES  1024
+
 #define GBR_TILE_SETTINGS_SIZE        19
 #define GBR_TILE_SETTINGS_BOOKMARK_COUNT  3
 
@@ -130,6 +132,7 @@ typedef struct {
     uint8_t    color_set[GBR_TILE_DATA_COLOR_SET_SIZE];
     uint32_t   pal_data_size;
     uint32_t   tile_data_size;
+    uint16_t   padding_tile_count; // Used since GBTD has a 1024 pixel minimum for tile data (8x8x16, 32x32x1, etc) see: GBR_TILE_DATA_MIN_TILE_BYTES
 } gbr_tile_data;
 
 

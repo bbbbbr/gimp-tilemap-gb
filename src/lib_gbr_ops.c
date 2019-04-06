@@ -100,12 +100,13 @@ int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_i
 }
 
 
+// Copy pixels from an image into a tile sized slice of the tile list buffer
 int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index) {
 
     int32_t offset;
     int32_t tile_size;
 
-    // Find the starting of the tile in the tile list buffer
+    // Find the start of the tile in the tile list buffer
     tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
     //offset = (tile_size * (tile_index - 1));
 
@@ -136,6 +137,28 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
     }
 */
 
+    return true;
+}
+
+
+
+// Copy pixels from an image into a tile sized slice of the tile list buffer
+int32_t gbr_tile_set_buf_padding(gbr_record * p_gbr, uint16_t tile_index) {
+
+    int32_t offset;
+    int32_t tile_size;
+
+    // Find the start of the tile in the tile list buffer
+    tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
+    offset = (tile_size * tile_index);
+
+    // Make sure there is enough data for a complete tile in the source tile buffer
+    // TODO: better bounds checking here, matched to actual max tile size
+    if ((tile_size * tile_index) > PASCAL_OBJECT_MAX_SIZE)
+        return false;
+
+    // Fill the padding tile with zeros
+    memset(&(p_gbr->tile_data.tile_list[offset]), 0x00, tile_size);
     return true;
 }
 

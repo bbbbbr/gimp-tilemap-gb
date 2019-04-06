@@ -296,6 +296,28 @@ printf("tile pal:\n%d\n%d\n%d\n",
 }
 
 
+// Expects tile_size to be an even multiple of 1024 (which it should be)
+int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr) {
+
+    uint16_t tile_size;
+    uint16_t tile_total_size;
+    uint16_t padding_bytes;
+
+    tile_size       = p_gbr->tile_data.width * p_gbr->tile_data.width;
+    tile_total_size = tile_size * p_gbr->tile_data.count;
+
+    if (GBR_TILE_DATA_MIN_TILE_BYTES > tile_total_size) {
+
+        padding_bytes = (GBR_TILE_DATA_MIN_TILE_BYTES - tile_total_size);
+        p_gbr->tile_data.padding_tile_count = (padding_bytes / tile_size);
+    }
+    else
+        p_gbr->tile_data.padding_tile_count = 0; // No padding required
+
+      return true;
+}
+
+
 
 int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_image) {
 
@@ -305,6 +327,7 @@ int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_im
             p_gbr->tile_data.width  = 32;
             p_gbr->tile_data.height = 32;
             p_gbr->tile_data.count  = p_image->height / 32;
+
             if ((p_image->height % 32) != 0)
                 return false; // FAILED: export image must be even multiple of tile size
     }
@@ -313,6 +336,7 @@ int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_im
             p_gbr->tile_data.width  = 16;
             p_gbr->tile_data.height = 16;
             p_gbr->tile_data.count  = p_image->height / 16;
+
             if ((p_image->height % 16) != 0)
                 return false; // FAILED: export image must be even multiple of tile size
     }
@@ -358,6 +382,8 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
     if (!gbr_export_tileset_calc_dimensions(p_gbr, p_image))
         return false;
 
+    gbr_export_tileset_calc_tile_count_padding(p_gbr);
+
     if (p_image->p_img_data) {
 
         offset = 0;
@@ -375,6 +401,18 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
             offset += p_gbr->tile_data.width * p_gbr->tile_data.height * p_image->bytes_per_pixel;
         }
+
+
+        // Now add padding tiles to achieve the minimum required size
+        for (tile_id=p_gbr->tile_data.count; tile_id < (p_gbr->tile_data.count + p_gbr->tile_data.padding_tile_count); tile_id++) {
+            printf("PADDING EXPORT Tile:%d\n", tile_id);
+            if (!gbr_tile_set_buf_padding(p_gbr,
+                                          tile_id))
+                return false;
+        }
+
+        p_gbr->tile_data.count += p_gbr->tile_data.padding_tile_count;
+
         // TODO: should match offset?
         // Calculate final size..
         p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
