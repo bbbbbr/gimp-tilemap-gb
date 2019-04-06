@@ -36,6 +36,7 @@
 #define GBM_OBJECT_MAX_SIZE 65535 // This may not be true, it's just for convenience :)
 
 #define GBM_MAP_TILE_DATA_RECORDS_SIZE  GBM_OBJECT_MAX_SIZE
+#define GBM_MAP_TILE_DATA_PADDING_UNKNOWN 4800 - 2160 // TODO: what is this, and is it variable?
 
 #define GBM_MAP_PROP_NAME_SIZE 32
 
@@ -45,7 +46,7 @@
 #define GBM_MAP_SETTINGS_MIN_SIZE    29 + GBM_MAP_SETTINGS_BOOKMARK_SIZE
 
 #define GBM_MAP_PROP_COLORS_COLORS_COUNT 2
-#define GBM_MAP_PROP_COLORS_COLORS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 // uint24
+#define GBM_MAP_PROP_COLORS_COLORS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 * 4 // uint24?
 
 #define GBM_MAP_EXPORT_FILE_NAME_SIZE    255
 #define GBM_MAP_EXPORT_SECTION_NAME_SIZE 40
@@ -65,6 +66,9 @@
 #define GBM_MAP_TILE_FLIP_V   0x800000 //.23
 #define GBM_MAP_TILE_FLIP_H_BYTE   0x40 //.24
 #define GBM_MAP_TILE_FLIP_V_BYTE   0x80 //.24
+
+#define GBM_MAP_EXPORT_DELETED_1_SIZE 0x012C
+
 
 typedef struct {
     uint16_t num;
@@ -148,7 +152,7 @@ typedef struct {
     uint32_t  block_fill_width;
     uint32_t  block_fill_height;
 
-    // uint8_t   auto_update; // bool MAYBE NOTE PRESENT?
+    uint8_t   auto_update; // bool
 } gbm_map_settings;
 
 

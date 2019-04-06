@@ -397,7 +397,6 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 }
 
 
-
 int32_t gbr_export_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
 
     uint16_t pal_index;

@@ -130,13 +130,8 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
                 break;
 
             case EXPORT_FORMAT_GBM:
-                status = tilemap_export_process(&app_image);
-                printf("(gbm) tilemap_export_process: status= %d\n", status);
-
-                if (status)
-                    // TODO:
-                    // Get processed Map tile set and map array
-                    // status = gbm_save(filename, image_mode);
+                // Get processed Map tile set and map array
+                status = gbm_save(filename, &app_image, &app_colors);
                 printf("gbm_save: status= %d\n", status);
                 break;
         }

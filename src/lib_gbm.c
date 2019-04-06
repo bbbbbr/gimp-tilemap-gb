@@ -7,11 +7,15 @@
 #include "lib_gbm_import.h"
 #include "lib_gbm_export.h"
 #include "lib_gbm_file_utils.h"
+#include "lib_gbm_ops.h"
+
+#include "lib_gbr.h"
+#include "lib_gbr_export.h"
+
+#include "lib_tilemap.h"
+#include "tilemap_path_ops.h"
 
 #include "image_info.h"
-#include "lib_gbr.h"
-
-#include "tilemap_path_ops.h"
 
 static image_data image;
 static color_data colors;
@@ -63,6 +67,7 @@ int32_t gbm_load(const int8_t * filename) {
 
         // Render the image from the loaded data
         // TODO: The use of p_gbr here is crossing some boundaries that maybe shouldn't be
+        // Consider just passing the tiles converted into an image
         if (status)
             status = gbm_convert_map_to_image(&gbm, p_gbr, &image);
    }
@@ -84,21 +89,75 @@ int32_t gbm_load(const int8_t * filename) {
 int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors) {
 
     int32_t status;
-/*
-    // Initialize shared GBR structure with defaults
-    gbr_export_set_defaults(&gbr);
+    tile_map_data * p_map;
+    tile_set_data * p_tile_set;
+    image_data      tile_set_deduped_image;
 
-    // TODO: check
-    // TODO: MIN 16 tiles required in file?
-    // Convert the image data to tiles
-    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors);
+    gbr_record      gbr;
 
-    // Load and parse the file
-    if (status)
-        status = gbr_save_file(filename);
-*/
+    status = tilemap_export_process(p_src_image);
+printf("(gbm) tilemap_export_process: status= %d\n", status);
+
+    if (status) {
+
+        // == IMAGE -> MAP + TILE SET CONVERSION ==
+
+        // Retrieve the deduplicated map and tile set
+        p_map      = tilemap_get_map();
+        p_tile_set = tilemap_get_tile_set();
+        status     = tilemap_get_image_of_deduped_tile_set(&tile_set_deduped_image);
+printf("(gbm) tilemap_get_image_of_deduped_tile_set: status= %d\n", status);
+
+        if (p_map && p_tile_set && status) {
+
+            // == EXPORT TILE SET AS GBR ==
+            char gbr_path[STR_FILENAME_MAX];
+            snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  filename, ".tiles.gbr");
+printf("calling gbr save:%s:\n", gbr_path);
+            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors);
+printf("(gbm) gbr_save_file: status= %d\n", status);
+
+            if (status) {
+                // == EXPORT MAP AS GBM ==
+
+                // Initialize shared GBM map structure with defaults
+                gbm_export_set_defaults(&gbm);
+
+                // Set GBR tile file name for the GBM file to use (exported above)
+                snprintf(gbm.map.tile_file, GBM_MAP_TILE_FILE_SIZE, "%s", get_filename_from_path(gbr_path));
+
+                // Set tile map parameters, then convert the image to a map
+                gbm.map.width      = p_map->width_in_tiles;
+                gbm.map.height     = p_map->height_in_tiles;
+                gbm.map.tile_count = p_tile_set->tile_count;
+                gbm.map_tile_data.length_bytes = gbm.map.width * gbm.map.height * GBM_MAP_TILE_RECORD_SIZE;
+
+                if (gbm.map_tile_data.length_bytes > GBM_MAP_TILE_DATA_RECORDS_SIZE)
+                    status = false;
+
+                status = gbm_convert_tilemap_buf_to_map(&gbm, p_map->tile_id_list, p_map->size);
+printf("(gbm) gbm_convert_image_to_map: status= %d\n", status);
+
+printf("gbm_save_file\n");
+                if (status) {
+                    status = gbm_save_file(filename);
+
+                    printf("(gbm) gbm_save_file: status= %d\n", status);
+                }
+            }
+
+        } else
+            status = false;
+    }
+
+printf("(gbm) gbm_save_file END: status= %d\n", status);
+
+    // Free temp composite image of tiles
+    if (tile_set_deduped_image.p_img_data)
+        free(tile_set_deduped_image.p_img_data);
+
     return status;
-};
+}
 
 
 
@@ -224,6 +283,9 @@ int32_t gbm_save_file(const int8_t * filename) {
                 if (status) status = gbm_object_map_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
+                if (status) status = gbm_object_map_deleted_1_encode(&gbm, &obj);
+                    if (status) status = gbm_write_object_to_file(&obj, p_file);
+
                 if (status) status = gbm_object_map_prop_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
@@ -242,11 +304,11 @@ int32_t gbm_save_file(const int8_t * filename) {
                 if (status) status = gbm_object_map_export_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                    // TODO : map_tile_data rename and move up
                 if (status) status = gbm_object_tile_data_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
-                    /// TODO: gbm_obj_map_export_prop
+                if (status) status = gbm_object_map_export_prop_encode(&gbm, &obj);
+                    if (status) status = gbm_write_object_to_file(&obj, p_file);
 
             } // end: if gbm_write_version
         } // end: if gbm_write_header_key
@@ -303,6 +365,8 @@ void gbm_free_resources(void) {
 
     // Free any resources of the tile file used when loading the map
     gbr_free_resources();
+
+    tilemap_free_resources();
 };
 
 

@@ -36,9 +36,10 @@ int tilemap_initialize(image_data * p_src_img) {
     // width x height in tiles (if every map tile is unique)
     tile_map.size = (tile_map.width_in_tiles * tile_map.height_in_tiles);
 
-    tile_map.p_data = malloc(tile_map.size * sizeof(int32_t));
+    //tile_map.tile_id_list = malloc(tile_map.size * sizeof(int32_t)); // Why was this uint32_t?
+    tile_map.tile_id_list = malloc(tile_map.size);
 
-    if (!tile_map.p_data)
+    if (!tile_map.tile_id_list)
             return(false);
 
 
@@ -138,16 +139,16 @@ unsigned char process_tiles(image_data * p_src_img) {
                 int32_t test;
                 test = tile_id;
 
-                tile_map.p_data[map_slot] = test; // = tile_id; // TODO: IMPORTANT, SOMETHING IS VERY WRONG
+                tile_map.tile_id_list[map_slot] = test; // = tile_id; // TODO: IMPORTANT, SOMETHING IS VERY WRONG
 
-// printf("Map Slot %d: tile_id=%d tilemap[]=%d, %08lx\n",map_slot, tile_id, tile_map.p_data[map_slot], tile.hash);
+// printf("Map Slot %d: tile_id=%d tilemap[]=%d, %08lx\n",map_slot, tile_id, tile_map.tile_id_list[map_slot], tile.hash);
                 map_slot++;
             }
         }
 
     } else { // else if (tile.p_img_raw) {
-        if (tile_map.p_data)
-            free(tile_map.p_data);
+        if (tile_map.tile_id_list)
+            free(tile_map.tile_id_list);
         return (false); // Failed to allocate buffer, exit
     }
 
@@ -185,8 +186,8 @@ void tilemap_free_resources() {
     }
 
     // Free tile map data
-    if (tile_map.p_data)
-        free(tile_map.p_data);
+    if (tile_map.tile_id_list)
+        free(tile_map.tile_id_list);
 
 }
 
@@ -199,4 +200,74 @@ int32_t tilemap_save(const int8_t * filename, uint32_t export_format) {
                            export_format,
                            &tile_map,
                            &tile_set) );
+}
+
+
+
+tile_map_data * tilemap_get_map(void) {
+    return (&tile_map);
+}
+
+
+
+tile_set_data * tilemap_get_tile_set(void) {
+    return (&tile_set);
+}
+
+
+
+// TODO: Consider moving this to a different location
+//
+// Returns an image which is a composite of all the
+// tiles in a tile map, in order.
+int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
+
+    uint32_t c;
+    uint32_t img_offset;
+
+    // Set up image to store deduplicated tile set
+    p_img->width  = tile_map.tile_width;
+    p_img->height = tile_map.tile_height * tile_set.tile_count;
+    p_img->size   = tile_set.tile_size   * tile_set.tile_count;
+    p_img->bytes_per_pixel = tile_set.tile_bytes_per_pixel;
+
+printf("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
+    // Allocate a buffer for the image
+    p_img->p_img_data = malloc(p_img->size);
+
+    if (p_img->p_img_data) {
+
+        img_offset = 0;
+
+        for (c = 0; c < tile_set.tile_count; c++) {
+
+            if (tile_set.tiles[c].p_img_raw) {
+                // Copy from the tile's raw image buffer (indexed)
+                // into the composite image
+
+tile_print_buffer_raw(tile_set.tiles[c]); // TODO: remove
+
+                memcpy(p_img->p_img_data + img_offset,
+                       tile_set.tiles[c].p_img_raw,
+                       tile_set.tile_size);
+            }
+            else
+                return false;
+
+            img_offset += tile_set.tile_size;
+        }
+    }
+    else
+        return false;
+
+    printf("== TILEMAP -> IMG COPIED BUFF\n");
+
+    // Iterate over each tile, top -> bottom, left -> right
+    for (c = 0; c < p_img->size; c++) {
+        printf(" %2x", *(p_img->p_img_data + c));
+        if ((c % 8) ==0) printf("\n");
+    }
+    printf(" \n");
+
+    return true;
 }

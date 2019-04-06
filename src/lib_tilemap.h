@@ -54,7 +54,7 @@
         uint16_t map_width;
         uint16_t map_height;
         uint32_t size;
-        int32_t * p_data; // TODO: rename tile_id_list
+        uint8_t * tile_id_list; // TODO: this was int32_t .. WHY?
     } tile_map_data;
 
 
@@ -88,7 +88,10 @@
     int32_t        tilemap_initialize(image_data * p_src_img);
     int32_t        tilemap_save(const int8_t * filename, uint32_t export_format);
 
+    tile_map_data * tilemap_get_map(void);
+    tile_set_data * tilemap_get_tile_set(void);
 
+    int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img);
 
 #endif // LIB_TILEMAP_HEADER
 

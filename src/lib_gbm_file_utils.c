@@ -63,32 +63,32 @@ int32_t gbm_write_version(FILE * p_file) {
 
 
 
-int32_t gbm_read_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
+int32_t gbm_read_object_from_file(gbm_file_object * p_obj, FILE * p_file) {
 
 // printf("ftell: %ld\n", ftell(p_file));
 
     // Read in the object properties, and then it's data buffer
-    if ((fread(g_obj->marker,                   sizeof(g_obj->marker),       1, p_file))
-        && (0 == strncmp(g_obj->marker, gbm_object_marker, sizeof(g_obj->marker))))
-        if (fread(&(g_obj->id),                   sizeof(g_obj->id),            1, p_file))
-            if (fread(&(g_obj->object_id),         sizeof(g_obj->object_id),      1, p_file))
-                if (fread(&(g_obj->master_id),      sizeof(g_obj->master_id),       1, p_file))
-                    if (fread(&(g_obj->crc),         sizeof(g_obj->crc),             1, p_file))
-                        if (fread(&(g_obj->length_bytes), sizeof(g_obj->length_bytes), 1, p_file)
-                            && (g_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
-                            if (g_obj->length_bytes == 0) {
-//                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
-                                g_obj->offset = 0;
+    if ((fread(p_obj->marker,                   sizeof(p_obj->marker),       1, p_file))
+        && (0 == strncmp(p_obj->marker, gbm_object_marker, sizeof(p_obj->marker))))
+        if (fread(&(p_obj->id),                   sizeof(p_obj->id),            1, p_file))
+            if (fread(&(p_obj->object_id),         sizeof(p_obj->object_id),      1, p_file))
+                if (fread(&(p_obj->master_id),      sizeof(p_obj->master_id),       1, p_file))
+                    if (fread(&(p_obj->crc),         sizeof(p_obj->crc),             1, p_file))
+                        if (fread(&(p_obj->length_bytes), sizeof(p_obj->length_bytes), 1, p_file)
+                            && (p_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
+                            if (p_obj->length_bytes == 0) {
+//                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+                                p_obj->offset = 0;
                                 return true;
                             }
-                            else if (fread(g_obj->p_data,          g_obj->length_bytes,         1, p_file)) {
-//                                printf("GBM TRUE type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
-                                g_obj->offset = 0;
+                            else if (fread(p_obj->p_data,          p_obj->length_bytes,         1, p_file)) {
+//                                printf("GBM TRUE type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+                                p_obj->offset = 0;
                                 return true;
                             }
     printf("ftell: %ld\n", ftell(p_file));
 
-    printf("GBM FALSE type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
+    printf("GBM FALSE type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
 
     // If all the above reads didn't complete then signal failure
     return false;
@@ -96,28 +96,25 @@ int32_t gbm_read_object_from_file(gbm_file_object * g_obj, FILE * p_file) {
 
 
 
-int32_t gbm_write_object_to_file(gbm_file_object * g_obj, FILE * p_file) {
+int32_t gbm_write_object_to_file(gbm_file_object * p_obj, FILE * p_file) {
+
+    p_obj-> crc = 0x00; // Always zero
 
     // Read in the object properties, and then it's data buffer
-    if (fwrite(&(gbm_object_marker[0]),           sizeof(g_obj->marker),       1, p_file))
-        if (fwrite(&(g_obj->id),                   sizeof(g_obj->id),            1, p_file))
-            if (fwrite(&(g_obj->object_id),         sizeof(g_obj->object_id),      1, p_file))
-                if (fwrite(&(g_obj->master_id),      sizeof(g_obj->master_id),       1, p_file))
-                    if (fwrite(&(g_obj->crc),         sizeof(g_obj->crc),             1, p_file))
-                        if (fwrite(&(g_obj->length_bytes), sizeof(g_obj->length_bytes), 1, p_file)
-                            && (g_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
-                            if (g_obj->length_bytes == 0) {
-//                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
-                                g_obj->offset = 0;
-                                return true;
-                            }
-                            else if (fwrite(g_obj->p_data,          g_obj->length_bytes,         1, p_file)) {
-//                                printf("GBM WROTE type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
-                                g_obj->offset = 0;
+    if (fwrite(&(gbm_object_marker[0]),           sizeof(p_obj->marker),       1, p_file))
+        if (fwrite(&(p_obj->id),                   sizeof(p_obj->id),            1, p_file))
+            if (fwrite(&(p_obj->object_id),         sizeof(p_obj->object_id),      1, p_file))
+                if (fwrite(&(p_obj->master_id),      sizeof(p_obj->master_id),       1, p_file))
+                    if (fwrite(&(p_obj->crc),         sizeof(p_obj->crc),             1, p_file))
+                        if (fwrite(&(p_obj->length_bytes), sizeof(p_obj->length_bytes), 1, p_file)
+                            && (p_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
+                            if ((fwrite(p_obj->p_data, p_obj->length_bytes, 1, p_file))
+                                || (p_obj->length_bytes == 0)) {
+//                                printf("GBM WROTE type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
                                 return true;
                             }
 
-    printf("GBM FALSE type=%x, id=%x, size=%x\n", g_obj->id, g_obj->object_id, g_obj->length_bytes);
+    printf("GBM FALSE id=%x, object_id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
 
     // If all the above reads didn't complete then signal failure
     return false;
@@ -157,7 +154,7 @@ void gbm_read_uint32(uint32_t * p_dest_val, gbm_file_object * p_obj) {
     memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint32_t));
     p_obj->offset += sizeof(uint32_t);
 
-    printf("gbm_read_uint32 @ %d\n", p_obj->offset);
+    printf("gbm_read_uint32 @ %d=%d\n", p_obj->offset, *p_dest_val);
 }
 
 
@@ -166,7 +163,7 @@ void gbm_read_uint16(uint16_t * p_dest_val, gbm_file_object * p_obj) {
     memcpy(p_dest_val, &p_obj->p_data[ p_obj->offset ], sizeof(uint16_t));
     p_obj->offset += sizeof(uint16_t);
 
-    printf("gbm_read_uint16 @ %d\n", p_obj->offset);
+    printf("gbm_read_uint16 @ %d=%d\n", p_obj->offset, *p_dest_val);
 }
 
 
@@ -175,7 +172,7 @@ void gbm_read_uint8(uint8_t * p_dest_val, gbm_file_object * p_obj) {
     *p_dest_val = p_obj->p_data[ p_obj->offset ];
     p_obj->offset += sizeof(uint8_t);
 
-    printf("gbm_read_uint8 @ %d\n", p_obj->offset);
+    printf("gbm_read_uint8 @ %d=%d\n", p_obj->offset, *p_dest_val);
 }
 
 
@@ -184,7 +181,7 @@ void gbm_read_bool(uint8_t * p_dest_val, gbm_file_object * p_obj) {
     *p_dest_val = p_obj->p_data[ p_obj->offset ] & 0x01;
     p_obj->offset += sizeof(uint8_t);
 
-    printf("gbm_read_bool @ %d\n", p_obj->offset);
+    printf("gbm_read_bool @ %d=%d\n", p_obj->offset, *p_dest_val);
 }
 
 
@@ -239,7 +236,7 @@ void gbm_write_uint32(uint32_t * p_src_val, gbm_file_object * p_obj) {
     p_obj->offset += sizeof(uint32_t);
     p_obj->length_bytes = p_obj->offset;
 
-    printf("gbm_write_uint32 @ %d\n", p_obj->offset);
+    printf("gbm_write_uint32 @ %d=%d\n", p_obj->offset, *p_src_val);
 }
 
 
@@ -249,7 +246,7 @@ void gbm_write_uint16(uint16_t * p_src_val, gbm_file_object * p_obj) {
     p_obj->offset += sizeof(uint16_t);
     p_obj->length_bytes = p_obj->offset;
 
-    printf("gbm_write_uint16 @ %d\n", p_obj->offset);
+    printf("gbm_write_uint16 @ %d=%d\n", p_obj->offset, *p_src_val);
 }
 
 
@@ -259,7 +256,7 @@ void gbm_write_uint8(uint8_t * p_src_val, gbm_file_object * p_obj) {
     p_obj->offset += sizeof(uint8_t);
     p_obj->length_bytes = p_obj->offset;
 
-    printf("gbm_write_uint8 @ %d\n", p_obj->offset);
+    printf("gbm_write_uint8 @ %d=%d\n", p_obj->offset, *p_src_val);
 }
 
 
@@ -269,5 +266,7 @@ void gbm_write_bool(uint8_t * p_src_val, gbm_file_object * p_obj) {
     p_obj->offset += sizeof(uint8_t);
     p_obj->length_bytes = p_obj->offset;
 
-    printf("gbm_write_bool @ %d\n", p_obj->offset);
+    printf("gbm_write_bool @ %d=%d\n", p_obj->offset, *p_src_val);
 }
+
+
