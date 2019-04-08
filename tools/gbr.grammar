@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.17">
+    <grammar name="GBR Game Boy Tile Designer" start="id:2351">
+        <structure name="GBR File" id="2351" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <structure name="Header" id="2352">
+                <string name="Header Key" mustmatch="yes" id="2454" type="fixed-length" length="3">
+                    <fixedvalues>
+                        <fixedvalue name="" value="GBO"/>
+                    </fixedvalues>
+                </string>
+                <string name="Version" id="2455" type="fixed-length" length="1"/>
+            </structure>
+            <structure name="Records" id="2354" repeatmax="-1" order="variable">
+                <structref name="Producer" id="2356" repeatmin="0" structure="id:2355"/>
+                <structref name="Tile Data" id="2358" repeatmin="0" structure="id:2357"/>
+                <structref name="Tile Settings" id="2360" repeatmin="0" structure="id:2359"/>
+                <structref name="Tile Export" id="2362" repeatmin="0" structure="id:2361"/>
+                <structref name="Tile Import" id="2364" repeatmin="0" structure="id:2363"/>
+                <structref name="Palettes" id="2366" repeatmin="0" structure="id:2365"/>
+                <structref name="Tile Pal" id="2368" repeatmin="0" structure="id:2367"/>
+                <structref name="Deleted" id="2370" repeatmin="0" repeatmax="10" structure="id:2369"/>
+            </structure>
+        </structure>
+        <structure name="GBR Record" id="2373" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <number name="type" id="2374" type="integer" length="2"/>
+            <number name="id" id="2375" type="integer" length="2"/>
+            <number name="length_bytes" id="2376" type="integer" length="4"/>
+            <structure name="Data" id="2377" length="length_bytes"/>
+        </structure>
+        <structure name="Rec Producer" id="2355" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2380" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="1"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="2381">
+                <string name="name" id="2384" type="fixed-length" length="30"/>
+                <string name="version" id="2385" type="fixed-length" length="10"/>
+                <string name="info" id="2386" type="fixed-length" length="80"/>
+            </structure>
+        </structure>
+        <structure name="Rec Tile Data" id="2357" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2389" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="2"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="2390">
+                <string name="name" id="2393" type="fixed-length" length="30"/>
+                <number name="tile_width" id="2394" type="integer" length="2"/>
+                <number name="tile_height" id="2395" type="integer" length="2"/>
+                <number name="tile_count" id="2396" type="integer" length="2"/>
+                <binary name="color_set" id="2397" length="4"/>
+                <scriptelement name="tile_list_size_bytes" id="2398">
+                    <script name="unnamed" type="Generic">
+                        <source language="Python"># Get current results so far
+results = currentMapper.getCurrentResults()
+
+# Get Map width and height in tiles
+tile_widthResult= results.getResultByName(&quot;tile_width&quot;)
+tile_widthValue = tile_widthResult.getValue()
+tile_width = tile_widthValue.getUnsignedNumber()
+
+tile_heightResult= results.getResultByName(&quot;tile_height&quot;)
+tile_heightValue = tile_heightResult.getValue()
+tile_height = tile_heightValue.getUnsignedNumber()
+
+tile_countResult= results.getResultByName(&quot;tile_count&quot;)
+tile_countValue = tile_countResult.getValue()
+tile_count = tile_countValue.getUnsignedNumber()
+
+
+# calculate map size in byes
+tile_size_bytes = tile_width * tile_height * tile_count
+
+
+value = Value()
+value.setUnsigned(tile_size_bytes)
+
+element = Element(ELEMENT_NUMBER, &quot;tile_list_size_bytes&quot;, True)
+# add element with value to results
+results.addElement(element, 0, 0, value)</source>
+                    </script>
+                </scriptelement>
+                <binary name="tile_list" id="2399" length="tile_list_size_bytes"/>
+            </structure>
+        </structure>
+        <structure name="Rec Tile Settings" id="2359" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2402" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="3"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="2403">
+                <number name="tile_id" id="2406" type="integer" length="2"/>
+                <number name="simple" id="2407" type="integer" length="1"/>
+                <number name="flags" id="2408" type="integer" length="1"/>
+                <number name="left_color" id="2409" type="integer" length="1"/>
+                <number name="right_color" id="2410" type="integer" length="1"/>
+                <number name="split_width" id="2411" type="integer" length="2"/>
+                <number name="split_height" id="2412" type="integer" length="2"/>
+                <number name="split_order" id="2413" type="integer" length="1"/>
+                <number name="color_set" id="2414" type="integer" length="1"/>
+                <number name="bookmarks" id="2415" type="integer" length="6"/>
+                <number name="auto_update" id="2416" type="integer" length="1"/>
+            </structure>
+        </structure>
+        <structure name="Rec Tile Export" id="2361" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2419" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="4"/>
+                </fixedvalues>
+            </number>
+        </structure>
+        <structure name="Rec Tile Import" id="2363" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2425" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="5"/>
+                </fixedvalues>
+            </number>
+        </structure>
+        <structure name="Rec Palettes" id="2365" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2431" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="13"/>
+                </fixedvalues>
+            </number>
+        </structure>
+        <structure name="Rec Tile Pal" id="2367" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2437" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="14"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="2438">
+                <number name="id" id="2441" type="integer" length="2"/>
+                <number name="count" id="2442" type="integer" length="2"/>
+                <scriptelement name="color_set_length" id="2456">
+                    <script name="unnamed">
+                        <source language="Python"># Get current results so far
+results = currentMapper.getCurrentResults()
+
+tile_countResult= results.getResultByName(&quot;tile_count&quot;)
+tile_countValue = tile_countResult.getValue()
+tile_count = tile_countValue.getUnsignedNumber()
+
+
+# calculate color pal size in byes
+color_set_length_bytes = tile_count * 4
+
+
+value = Value()
+value.setUnsigned(color_set_length_bytes)
+
+element = Element(ELEMENT_NUMBER, &quot;color_set_length&quot;, True)
+# add element with value to results
+results.addElement(element, 0, 0, value)</source>
+                    </script>
+                </scriptelement>
+                <binary name="color_set" id="2443" length="color_set_length"/>
+                <number name="sgb_count" id="2444" type="integer" length="2"/>
+                <binary name="sgb_color_set" id="2445" length="color_set_length"/>
+                <binary name="Unknown Padding 8 " id="2458" length="8"/>
+            </structure>
+        </structure>
+        <structure name="Rec Deleted" id="2369" extends="id:2373">
+            <number name="type" mustmatch="yes" id="2448" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="" value="255"/>
+                </fixedvalues>
+            </number>
+        </structure>
+    </grammar>
+</ufwb>
