@@ -55,7 +55,7 @@
 #define GBM_MAP_EXPORT_SIZE 19 + GBM_MAP_EXPORT_FILE_NAME_SIZE + GBM_MAP_EXPORT_SECTION_NAME_SIZE + GBM_MAP_EXPORT_LABEL_NAME_SIZE
 
 #define GBM_MAP_EXPORT_PROPS_COUNT 2  // It's possible this should be larger
-#define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 // uint24
+#define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 4 // Maybe uint32? // 3 // uint24
 
 
 #define GBM_MAP_TILE_RECORD_SIZE  3 // 24 bits per record
@@ -68,6 +68,7 @@
 #define GBM_MAP_TILE_FLIP_V_BYTE   0x80 //.24
 
 #define GBM_MAP_EXPORT_DELETED_1_SIZE 0x012C
+#define GBM_MAP_EXPORT_DELETED_2_SIZE 0x0
 
 
 typedef struct {
@@ -108,12 +109,14 @@ typedef struct {
     int8_t   tile_file[GBM_MAP_TILE_FILE_SIZE];
     uint32_t tile_count;
     uint32_t prop_color_count;
+    // End of native structure
 } gbm_map;
 
 
 typedef struct {
-    uint32_t  length_bytes;
     uint8_t   records[GBM_MAP_TILE_DATA_RECORDS_SIZE];  // uint24
+    // End of native structure
+    uint32_t  length_bytes;
 } gbm_map_tile_data;
 
 
@@ -185,7 +188,7 @@ typedef struct {
 
 
 typedef struct {
-    uint8_t   props[GBM_MAP_EXPORT_PROPS_SIZE];  // uint24
+    uint8_t   props[GBM_MAP_EXPORT_PROPS_SIZE];  // uint24? uint32?
 } gbm_map_export_prop;
 
 

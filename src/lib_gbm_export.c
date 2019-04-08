@@ -73,6 +73,18 @@ int32_t gbm_object_map_deleted_1_encode(gbm_record * p_gbm, gbm_file_object * p_
 }
 
 
+int32_t gbm_object_map_deleted_2_encode(gbm_record * p_gbm, gbm_file_object * p_obj) {
+
+    p_obj->length_bytes = 0;
+    p_obj->offset    = 0;
+    p_obj->id        = gbm_obj_deleted;
+    p_obj->object_id = 9 ; // TODO: this should probably increment on write instead of being hardwired
+    p_obj->master_id = 8;
+
+    gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_DELETED_2_SIZE);
+    return true;
+}
+
 
 int32_t gbm_object_map_prop_encode(gbm_record * p_gbm, gbm_file_object * p_obj) {
 
@@ -224,7 +236,7 @@ int32_t gbm_object_map_export_prop_encode(gbm_record * p_gbm, gbm_file_object * 
     p_obj->offset    = 0;
     p_obj->id        = gbm_obj_map_export_prop;
     p_obj->object_id = 9; // TODO: this should probably increment on write instead of being hardwired
-    p_obj->master_id = 1;
+    p_obj->master_id = 8;
 
     // TODO: figure this out
     gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_PROPS_SIZE);
@@ -238,7 +250,7 @@ int32_t gbm_object_tile_data_encode(gbm_record * p_gbm, gbm_file_object * p_obj)
     p_obj->length_bytes = 0;
     p_obj->offset    = 0;
     p_obj->id        = gbm_obj_map_tile_data;
-    p_obj->object_id = 10; // TODO: this should probably increment on write instead of being hardwired
+    p_obj->object_id = 2; // TODO: this should probably increment on write instead of being hardwired
     p_obj->master_id = 1;
 
     // Map Tile Data is an array of uint24, just read them as 3 x uint8
@@ -324,7 +336,7 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
     p_gbm->map_settings.block_fill_width   = 1;
     p_gbm->map_settings.block_fill_height  = 1;
 
-    p_gbm->map_settings.auto_update        = 1;
+    p_gbm->map_settings.auto_update        = 0;
 
 
     // MAP PROP COLORS
@@ -338,8 +350,8 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
 
     snprintf(p_gbm->map_export.file_name,      GBM_MAP_EXPORT_FILE_NAME_SIZE, "map.c");
     p_gbm->map_export.file_type = 3; // TODO: make a #define for this?
-    snprintf(p_gbm->map_export.section_name,      GBM_MAP_EXPORT_SECTION_NAME_SIZE, "map");
-    snprintf(p_gbm->map_export.label_name,      GBM_MAP_EXPORT_LABEL_NAME_SIZE, "e1_1");
+    // snprintf(p_gbm->map_export.section_name,      GBM_MAP_EXPORT_SECTION_NAME_SIZE, ""); // Section name is blank
+    snprintf(p_gbm->map_export.label_name,      GBM_MAP_EXPORT_LABEL_NAME_SIZE, "map%ce1_1", '\0');
     p_gbm->map_export.bank      = 0; // TODO: make a #define for this? Different default bank?
 
     p_gbm->map_export.plane_count = 1;

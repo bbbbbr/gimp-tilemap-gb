@@ -304,6 +304,9 @@ int32_t gbm_save_file(const int8_t * filename) {
                 if (status) status = gbm_object_map_export_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
+                if (status) status = gbm_object_map_deleted_2_encode(&gbm, &obj);
+                    if (status) status = gbm_write_object_to_file(&obj, p_file);
+
                 if (status) status = gbm_object_tile_data_encode(&gbm, &obj);
                     if (status) status = gbm_write_object_to_file(&obj, p_file);
 
