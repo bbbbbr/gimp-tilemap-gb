@@ -35,7 +35,7 @@ int32_t get_path_without_filename(const char * path, char * path_only, uint32_t 
         if (path[i] == '/') {
 
             memcpy(path_only, path, i+1 );
-            path_only[i+2] = '\0';
+            path_only[i+1] = '\0';
             return true;
         }
     }
