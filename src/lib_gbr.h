@@ -58,8 +58,7 @@
 #define GBR_PALETTES_SIZE_MIN 6
 #define GBR_TILE_PAL_SIZE_MIN 6
 
-#define GBR_TILE_PAL_ACTUAL_SIZE 512
-#define GBR_TILE_PAL_UNKNOWN_PADDING 6
+#define GBR_TILE_PAL_UNKNOWN_PADDING 8
 
 #define GBR_COL_MAX 0xF8
 
@@ -126,10 +125,11 @@ typedef struct {
     uint16_t   width;
     uint16_t   height;
     uint16_t   count;
+    uint8_t    color_set[GBR_TILE_DATA_COLOR_SET_SIZE];
                // tile_list: packed arrays width * height * count.
                //            width & height can be up to 32 x 32 (0..31)
     uint8_t    tile_list[PASCAL_OBJECT_MAX_SIZE];
-    uint8_t    color_set[GBR_TILE_DATA_COLOR_SET_SIZE];
+    // End of native structure
     uint32_t   pal_data_size;
     uint32_t   tile_data_size;
     uint16_t   padding_tile_count; // Used since GBTD has a 1024 pixel minimum for tile data (8x8x16, 32x32x1, etc) see: GBR_TILE_DATA_MIN_TILE_BYTES
@@ -207,6 +207,9 @@ typedef struct {
     uint8_t   color_set[PASCAL_OBJECT_MAX_SIZE];
     uint16_t  sgb_count;
     uint8_t   sgb_color_set[PASCAL_OBJECT_MAX_SIZE];
+    // End of native structure
+    uint16_t  color_set_size_bytes;
+    uint16_t  sgb_color_set_size_bytes;
 } gbr_tile_pal;
 
 

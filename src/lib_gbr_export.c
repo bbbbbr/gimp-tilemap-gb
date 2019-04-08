@@ -47,6 +47,7 @@ int32_t gbr_object_producer_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
 //    if (p_obj->length_bytes > GBR_PRODUCER_SIZE)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_producer;
     p_obj->id     = 0; // TODO: this should probably increment on write instead of being hardwired
@@ -73,6 +74,7 @@ int32_t gbr_object_tile_data_encode(gbr_record * p_gbr, gbr_file_object * p_obj)
 //    if (p_obj->length_bytes < GBR_TILE_DATA_SIZE_MIN)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_tile_data;
     p_obj->id     = 1;
@@ -91,13 +93,13 @@ int32_t gbr_object_tile_data_encode(gbr_record * p_gbr, gbr_file_object * p_obj)
     // If tile count/data size was less than 8192, pad it out
     // Since GBTD seems to write a record of that size
     // regardless of how many actual tiles are stored
-    #define GBR_TILE_DATA_RECORD_MAX 8192
+//    #define GBR_TILE_DATA_RECORD_MAX 8192
     /*
     gbr_write_buf   (p_gbr->tile_data.tile_list[p_gbr->tile_data.tile_data_size],
                      p_obj,
                      (GBR_TILE_DATA_RECORD_MAX - p_gbr->tile_data.tile_data_size));
     */
-    gbr_write_padding(p_obj, (GBR_TILE_DATA_RECORD_MAX - p_gbr->tile_data.tile_data_size));
+//    gbr_write_padding(p_obj, (GBR_TILE_DATA_RECORD_MAX - p_gbr->tile_data.tile_data_size));
 
 
 
@@ -123,6 +125,7 @@ int32_t gbr_object_tile_settings_encode(gbr_record * p_gbr, gbr_file_object * p_
 //    if (p_obj->length_bytes != GBR_TILE_SETTINGS_SIZE)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_tile_settings;
     p_obj->id     = 2;
@@ -162,6 +165,7 @@ int32_t gbr_object_tile_export_encode(gbr_record * p_gbr, gbr_file_object * p_ob
 //    if (p_obj->length_bytes != GBR_TILE_EXPORT_SIZE)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_tile_export;
     p_obj->id     = 3;
@@ -206,6 +210,7 @@ int32_t gbr_object_tile_import_encode(gbr_record * p_gbr, gbr_file_object * p_ob
 //    if (p_obj->length_bytes != GBR_TILE_IMPORT_SIZE)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_tile_import;
     p_obj->id     = 4;
@@ -240,6 +245,7 @@ int32_t gbr_object_palettes_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
 //    if (p_obj->length_bytes < GBR_PALETTES_SIZE_MIN)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_palettes;
     p_obj->id     = 5;
@@ -265,27 +271,27 @@ int32_t gbr_object_tile_pal_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
 //    if (p_obj->length_bytes < GBR_TILE_PAL_SIZE_MIN)
 //        return false;
 
+    p_obj->length_bytes = 0;
     p_obj->offset = 0;
     p_obj->type   = gbr_obj_tile_pal;
     p_obj->id     = 6;
+
+    p_gbr->tile_pal.count     = p_gbr->tile_data.count;
+    p_gbr->tile_pal.sgb_count = p_gbr->tile_data.count;
 
     gbr_write_uint16(&p_gbr->tile_pal.id,            p_obj);
     // It's supposed to be tile_pal_count * array of 16 bit ints
     // but instead it seems to be * array of 32 bit ints x count
     gbr_write_uint16(&p_gbr->tile_pal.count,         p_obj);
     // TODO: Is this padding actually necessary? It only shows up in some versions
-    gbr_write_buf   ( p_gbr->tile_pal.color_set,     p_obj, p_gbr->tile_pal.count * (sizeof(uint16_t) * 2));
-    gbr_write_padding(p_obj, GBR_TILE_PAL_ACTUAL_SIZE
-                             - (p_gbr->tile_pal.count * (sizeof(uint16_t) * 2)) );
+    gbr_write_buf   ( p_gbr->tile_pal.color_set,     p_obj, p_gbr->tile_pal.count * sizeof(uint16_t) * 2);
 
     gbr_write_uint16(&p_gbr->tile_pal.sgb_count,     p_obj);
-    gbr_write_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2));
-    gbr_write_padding(p_obj, GBR_TILE_PAL_ACTUAL_SIZE
-                             - (p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2)) );
+    gbr_write_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, p_gbr->tile_pal.sgb_count * sizeof(uint16_t) * 2);
 
     // Add the padding amount to fill out the size
     // Not sure where this comes from
-    // gbr_write_padding(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
+    gbr_write_padding(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
 
 printf("tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,
@@ -299,20 +305,39 @@ printf("tile pal:\n%d\n%d\n%d\n",
 // Expects tile_size to be an even multiple of 1024 (which it should be)
 int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr) {
 
-    uint16_t tile_size;
-    uint16_t tile_total_size;
+    uint16_t tile_size_bytes;
+    uint16_t tile_buf_size_current;
+    uint16_t tile_buf_size_new;
+
     uint16_t padding_bytes;
 
-    tile_size       = p_gbr->tile_data.width * p_gbr->tile_data.width;
-    tile_total_size = tile_size * p_gbr->tile_data.count;
+    // Max tile size is 32*32
+    // If using smaller sizes, then allow more tiles
+    // Max tile buffer size is 49,152
+    // Tile buffer must be an even multiple of 1024
+    //
+    // i := 16 div ((CurTileWidth*CurTileHeight) div (8*8));
+    // FTileSize := ((cnt + i - 1) div i) * i;
+    //
+    // Make sure the new tile count results in a total buffer that's an even multiple of 1024
+    tile_size_bytes       = p_gbr->tile_data.width * p_gbr->tile_data.width;
+    tile_buf_size_current = tile_size_bytes * p_gbr->tile_data.count;
+    tile_buf_size_new     = tile_buf_size_current + (1024 - (tile_buf_size_current % 1024));
 
-    if (GBR_TILE_DATA_MIN_TILE_BYTES > tile_total_size) {
-
-        padding_bytes = (GBR_TILE_DATA_MIN_TILE_BYTES - tile_total_size);
-        p_gbr->tile_data.padding_tile_count = (padding_bytes / tile_size);
+    if (tile_buf_size_new > tile_buf_size_current) {
+        padding_bytes = (tile_buf_size_new - tile_buf_size_current);
+        p_gbr->tile_data.padding_tile_count = padding_bytes / tile_size_bytes;
     }
-    else
+    else {
         p_gbr->tile_data.padding_tile_count = 0; // No padding required
+    }
+
+
+printf("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new%d\npadding=%d\n",
+                                         tile_size_bytes,
+                                         tile_buf_size_current,
+                                         tile_buf_size_new,
+                                         p_gbr->tile_data.padding_tile_count);
 
       return true;
 }
@@ -606,10 +631,10 @@ memset(p_gbr->tile_data.color_set,  0x00, PASCAL_OBJECT_MAX_SIZE);
     p_gbr->tile_pal.count = 0x10;
     // It's supposed to be tile_pal_count * array of 16 bit ints
     // but instead it seems to be an (empty) array of 32 bit ints x count
-    memset(p_gbr->tile_pal.color_set,     0x00, GBR_TILE_PAL_ACTUAL_SIZE);
+    memset(p_gbr->tile_pal.color_set,     0x00, PASCAL_OBJECT_MAX_SIZE);
 
     p_gbr->tile_pal.sgb_count = 0x10;
-    memset(p_gbr->tile_pal.sgb_color_set, 0x00, GBR_TILE_PAL_ACTUAL_SIZE);
+    memset(p_gbr->tile_pal.sgb_color_set, 0x00, PASCAL_OBJECT_MAX_SIZE);
 
     return true;
 }

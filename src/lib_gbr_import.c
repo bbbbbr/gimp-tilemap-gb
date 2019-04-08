@@ -233,11 +233,20 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
             // It's supposed to be tile_pal_count * array of 16 bit ints
             // but instead it seems to be * array of 32 bit ints...?
             gbr_read_uint16(&p_gbr->tile_pal.count,         p_obj);
-            gbr_read_buf   ( p_gbr->tile_pal.color_set,     p_obj, p_gbr->tile_pal.count * (sizeof(uint16_t) * 2));
+            p_gbr->tile_pal.color_set_size_bytes = p_gbr->tile_pal.count * sizeof(uint16_t);
+            gbr_read_buf   ( p_gbr->tile_pal.color_set,
+                             p_obj,
+                             p_gbr->tile_pal.color_set_size_bytes);
 
             gbr_read_uint16(&p_gbr->tile_pal.sgb_count,     p_obj);
             //gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, (p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2) + sizeof(uint16_t)); // Mystery extra 2 color_set reads?
-            gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2));
+            p_gbr->tile_pal.sgb_color_set_size_bytes = p_gbr->tile_pal.sgb_count * sizeof(uint16_t);
+            gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set,
+                             p_obj,
+                             p_gbr->tile_pal.sgb_color_set_size_bytes);
+
+            gbr_read_padding_bytes(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
+
 
 printf("tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,

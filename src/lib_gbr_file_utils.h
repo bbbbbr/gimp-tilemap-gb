@@ -17,6 +17,7 @@ int32_t gbr_read_object_from_file(gbr_file_object * p_obj, FILE * p_file);
 int32_t gbr_write_object_to_file(gbr_file_object * p_obj, FILE * p_file);
 
 void gbr_read_str(int8_t * p_dest_str, gbr_file_object * p_obj, uint32_t n_bytes);
+void gbr_read_padding_bytes(gbr_file_object * p_obj, uint32_t n_bytes);
 void gbr_read_buf(int8_t * p_dest_buf, gbr_file_object * p_obj, uint32_t n_bytes);
 void gbr_read_uint32(uint32_t * p_dest_val, gbr_file_object * p_obj);
 void gbr_read_uint16(uint16_t * p_dest_val, gbr_file_object * p_obj);

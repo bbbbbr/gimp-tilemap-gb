@@ -116,6 +116,17 @@ void gbr_read_str(int8_t * p_dest_str, gbr_file_object * p_obj, uint32_t n_bytes
 }
 
 
+void gbr_read_padding_bytes(gbr_file_object * p_obj, uint32_t n_bytes) {
+
+    printf("gbr_read_padding_bytes @ %d -> ", p_obj->offset);
+
+    // Move offset to next data
+    p_obj->offset += n_bytes;
+
+    printf("%d\n", p_obj->offset);
+}
+
+
 void gbr_read_buf(int8_t * p_dest_buf, gbr_file_object * p_obj, uint32_t n_bytes) {
 
     printf("gbr_read_buf @ %d -> ", p_obj->offset);
