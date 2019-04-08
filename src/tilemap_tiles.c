@@ -175,7 +175,7 @@ void tile_copy_tile_from_image(image_data * p_src_img,
 
 
 // TODO: DEBUG: REMOVE ME
-static void tile_print_buffer_raw(tile_data tile) {
+void tile_print_buffer_raw(tile_data tile) {
 
     int32_t tile_y;
     int32_t tile_x;
@@ -198,7 +198,7 @@ static void tile_print_buffer_raw(tile_data tile) {
 }
 
 
-static void tile_print_buffer_encoded(tile_data tile) {
+void tile_print_buffer_encoded(tile_data tile) {
 
     int32_t c;
 

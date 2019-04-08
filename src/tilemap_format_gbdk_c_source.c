@@ -7,6 +7,7 @@
 
 #include "lib_tilemap.h"
 #include "tilemap_io.h"
+#include "tilemap_path_ops.h"
 #include "tilemap_format_gbdk_c_source.h"
 
 
@@ -178,7 +179,7 @@ printf("// ==== TILE MAP C SOURCE FILE ====\n");
     // Write all the Tile Map data to a file
     for (t = 0; t < tile_map->size; t++) {
 
-        fprintf(file, " %3d,", tile_map->p_data[t]);
+        fprintf(file, " %3d,", tile_map->tile_id_list[t]);
 
         if (t && (((t+1) % 16) == 0))
             fprintf(file, "\n"); // Line break every 8 tiles

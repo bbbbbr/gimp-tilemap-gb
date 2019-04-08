@@ -4,6 +4,7 @@
 
 #include "lib_gbr_file_utils.h"
 
+
 int32_t gbr_read_header_key(FILE * p_file) {
 
     // Check to make sure the start of the file is "GBO"
@@ -86,7 +87,8 @@ int32_t gbr_write_object_to_file(pascal_file_object * p_obj, FILE * p_file) {
         if (fwrite(&(p_obj->id),           sizeof(p_obj->id),           1, p_file))
             if (fwrite(&(p_obj->length_bytes), sizeof(p_obj->length_bytes), 1, p_file)
                 && (p_obj->length_bytes <= PASCAL_OBJECT_MAX_SIZE) )
-                if (fwrite(p_obj->p_data,          p_obj->length_bytes,         1, p_file)) {
+                if ((fwrite(p_obj->p_data,          p_obj->length_bytes,         1, p_file))
+                    || (p_obj->length_bytes == 0)) {
                     printf("OBJ type=%d, id=%d, size=%d\n", p_obj->type, p_obj->id, p_obj->length_bytes);
                     printf("OBJ type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
                     return true;

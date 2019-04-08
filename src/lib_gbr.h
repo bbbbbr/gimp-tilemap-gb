@@ -35,6 +35,8 @@
 #define GBR_TILE_DATA_COLOR_SET_SIZE 4
 #define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOR_SET_SIZE
 
+#define GBR_TILE_DATA_MIN_TILE_BYTES  1024
+
 #define GBR_TILE_SETTINGS_SIZE        19
 #define GBR_TILE_SETTINGS_BOOKMARK_COUNT  3
 
@@ -130,6 +132,7 @@ typedef struct {
     uint8_t    color_set[GBR_TILE_DATA_COLOR_SET_SIZE];
     uint32_t   pal_data_size;
     uint32_t   tile_data_size;
+    uint16_t   padding_tile_count; // Used since GBTD has a 1024 pixel minimum for tile data (8x8x16, 32x32x1, etc) see: GBR_TILE_DATA_MIN_TILE_BYTES
 } gbr_tile_data;
 
 
@@ -226,7 +229,10 @@ typedef struct {
     uint32_t   length_bytes;
     uint32_t   offset;
     uint8_t  * p_data;
-} pascal_file_object;
+} pascal_file_object; // TODO: rename to gbr_file_object
+
+
+
 
 image_data * gbr_get_image();
 color_data * gbr_get_colors();
@@ -239,6 +245,6 @@ void gbr_free_resources(void);
 int32_t gbr_load_file(const int8_t * filename);
 int32_t gbr_save_file(const int8_t * filename);
 
-
+gbr_record * gbr_get_ptr(void);
 
 #endif // LIB_GBR_FILE_HEADER

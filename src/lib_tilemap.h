@@ -22,9 +22,9 @@
 
 
     enum import_formats {
-        IMPORT_FORMAT_GBDK_C_SOURCE = 1, // TODO
-        IMPORT_FORMAT_GBR,
-        IMPORT_FORMAT_GBTD,  // TODO
+        IMPORT_FORMAT_GBDK_C_SOURCE = 1, // TODO  // For : GBDK/ZGB Game Boy Dev Kit
+        IMPORT_FORMAT_GBR,  // For: Game Boy Tile Designer / GBTD
+        IMPORT_FORMAT_GBM,  // For: Game Boy Map Builder / GBMB
         IMPORT_FORMAT_LAST
     };
 
@@ -39,9 +39,9 @@
 
     // Export formats
     enum export_formats {
-        EXPORT_FORMAT_GBDK_C_SOURCE = 1,
-        EXPORT_FORMAT_GBR,
-        EXPORT_FORMAT_GBTD,  // TODO
+        EXPORT_FORMAT_GBDK_C_SOURCE = 1, // For : GBDK/ZGB Game Boy Dev Kit
+        EXPORT_FORMAT_GBR,  // For: Game Boy Tile Designer / GBTD
+        EXPORT_FORMAT_GBM,  // For: Game Boy Map Builder / GBMB
         EXPORT_FORMAT_LAST
     };
 
@@ -54,7 +54,7 @@
         uint16_t map_width;
         uint16_t map_height;
         uint32_t size;
-        int32_t * p_data; // TODO: rename tile_id_list
+        uint8_t * tile_id_list; // TODO: this was int32_t .. WHY?
     } tile_map_data;
 
 
@@ -88,7 +88,10 @@
     int32_t        tilemap_initialize(image_data * p_src_img);
     int32_t        tilemap_save(const int8_t * filename, uint32_t export_format);
 
+    tile_map_data * tilemap_get_map(void);
+    tile_set_data * tilemap_get_tile_set(void);
 
+    int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img);
 
 #endif // LIB_TILEMAP_HEADER
 

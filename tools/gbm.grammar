@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.17">
+    <grammar name="Game Boy Map Designer" start="id:5" author="bbbbbr" fileextension="GBM">
+        <structure name="GBM FIle" id="5" length="0" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <structure name="Header" id="6">
+                <string name="Header Key" id="7" type="fixed-length" length="3">
+                    <fixedvalues>
+                        <fixedvalue name="" value="GBO"/>
+                    </fixedvalues>
+                </string>
+                <string name="Version" id="8" type="fixed-length" length="1"/>
+            </structure>
+            <structure name="Records" id="10" repeatmax="-1" order="variable">
+                <structref name="Producer" id="12" repeatmin="0" structure="id:11"/>
+                <structref name="Map" id="14" repeatmin="0" structure="id:13"/>
+                <structref name="Tile Data" id="16" repeatmin="0" structure="id:15"/>
+                <structref name="SHIM Map Prop" id="18" repeatmin="0" structure="id:17"/>
+                <structref name="SHIM Map Prop Data" id="20" repeatmin="0" structure="id:19"/>
+                <structref name="SHIM Map Prop Default" id="22" repeatmin="0" structure="id:21"/>
+                <structref name="Map Settings" id="24" repeatmin="0" structure="id:23"/>
+                <structref name="Prop Colors" id="26" repeatmin="0" structure="id:25"/>
+                <structref name="Map Export" id="28" repeatmin="0" structure="id:27"/>
+                <structref name="Map Export Prop" id="30" repeatmin="0" structure="id:29"/>
+                <structref name="Deleted Obj" id="32" repeatmin="0" structure="id:31"/>
+                <structref name="&lt;GBM Record&gt;" id="34" repeatmin="0" structure="id:33"/>
+            </structure>
+        </structure>
+        <structure name="GBM Record" id="33" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <string name="Record Header" mustmatch="yes" id="37" type="fixed-length" length="6">
+                <fixedvalues>
+                    <fixedvalue name="HPJMTL" value="HPJMTL"/>
+                </fixedvalues>
+            </string>
+            <number name="ID" id="38" type="integer" length="2"/>
+            <number name="Object ID" id="39" type="integer" length="2"/>
+            <number name="Master ID" id="40" type="integer" length="2"/>
+            <number name="CRC" id="41" type="integer" length="4" display="hex"/>
+            <number name="LenBytes" id="42" type="integer" length="4"/>
+            <structure name="Data" id="43" length="LenBytes"/>
+        </structure>
+        <structure name="Rec Producer" id="11" extends="id:33">
+            <number name="ID" mustmatch="yes" id="47" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="Producer" value="1"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="48">
+                <structref name="&lt;Obj Producer&gt;" id="54" structure="id:53"/>
+            </structure>
+        </structure>
+        <structure name="Rec Map" id="13" extends="id:33">
+            <number name="ID" mustmatch="yes" id="58" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="Map" value="2"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="59">
+                <structref name="&lt;Obj Map&gt;" id="65" structure="id:64"/>
+            </structure>
+        </structure>
+        <structure name="Obj Map" id="64" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <string name="Name" id="68" type="fixed-length" length="128"/>
+            <number name="MapTileWidth" id="69" type="integer" length="4"/>
+            <number name="MapTileHeight" id="70" type="integer" length="4"/>
+            <number name="prop_count" id="71" type="integer" length="4"/>
+            <string name="tile_file_str" id="72" type="fixed-length" length="256"/>
+            <number name="tile_count" id="73" type="integer" length="4"/>
+            <number name="prop_color_count" id="74" type="integer" length="4" minval="0"/>
+        </structure>
+        <structure name="Obj Producer" id="53" encoding="ISO_8859-1:1987" endian="little" signed="no">
+            <string name="Name" id="76" type="fixed-length" length="128"/>
+            <string name="Version" id="77" type="fixed-length" length="10"/>
+            <string name="Info" id="78" type="fixed-length" length="128"/>
+        </structure>
+        <structure name="Rec Tile Data" id="15" extends="id:33">
+            <number name="ID" mustmatch="yes" id="81" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="Tiles" value="3"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="82">
+                <scriptelement name="map_tiles_size_bytes" id="87">
+                    <script name="unnamed" type="Generic">
+                        <source language="Python"># Get current results so far
+results = currentMapper.getCurrentResults()
+
+# Get Map width and height in tiles
+map_widthResult= results.getResultByName(&quot;MapTileWidth&quot;)
+map_widthValue = map_widthResult.getValue()
+map_width = map_widthValue.getUnsignedNumber()
+print map_width
+
+map_heightResult= results.getResultByName(&quot;MapTileHeight&quot;)
+map_heightValue = map_heightResult.getValue()
+map_height = map_heightValue.getUnsignedNumber()
+print map_height
+
+# calculate map size in byes
+map_size_bytes = map_width * map_height
+
+
+value = Value()
+value.setUnsigned(map_size_bytes)
+
+element = Element(ELEMENT_NUMBER, &quot;map_tiles_size_bytes&quot;, True)
+# add element with value to results
+results.addElement(element, 0, 0, value)</source>
+                    </script>
+                </scriptelement>
+                <binary name="tiles" id="88" length="map_tiles_size_bytes"/>
+                <binary name="unkown data" id="204" repeatmin="0" length="remaining"/>
+            </structure>
+        </structure>
+        <structure name="Rec Map Prop" id="17" extends="id:33">
+            <number name="ID" mustmatch="yes" id="92" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="Map Prop" value="4"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="93">
+                <structref name="&lt;Obj Map Prop&gt;" id="99" structure="id:98"/>
+            </structure>
+        </structure>
+        <structure name="Obj Map Prop" id="98" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="p_type" id="102" type="integer" length="4"/>
+            <number name="size" id="103" type="integer" length="4"/>
+            <string name="Name" id="104" type="fixed-length" length="32"/>
+        </structure>
+        <structure name="Rec Map Prop Data" id="19" extends="id:33">
+            <number name="ID" mustmatch="yes" id="107" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="5"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="108">
+                <structref name="&lt;Obj Prop Data&gt;" id="114" structure="id:113"/>
+            </structure>
+        </structure>
+        <structure name="Obj Map Prop Data" id="113" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <binary name="Data" id="117" length="remaining"/>
+        </structure>
+        <structure name="Rec Map Prop Default" id="21" extends="id:33">
+            <number name="ID" mustmatch="yes" id="120" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="6"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="121">
+                <binary name="data" id="126" length="remaining"/>
+            </structure>
+        </structure>
+        <structure name="Rec Map Settings" id="23" extends="id:33">
+            <number name="ID" mustmatch="yes" id="130" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="7"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="131">
+                <number name="form_width" id="136" type="integer" length="4"/>
+                <number name="form_height" id="137" type="integer" length="4"/>
+                <number name="form_maximized" id="138" type="integer" length="1"/>
+                <number name="info_panel" id="139" type="integer" length="1"/>
+                <number name="grid" id="140" type="integer" length="1"/>
+                <number name="double_markers" id="141" type="integer" length="1"/>
+                <number name="prop_colors" id="142" type="integer" length="1"/>
+                <number name="zoom" id="143" type="integer" length="2"/>
+                <number name="color_set" id="144" type="integer" length="2"/>
+                <number name="bookmarks" id="145" type="integer" length="6" display="hex"/>
+                <number name="block_fill_pattern" id="146" type="integer" length="4"/>
+                <number name="block_fill_width" id="147" type="integer" length="4"/>
+                <number name="block_fill_height" id="148" type="integer" length="4"/>
+                <number name="auto_update" id="149" type="integer" length="1"/>
+            </structure>
+        </structure>
+        <structure name="Rec prop_colors" id="25" extends="id:33">
+            <number name="ID" mustmatch="yes" id="153" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="8"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="154">
+                <binary name="&lt;binary&gt;" id="159" length="24"/>
+            </structure>
+        </structure>
+        <structure name="Rec Map Export" id="27" extends="id:33">
+            <number name="ID" mustmatch="yes" id="163" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="9"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="164">
+                <string name="file_name" id="169" type="fixed-length" length="255"/>
+                <number name="file_type" id="170" type="integer" length="1"/>
+                <string name="section_name" id="171" type="fixed-length" length="40"/>
+                <string name="label_name" id="172" type="fixed-length" length="40"/>
+                <number name="bank" id="173" type="integer" length="1"/>
+                <number name="plane_count" id="174" type="integer" length="2"/>
+                <number name="plane_order" id="175" type="integer" length="2"/>
+                <number name="map_layout" id="176" type="integer" length="2"/>
+                <number name="split" id="177" type="integer" length="1"/>
+                <number name="split_size" id="178" type="integer" length="4"/>
+                <number name="split_bank" id="179" type="integer" length="1"/>
+                <number name="sel_tab" id="180" type="integer" length="1"/>
+                <number name="prop_count" id="181" type="integer" length="2"/>
+                <number name="tile_offset" id="182" type="integer" length="2"/>
+            </structure>
+        </structure>
+        <structure name="Rec map_export_prop" id="29" extends="id:33">
+            <number name="ID" mustmatch="yes" id="186" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="10"/>
+                </fixedvalues>
+            </number>
+            <structure name="Data" id="187">
+                <binary name="props" id="192" length="6"/>
+            </structure>
+        </structure>
+        <structure name="Rec Deleted Obj" id="31" extends="id:33">
+            <number name="ID" id="196" type="integer">
+                <fixedvalues>
+                    <fixedvalue name="id" value="65535"/>
+                </fixedvalues>
+            </number>
+        </structure>
+    </grammar>
+</ufwb>

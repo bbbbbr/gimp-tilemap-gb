@@ -11,44 +11,6 @@
 #include "tilemap_format_gbdk_c_source.h"
 
 
-// TODO: fix up const / int8_t mixing
-const char * get_filename_from_path(const char * path)
-{
-    size_t i;
-
-   for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == '/') {
-            return &path[i+1];
-        }
-    }
-    return path;
-}
-
-int32_t get_path_without_filename(const char * path, char * path_only, uint32_t str_max)
-{
-    size_t i;
-
-   if (strlen(path) + 1 > str_max)
-        return false;
-
-    // Walk backwards in string until first path slash is found
-    for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == '/') {
-
-            // Add + 1 to copy length since array index is zero based
-            memcpy(path_only, path, i+1);
-            // Add string terminator in the next character out
-            path_only[i+1] = '\0';
-            return true;
-        }
-    }
-
-    memcpy(path_only, path, strlen(path));
-    return true;
-}
-
-
-
 int32_t tilemap_export(const int8_t * filename,
                        uint32_t   export_format,
                        tile_map_data * tile_map,

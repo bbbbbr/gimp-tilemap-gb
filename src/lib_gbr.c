@@ -1,5 +1,5 @@
 //
-// lib_gbr.h
+// lib_gbr.c
 //
 
 #include "lib_gbr.h"
@@ -54,6 +54,11 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
     return status;
 };
 
+
+
+gbr_record * gbr_get_ptr(void) {
+    return &(gbr);
+}
 
 
 
