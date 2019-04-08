@@ -227,9 +227,10 @@ typedef struct {
     uint16_t   type;
     uint16_t   id;
     uint32_t   length_bytes;
-    uint32_t   offset;
     uint8_t  * p_data;
-} pascal_file_object; // TODO: rename to gbr_file_object
+    // End of native object
+    uint32_t   offset;
+} gbr_file_object;
 
 
 

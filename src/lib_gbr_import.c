@@ -7,7 +7,7 @@
 #include "lib_gbr_ops.h"
 
 
-int32_t gbr_object_producer_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_producer_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes < GBR_PRODUCER_SIZE)
         return false;
@@ -29,7 +29,7 @@ int32_t gbr_object_producer_decode(gbr_record * p_gbr, pascal_file_object * p_ob
 //                            + (y * .width)
 //                            + (id * width * height) ]
 // TODO: change to int16_t? read about what is most efficient on 64 bit architectures
-int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes < GBR_TILE_DATA_SIZE_MIN)
         return false;
@@ -78,7 +78,7 @@ printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
 
 
 
-int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes != GBR_TILE_SETTINGS_SIZE)
         return false;
@@ -112,7 +112,7 @@ printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
 }
 
 
-int32_t gbr_object_tile_export_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_tile_export_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes != GBR_TILE_EXPORT_SIZE)
         return false;
@@ -152,7 +152,7 @@ printf("TILE_EXPORT:\n%d\n%s\n%d\n%s\n%s\n",
 
 
 
-int32_t gbr_object_tile_import_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_tile_import_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes != GBR_TILE_IMPORT_SIZE)
         return false;
@@ -182,7 +182,7 @@ printf("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
 
 
 
-int32_t gbr_object_palettes_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_palettes_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes < GBR_PALETTES_SIZE_MIN)
         return false;
@@ -222,7 +222,7 @@ printf("PALEttes:\n%d\n%d\n%d\n",
 }
 
 
-int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, pascal_file_object * p_obj) {
+int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
     if (p_obj->length_bytes < GBR_TILE_PAL_SIZE_MIN)
         return false;

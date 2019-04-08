@@ -98,7 +98,7 @@ void gbr_set_colors(color_data * p_src_colors) {
 int32_t gbr_load_file(const int8_t * filename) {
 
     FILE               * p_file;
-    pascal_file_object   obj;
+    gbr_file_object   obj;
     int32_t              status;
 
     obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
@@ -175,7 +175,7 @@ int32_t gbr_load_file(const int8_t * filename) {
 int32_t gbr_save_file(const int8_t * filename) {
 
     FILE               * p_file;
-    pascal_file_object   obj;
+    gbr_file_object   obj;
     int32_t              status;
 
     obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
