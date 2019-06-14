@@ -40,7 +40,7 @@ OS binaries available for:
  * Exported GBR tilesets should have an image width of 8, 16 or 32 pixels. Tile size width and height will auto set to be the same as the image width. This means 8x16 is not currently supported. (Maybe a dialog selecting export size later).
  * Exported GBR should have no more than 4 colors, for now.
  * Metadata stored in the GBR / GBM files, such as recently used files, etc is not currently preserved when exporting back out. (Maybe coming later, it's do-able and partially in there).
-
+ * If you export using this path: GIMP -> GBTD or GBMB -> C source, then you'll need to set up the export options for GBTD (path, tiles to export, etc) and GBMB (path, location format, etc).
 
 ## Quick instructions:
 
