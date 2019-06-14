@@ -1,11 +1,11 @@
 Gimp Plugin: tilemap generator and exporter for Game Boy / GBDK & ZGB
 ===========
 
-A GIMP plugin for exporting tilemaps and tilesets from an image. Current use is for gameboy console game development.
+GIMP plugin for importing & exporting Game Boy game tilemaps and tilesets.
 
 You can create a level map in Gimp (or other image editors) then export it to either C Source files for the GBDK, or export as .gbr / .gbm for editing and further work in either GBTD or GBMB. You can also import from .gbr and .gbm files, and re-export to them (tile order may change and not all app prefs may survive the import/re-export trip though).
 
-*This plugin is a work in progress and has lots of rough edges right now! Be careful :)*
+*This plugin is functional, but not polished. Don't be surprised to find some rough edges or annoyances.
 
 
 ![Opening a Game Boy Map Builder map as an image in GIMP](https://raw.githubusercontent.com/bbbbbr/gimp-tilemap/master/info/gimp-tilemap-plugin-screenshot.png)
@@ -15,14 +15,14 @@ Features
  * Tile deduplication
 
 Tile Map export formats:
- * C Source (GBDK / ZGB)
+* GBM (Game Boy Map Builder http://www.devrs.com/gb/hmgd/gbmb.html )
+* C Source (GBDK / ZGB)
 
 Tile Set export formats:
  * C (GBDK / ZGB)
  * GBR (Game Boy Tile Designer http://www.devrs.com/gb/hmgd/gbtd.html )
- * GBM (Game Boy Map Builder http://www.devrs.com/gb/hmgd/gbmb.html )
-
-Tile Set import formats:
+ 
+Tile Set & Map import formats:
  * GBR
  * GBM
 
@@ -31,10 +31,11 @@ Supported formats:
 
 OS binaries available for:
  * Linux
- * TODO: Windows
+ * Windows
 
 
 ## Usage:
+ * Work on an 8x8 grid. It will save you time, trouble and ROM size later on.
  * Exported C Source / GBM Map Tilesets *always* use a tile size of 8x8 pixels, and the source image should be an even multiple of the tile size
  * Exported GBR tilesets should have an image width of 8, 16 or 32 pixels. Tile size width and height will auto set to be the same as the image width. This means 8x16 is not currently supported. (Maybe a dialog selecting export size later).
  * Exported GBR should have no more than 4 colors, for now.
