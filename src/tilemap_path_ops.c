@@ -10,6 +10,12 @@
 #include "tilemap_path_ops.h"
 
 
+const char kPathSeparator =
+#ifdef _WIN32
+                            '\\';
+#else
+                            '/';
+#endif
 
 // TODO: fix up const / int8_t mixing
 const char * get_filename_from_path(const char * path)
@@ -17,7 +23,7 @@ const char * get_filename_from_path(const char * path)
     size_t i;
 
    for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == '/') {
+        if (path[i] == kPathSeparator) {
             return &path[i+1];
         }
     }
@@ -32,7 +38,7 @@ int32_t get_path_without_filename(const char * path, char * path_only, uint32_t 
         return false;
 
    for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == '/') {
+        if (path[i] == kPathSeparator) {
 
             memcpy(path_only, path, i+1 );
             path_only[i+1] = '\0';
