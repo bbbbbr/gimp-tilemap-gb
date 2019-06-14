@@ -221,8 +221,11 @@ typedef struct {
 } gbm_file_object;
 
 
-image_data * gbm_get_image();
-color_data * gbm_get_colors();
+image_data * gbm_get_image(void);
+color_data * gbm_get_colors(void);
+void gbm_set_image(image_data * p_src_image);
+void gbm_set_colors(color_data * p_src_colors);
+
 
 void gbm_free_resources(void);
 
@@ -231,6 +234,7 @@ int32_t gbm_load_file(const int8_t * filename);
 int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
 int32_t gbm_save_file(const int8_t * filename);
 
+void gbm_map_tiles_print(gbm_record * p_gbm);
 
 
 

@@ -62,14 +62,14 @@ gbr_record * gbr_get_ptr(void) {
 
 
 
-image_data * gbr_get_image() {
+image_data * gbr_get_image(void) {
 
     printf("gbr_get_image\n");
     return &image;
 }
 
 
-color_data * gbr_get_colors() {
+color_data * gbr_get_colors(void) {
 
     printf("gbr_get_colors\n");
     return &colors;

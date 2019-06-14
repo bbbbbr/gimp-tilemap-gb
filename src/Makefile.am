@@ -14,34 +14,38 @@ endif
 
 if HAVE_WINDRES
 include $(top_srcdir)/build/windows/gimprc-plug-ins.rule
-file-tilemap-export_RC = file-tilemap-export.rc.o
+file_tilemap_export_RC = file_tilemap_export.rc.o
 endif
 
 AM_LDFLAGS = $(mwindows)
 
 libexecdir = $(gimpplugindir)/plug-ins
 
-libexec_PROGRAMS = file-rom-bin
+libexec_PROGRAMS = file_tilemap_export
 
-file-tilemap-export_SOURCES = \
-	file-tilemap-export.c     \
-	export-dialog.c    \
-	lib_rom_bin.c      \
-	read-rom-bin.c     \
-	write-rom-bin.c    \
-	format_nes_1bpp.c  \
-	format_nes_2bpp.c  \
-	format_gba_4bpp.c  \
-	format_gba_8bpp.c  \
-	format_ngp_2bpp.c  \
-	format_gens_4bpp.c \
-	format_snesgb_2bpp.c   \
-	format_snes_3bpp.c     \
-	format_snespce_4bpp.c  \
-	format_snes_8bpp.c     \
-	format_ggsmswsc_4bpp.c \
-	rom_utils.c
-
+file_tilemap_export_SOURCES = \
+	file-tilemap.c \
+	format_snesgb_2bpp.c \
+	lib_gbm.c \
+	lib_gbm_export.c \
+	lib_gbm_file_utils.c \
+	lib_gbm_import.c \
+	lib_gbm_ops.c \
+	lib_gbr.c \
+	lib_gbr_export.c \
+	lib_gbr_file_utils.c \
+	lib_gbr_import.c \
+	lib_gbr_ops.c \
+	lib_rom_bin.c \
+	lib_tilemap.c \
+	rom_utils.c \
+	tilemap_format_gbdk_c_source.c \
+	tilemap_io.c \
+	tilemap_path_ops.c \
+	tilemap_read.c \
+	tilemap_tiles.c \
+	tilemap_write.c \
+	xtea.c
 
 
 INCLUDES = \
@@ -60,4 +64,4 @@ LDADD = \
 	$(GTK_LIBS)		\
 	$(RT_LIBS)		\
 	$(INTLLIBS)		\
-	$(file-tilemap-export_RC)
+	$(file_tilemap_export_RC)

@@ -4,6 +4,7 @@
 
 #include "lib_gbr.h"
 
+uint8_t clamp(uint8_t in_val, uint8_t max_val);
 
 int32_t gbr_object_producer_encode(gbr_record * p_gbr, gbr_file_object * p_obj);
 int32_t gbr_object_tile_data_encode(gbr_record * p_gbr, gbr_file_object * p_obj);

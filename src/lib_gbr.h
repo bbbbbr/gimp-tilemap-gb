@@ -238,8 +238,12 @@ typedef struct {
 
 
 
-image_data * gbr_get_image();
-color_data * gbr_get_colors();
+image_data * gbr_get_image(void);
+color_data * gbr_get_colors(void);
+
+void gbr_set_image(image_data * p_src_image);
+void gbr_set_colors(color_data * p_src_colors);
+
 
 int32_t gbr_load(const int8_t * filename);
 int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
@@ -250,5 +254,9 @@ int32_t gbr_load_file(const int8_t * filename);
 int32_t gbr_save_file(const int8_t * filename);
 
 gbr_record * gbr_get_ptr(void);
+
+
+int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr);
+int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_image);
 
 #endif // LIB_GBR_FILE_HEADER

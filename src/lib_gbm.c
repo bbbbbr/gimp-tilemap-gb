@@ -328,14 +328,14 @@ int32_t gbm_save_file(const int8_t * filename) {
 
 
 
-image_data * gbm_get_image() {
+image_data * gbm_get_image(void) {
 
     printf("gbm_get_image\n");
     return &image;
 }
 
 
-color_data * gbm_get_colors() {
+color_data * gbm_get_colors(void) {
 
     printf("gbm_get_colors\n");
     return &colors;
