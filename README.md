@@ -27,7 +27,7 @@ Tile Set & Map import formats:
  * GBM
 
 Supported formats:
- * GB 2bpp
+ * GB 2bpp (CGB not supported at this time)
 
 OS binaries available for:
  * Linux
