@@ -30,8 +30,8 @@ Supported formats:
  * GB 2bpp (CGB not supported at this time)
 
 OS binaries available for:
- * Linux
- * Windows
+ * Linux (GIMP 2.8+)
+ * Windows (GIMP 2.10.12+)
 
 
 ## Usage:
@@ -61,5 +61,6 @@ Plug-in folder locations:
 * Image must be indexed color and not have more colors than output format supports
 
 ## Known limitations & Issues:
+* GBMB Export does not yet auto-populate the Location Format, so it must be done manually.
 
 ## GIMP usage hints:
