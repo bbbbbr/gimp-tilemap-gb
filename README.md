@@ -1,4 +1,4 @@
-Gimp Plugin: tilemap generator and exporter for Game Boy / GBDK & ZGB
+Tilemap GB (Gimp Plugin): tilemap generator and exporter for Game Boy / GBDK & ZGB
 ===========
 
 GIMP plugin for importing & exporting Game Boy game tilemaps and tilesets.
