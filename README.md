@@ -62,9 +62,9 @@ Plug-in folder locations:
  Linux: ~/.gimp-2.8/plug-ins  , or ~/.config/GIMP/2.10/plug-ins
  Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
 
+```
 Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-rom-bin/blob/master/doc/GIMP%20jhbuild%20for%20Windows%20on%20Linux.md)
 
-```
 
 ## Requirements:
 * Image must be indexed color and not have more colors than output format supports
