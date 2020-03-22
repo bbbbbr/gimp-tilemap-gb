@@ -39,12 +39,13 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, gbr_file_object * p_obj)
     gbr_read_uint16(&p_gbr->tile_data.height,    p_obj);
     gbr_read_uint16(&p_gbr->tile_data.count,     p_obj);
 
+    // This is always 4 colors, regardless of Pocket/DMG/CGB/SGB mode
     p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOR_SET_SIZE;
     gbr_read_buf   ( p_gbr->tile_data.color_set, p_obj, p_gbr->tile_data.pal_data_size);
 
+    // Read N Tiles of x Width x Height array of bytes, one byte per tile pixel
     p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
                                                              * p_gbr->tile_data.count;
-    // Read N Tiles of x Width x Height array of bytes, one byte per tile pixel
     gbr_read_buf   ( p_gbr->tile_data.tile_list, p_obj, p_gbr->tile_data.tile_data_size);
 
 /*
@@ -96,6 +97,24 @@ int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, gbr_file_object * p_
                      p_obj,
                      sizeof(uint16_t) * GBR_TILE_SETTINGS_BOOKMARK_COUNT);
     gbr_read_uint8 (&p_gbr->tile_settings.auto_update,  p_obj);
+
+
+    // TODO: Consider converting into a function gbr_get_pal_data_size()
+    // Set Palette size based on file-wide color-set mode
+    switch (p_gbr->tile_settings.color_set) {
+
+        case gbr_color_set_gbc :
+        case gbr_color_set_sgb :
+            p_gbr->tile_settings.pal_data_size = GBR_TILE_DATA_PALETTE_SIZE_CGB;
+            break;
+
+        case gbr_color_set_pocket :
+        case gbr_color_set_game_boy :
+        default :
+            p_gbr->tile_settings.pal_data_size = GBR_TILE_DATA_PALETTE_SIZE_DMG;
+            break;
+    }
+
 
 printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
                                  p_gbr->tile_settings.tile_id,
@@ -208,17 +227,21 @@ int32_t gbr_object_palettes_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
 
 
   */
+            // CGB palette colors are packed as:
+            // * Per Color Entry: RGBX (X is an empty byte)
+            // * 4 Colors per Palette
+            //* 8 Palettes in total
             gbr_read_buf   ( p_gbr->palettes.colors,     p_obj, GBR_PALETTE_CGB_SETS_SIZE);
             gbr_read_uint16(&p_gbr->palettes.sgb_count,  p_obj);
             gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_SGB_SETS_ACTUAL_SIZE);
 
 
-printf("PALEttes:\n%d\n%d\n%d\n",
-                                 p_gbr->palettes.id,
-                                 p_gbr->palettes.count,
-                                 p_gbr->palettes.sgb_count);
+            printf("Palettes:\nid=%d\ncgb_count=%d\nsgb_count=%d\n",
+                                             p_gbr->palettes.id,
+                                             p_gbr->palettes.count,
+                                             p_gbr->palettes.sgb_count);
 
-  return true;
+    return true;
 }
 
 
@@ -232,15 +255,19 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
 
             // It's supposed to be tile_pal_count * array of 16 bit ints
             // but instead it seems to be * array of 32 bit ints...?
+
+            // List of palettes that each tile uses, mainly CGB/SGB (Pocket/DMG should always be 1 [palette zero/0])
             gbr_read_uint16(&p_gbr->tile_pal.count,         p_obj);
-            p_gbr->tile_pal.color_set_size_bytes = p_gbr->tile_pal.count * sizeof(uint16_t);
+
+            p_gbr->tile_pal.color_set_size_bytes = p_gbr->tile_pal.count * GBR_TILE_PAL_COLOR_SET_REC_SIZE;
             gbr_read_buf   ( p_gbr->tile_pal.color_set,
                              p_obj,
                              p_gbr->tile_pal.color_set_size_bytes);
 
+
             gbr_read_uint16(&p_gbr->tile_pal.sgb_count,     p_obj);
-            //gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set, p_obj, (p_gbr->tile_pal.sgb_count * (sizeof(uint16_t) * 2) + sizeof(uint16_t)); // Mystery extra 2 color_set reads?
-            p_gbr->tile_pal.sgb_color_set_size_bytes = p_gbr->tile_pal.sgb_count * sizeof(uint16_t);
+
+            p_gbr->tile_pal.sgb_color_set_size_bytes = p_gbr->tile_pal.sgb_count * GBR_TILE_PAL_COLOR_SET_REC_SIZE;
             gbr_read_buf   ( p_gbr->tile_pal.sgb_color_set,
                              p_obj,
                              p_gbr->tile_pal.sgb_color_set_size_bytes);
@@ -248,12 +275,12 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
             gbr_read_padding_bytes(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
 
 
-printf("tile pal:\n%d\n%d\n%d\n",
+            printf("tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,
                                  p_gbr->tile_pal.count,
                                  p_gbr->tile_pal.sgb_count);
 
-  return true;
+    return true;
 }
 
 
@@ -317,12 +344,20 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     uint32_t pal_offset;
     uint32_t buf_offset;
 
+    // Note: In CGB/SGB mode, tiles remain stored only referencing 4 colors (0-3), and then
+    //       have their palettes remapped on the fly to the associated sub palette (0-7) when rendered.
+    //       * In Pocket/DMG mode : Pal will be 0- 3 colors, tiles have colors 0-3 and point to only Palette  0
+    //       * In CGB/SGB mode :    Pal will be 0-31 colors, tiles have colors 0-3 and pointing to Palettes 0-7 (0=0-3, 1=4-7, etc, 7=28-31)
+
     // Make sure there is enough space in destination palette buffer
     if ((p_gbr->tile_data.pal_data_size * COLOR_DATA_BYTES_PER_COLOR) > (COLOR_DATA_PAL_SIZE))
         return false;
 
+    printf("TILE_DATA --> COLOR_SET : %d\n", p_gbr->tile_settings.color_set);
+
     // Set the destination color palette size based on tile list color set size
-    p_colors->color_count = p_gbr->tile_data.pal_data_size;
+    // This will either be 1 palette x 4 colors (Pocket, DMG), or 8 palettes x 4 colors (CGB, SGB?)
+    p_colors->color_count = p_gbr->tile_settings.pal_data_size;
     p_colors->size        = p_colors->color_count * COLOR_DATA_BYTES_PER_COLOR;
 
 
@@ -331,10 +366,10 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     buf_offset = 0;
 
     // Load the palette colors for each entry in the tile list color set
-    for(pal_index = 0; pal_index < p_gbr->tile_data.pal_data_size; pal_index++) {
+    for(pal_index = 0; pal_index < p_colors->color_count; pal_index++) {
 
         // Find the tile palette entry for the tile list color
-        pal_offset = p_gbr->tile_data.color_set[pal_index] * GBR_PALETTE_TCOLOR_SIZE;
+        pal_offset = pal_index * GBR_PALETTE_TCOLOR_SIZE;
 
         // Load the color data into the destination palette
         p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 0]; // R.0

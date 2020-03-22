@@ -126,7 +126,8 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
                     status = gbr_tile_copy_to_image(p_image,
                                                     p_gbr,
                                                     tile.num,
-                                                    map_x, map_y);
+                                                    map_x, map_y,
+                                                    tile.flip_h, tile.flip_v);
             } // for .. map_x
         } // for.. map_y
     } else {

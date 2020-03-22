@@ -34,6 +34,8 @@
 #define GBR_TILE_DATA_NAME_SIZE_STR   GBR_TILE_DATA_NAME_SIZE + 1
 #define GBR_TILE_DATA_COLOR_SET_SIZE 4
 #define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOR_SET_SIZE
+#define GBR_TILE_DATA_PALETTE_SIZE_DMG (4 * 1)
+#define GBR_TILE_DATA_PALETTE_SIZE_CGB (4 * 8)
 
 #define GBR_TILE_DATA_MIN_TILE_BYTES  1024
 
@@ -58,6 +60,7 @@
 #define GBR_PALETTES_SIZE_MIN 6
 #define GBR_TILE_PAL_SIZE_MIN 6
 
+#define GBR_TILE_PAL_COLOR_SET_REC_SIZE sizeof(uint32_t) // supposed to be 16 bits, but appears to be 32 bits
 #define GBR_TILE_PAL_UNKNOWN_PADDING 8
 
 #define GBR_COL_MAX 0xF8
@@ -129,6 +132,7 @@ typedef struct {
                // tile_list: packed arrays width * height * count.
                //            width & height can be up to 32 x 32 (0..31)
     uint8_t    tile_list[PASCAL_OBJECT_MAX_SIZE];
+
     // End of native structure
     uint32_t   pal_data_size;
     uint32_t   tile_data_size;
@@ -149,6 +153,9 @@ typedef struct {
 
     uint16_t  bookmarks[GBR_TILE_SETTINGS_BOOKMARK_COUNT];
     uint8_t   auto_update;
+
+    // End of native structure
+    uint16_t   pal_data_size;
 } gbr_tile_settings;
 
 

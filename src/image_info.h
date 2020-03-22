@@ -5,7 +5,7 @@
 #ifndef IMAGE_INFO_HEADER
 #define IMAGE_INFO_HEADER
 
-    #define COLOR_DATA_PAL_MAX_COUNT   255 // 255 Colors max for indexed
+    #define COLOR_DATA_PAL_MAX_COUNT   256 // 255 Colors max for indexed
     #define COLOR_DATA_BYTES_PER_COLOR 3   // RGB 1 byte per color
     #define COLOR_DATA_PAL_SIZE COLOR_DATA_PAL_MAX_COUNT * COLOR_DATA_BYTES_PER_COLOR
 

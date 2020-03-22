@@ -58,6 +58,7 @@
 #define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 4 // Maybe uint32? // 3 // uint24
 
 
+// These are used with: map_tile_data.record
 #define GBM_MAP_TILE_RECORD_SIZE  3 // 24 bits per record
 // TODO: original pascal says bits 0..8 ~ 0-511, but uses 0x3FF. Which is right?
 #define GBM_MAP_TILE_NUM      0x0001FF //.0-8
