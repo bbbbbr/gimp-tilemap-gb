@@ -26,6 +26,9 @@ Tile Set & Map import formats:
  * GBR
  * GBM
 
+Color Gameboy Support (CGB)
+ * Import only, for now (export is more complicated)
+
 Supported formats:
  * GB 2bpp
 
