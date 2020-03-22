@@ -1,4 +1,4 @@
-Gimp Plugin: tilemap generator and exporter for Game Boy / GBDK & ZGB
+Tilemap GB (Gimp Plugin): tilemap generator and exporter for Game Boy / GBDK & ZGB
 ===========
 
 GIMP plugin for importing & exporting Game Boy game tilemaps and tilesets.
@@ -7,6 +7,9 @@ You can create a level map in Gimp (or other image editors) then export it to ei
 
 *This plugin is functional, but not polished. Don't be surprised to find some rough edges or annoyances.
 
+Download compiled executables here: 
+ * [Linux GIMP 2.8+](/bin/linux)
+ * [Windows GIMP 2.10.12+](/bin/windows)
 
 ![Opening a Game Boy Map Builder map as an image in GIMP](https://raw.githubusercontent.com/bbbbbr/gimp-tilemap/master/info/gimp-tilemap-plugin-screenshot.png)
 
@@ -30,11 +33,7 @@ Color Gameboy Support (CGB)
  * Import only, for now (export is more complicated)
 
 Supported formats:
- * GB 2bpp
-
-OS binaries available for:
- * Linux
- * Windows
+ * GB 2bpp (CGB not supported at this time)
 
 
 ## Usage:
@@ -50,19 +49,30 @@ OS binaries available for:
 Native compile/install on Linux using below.
 
 ```
-gimptool-2.0 --install file-tilemap-export.c
-    or
- make (and then copy to your GIMP plugin folder, depends on version)
+If GIMP & build tools not yet installed:
+(example for debian/ubuntu/mint)
+ * sudo apt install gimp
+ * sudo apt install build-essential
+ * sudo apt install libgimp2.0-dev
+ 
+Then: 
+* cd gimp-rom-bin
+* make
+
+Then copy the resulting "file-tilemap" to your GIMP plugin folder, depends on version
 
 Plug-in folder locations:
- Linux: ~/.gimp-2.8/plug-ins
+ Linux: ~/.gimp-2.8/plug-ins  , or ~/.config/GIMP/2.10/plug-ins
  Windows: C:\Program Files\GIMP 2\lib\gimp\2.0\plug-ins
 
 ```
+Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-rom-bin/blob/master/doc/GIMP%20jhbuild%20for%20Windows%20on%20Linux.md)
+
 
 ## Requirements:
 * Image must be indexed color and not have more colors than output format supports
 
 ## Known limitations & Issues:
+* GBMB Export does not yet auto-populate the Location Format, so it must be done manually.
 
 ## GIMP usage hints:
