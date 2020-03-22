@@ -71,7 +71,7 @@ int32_t gbr_pal_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t num_colo
 }
 
 
-// TODO: Warning: assumes bytes per pixel = 1 in working buffer
+// WARNING: assumes bytes per pixel = 1 in working buffer
 //
 // Handle Horizontal row flipping
 void gbr_tile_row_mirror_horizontal( uint8_t tile_row[], int16_t row_width) {
@@ -88,18 +88,29 @@ void gbr_tile_row_mirror_horizontal( uint8_t tile_row[], int16_t row_width) {
 }
 
 
-// TODO: Warning: assumes bytes per pixel = 1 in DEST buffer
-void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index, int32_t tile_size) {
+// WARNING: assumes bytes per pixel = 1 in DEST buffer
+//
+// TODO: could just pass in pal_index instead of deciding whether to use map tile palette override logic in this function
+void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_index, int32_t tile_size, uint8_t map_tile_pal_id) {
 
     int32_t index;
     uint8_t tile_pal_offset;
 
-    // CGB color palette loading
-    // Remap tile colors if there are multiple palettes
-    // Look up palette for tile, then calculate it's 4-bytes-per-palette offset
-    tile_pal_offset = (p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ])
-                      * GBR_TILE_DATA_COLOR_SET_SIZE;
+    // Choose which color palette to use:
+    // * Tile's built-in palette ID, or the Map's per-tile optional override palette ID
+    if (map_tile_pal_id == GBR_MAP_TILE_PAL_OVERRIDE_NONE) {
+        // CGB color palette loading
+        // Remap tile colors if there are multiple palettes
+        // Look up palette for tile, then calculate it's 4-bytes-per-palette offset
+        tile_pal_offset = (p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ])
+                          * GBR_TILE_DATA_COLOR_SET_SIZE;
+    } else {
+        // Use pal override from map (with offset for palettes upshifted to accomodate "default" pal setting
+        tile_pal_offset = (map_tile_pal_id - GBR_MAP_TILE_PAL_OFFSET)  * GBR_TILE_DATA_COLOR_SET_SIZE;
+    }
 
+
+    // Now remap the palette
     for (index = 0; index < tile_size; index++) {
         // Remap the tile color to the correct palette index
        (*dest_buf) +=  tile_pal_offset;
@@ -134,7 +145,7 @@ int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_i
     memcpy(dest_buf, &(p_gbr->tile_data.tile_list[offset]), tile_size);
 
     // Remap colors to correct palette (mostly for CGB/SGB mode)
-    gbr_tile_remap_colors(dest_buf, p_gbr, tile_index, tile_size);
+    gbr_tile_remap_colors(dest_buf, p_gbr, tile_index, tile_size, GBR_MAP_TILE_PAL_OVERRIDE_NONE);
 
     return true;
 }
@@ -215,7 +226,8 @@ int32_t gbr_tile_set_buf_padding(gbr_record * p_gbr, uint16_t tile_index) {
 int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr,
                                uint16_t tile_index,
                                uint16_t map_x, uint16_t map_y,
-                               uint8_t flip_h, uint8_t flip_v) {
+                               uint8_t flip_h, uint8_t flip_v,
+                               uint8_t map_tile_pal_id) {
 
     int32_t tile_offset;
     int32_t tile_size;
@@ -275,7 +287,8 @@ int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr,
         gbr_tile_remap_colors(&tile_row[0],
                               p_gbr,
                               tile_index,
-                              p_gbr->tile_data.width);
+                              p_gbr->tile_data.width,
+                              map_tile_pal_id);
 
         // Handle Horizontal flipping if needed
         if (flip_h)

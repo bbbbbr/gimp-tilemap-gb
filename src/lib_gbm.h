@@ -57,25 +57,43 @@
 #define GBM_MAP_EXPORT_PROPS_COUNT 2  // It's possible this should be larger
 #define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 4 // Maybe uint32? // 3 // uint24
 
-
 // These are used with: map_tile_data.record
 #define GBM_MAP_TILE_RECORD_SIZE  3 // 24 bits per record
 // TODO: original pascal says bits 0..8 ~ 0-511, but uses 0x3FF. Which is right?
 #define GBM_MAP_TILE_NUM      0x0001FF //.0-8
 #define GBM_MAP_TILE_RESERVED 0x3FFE00 //.9-21
+#define GBM_MAP_TILE_PAL_CGB  0x003C00 //.10-13
+#define GBM_MAP_TILE_PAL_SGB  0x070000 //.17-19
+#define GBM_MAP_TILE_PAL_CGB_BYTE     0x0F // Middle Byte
+#define GBM_MAP_TILE_PAL_CGB_BITSHIFT    2 // Downshift to align when loading from Middle Byte
+#define GBM_MAP_TILE_PAL_NONCGB_BYTE  0x07 // LS Byte
 #define GBM_MAP_TILE_FLIP_H   0x400000 //.24
 #define GBM_MAP_TILE_FLIP_V   0x800000 //.23
-#define GBM_MAP_TILE_FLIP_H_BYTE   0x40 //.24
-#define GBM_MAP_TILE_FLIP_V_BYTE   0x80 //.24
+#define GBM_MAP_TILE_FLIP_H_BYTE   0x40 // MS Byte
+#define GBM_MAP_TILE_FLIP_V_BYTE   0x80 // MS Byte
+
+#define GBM_MAP_TILE_PAL_CGB_DEFAULT  0
+#define GBM_MAP_TILE_PAL_NONCGB_DEFAULT  0
+#define GBM_MAP_TILE_PAL_CGB_OFFSET      1 // Actual palette number is -1 from value since 0 indicates default
+#define GBM_MAP_TILE_PAL_NONCGB_OFFSET   1 // Actual palette number is -1 from value since 0 indicates default
 
 #define GBM_MAP_EXPORT_DELETED_1_SIZE 0x012C
 #define GBM_MAP_EXPORT_DELETED_2_SIZE 0x0
 
 
+enum gbm_tileset_colorset {
+    gbm_color_set_pocket   = 0,
+    gbm_color_set_game_boy = 1,
+    gbm_color_set_gbc      = 2,
+    gbm_color_set_sgb      = 3
+};
+
 typedef struct {
     uint16_t num;
     uint8_t  flip_h;
     uint8_t  flip_v;
+    uint8_t  pal_cgb_id;    // 0 = default/tile attrib, 1-8 map  -> palettes 0-7
+    uint8_t  pal_noncgb_id; // 0 = default/tile attrib, 1-8 map  -> palettes 0-7
 } gbm_tile_record;
 
 

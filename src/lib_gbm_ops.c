@@ -44,6 +44,9 @@ gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) 
     tile.flip_h = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_H_BYTE;
     tile.flip_v = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_V_BYTE;
 
+    tile.pal_cgb_id    = (p_gbm->map_tile_data.records[index+1] >> GBM_MAP_TILE_PAL_CGB_BITSHIFT) & GBM_MAP_TILE_PAL_CGB_BYTE;
+    tile.pal_noncgb_id =  p_gbm->map_tile_data.records[index]                                     & GBM_MAP_TILE_PAL_NONCGB_BYTE;
+
     tile.num = ((uint16_t)p_gbm->map_tile_data.records[index+2] |
                ((uint16_t)p_gbm->map_tile_data.records[index+1] >> 8)) & GBM_MAP_TILE_NUM;
 
@@ -89,6 +92,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
     uint16_t map_x, map_y;
     gbm_tile_record tile;
     int32_t status;
+    uint8_t map_tile_pal_id;
 
     status = true; // default to success
 
@@ -122,12 +126,18 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
 
                 tile = gbm_map_tile_get_xy(p_gbm, map_x, map_y);
 
+                if (p_gbm->map_settings.color_set == gbm_color_set_gbc)
+                    map_tile_pal_id = tile.pal_cgb_id;
+                else
+                    map_tile_pal_id = tile.pal_noncgb_id;
+
                 if (status)
                     status = gbr_tile_copy_to_image(p_image,
                                                     p_gbr,
                                                     tile.num,
                                                     map_x, map_y,
-                                                    tile.flip_h, tile.flip_v);
+                                                    tile.flip_h, tile.flip_v,
+                                                    map_tile_pal_id);
             } // for .. map_x
         } // for.. map_y
     } else {

@@ -72,6 +72,9 @@
 #define GBR_PALETTE_SGB_SETS_SIZE      4 * GBR_PALETTE_TGBCOLORTYPE_SIZE
 #define GBR_PALETTE_SGB_SETS_ACTUAL_SIZE      8 * GBR_PALETTE_TGBCOLORTYPE_SIZE // GBTD loads this as 4 but saves it with 8 sets (for 128 bytes)
 
+#define GBR_MAP_TILE_PAL_OVERRIDE_NONE 0 // 0 = use default tile pal in cgb mode
+#define GBR_MAP_TILE_PAL_OFFSET        1 // Actual palette number is -1 from value since 0 indicates default
+
 
 enum gbr_tilemap_layer {
     gbr_bkg    = 0x00,
