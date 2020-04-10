@@ -45,7 +45,7 @@ file_tilemap_export_SOURCES = \
 	tilemap_read.c \
 	tilemap_tiles.c \
 	tilemap_write.c \
-	xtea.c
+	hash.c
 
 
 INCLUDES = \

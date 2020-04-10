@@ -9,7 +9,7 @@
 #include "tilemap_tiles.h"
 #include "tilemap_io.h"
 
-#include "xtea.h"
+#include "hash.h"
 
 // Globals
 tile_map_data tile_map;
@@ -17,10 +17,8 @@ tile_set_data tile_set;
 
 
 
-// TODO: Fix the dubious mixing of global and locals. Simplify code
-
 // TODO: support configurable tile size
-int tilemap_initialize(image_data * p_src_img) {
+int tilemap_initialize(image_data * p_src_img, uint16_t search_mask) {
 
     // Tile Map
     tile_map.map_width   = p_src_img->width;
@@ -32,14 +30,20 @@ int tilemap_initialize(image_data * p_src_img) {
     tile_map.width_in_tiles  = tile_map.map_width  / tile_map.tile_width;
     tile_map.height_in_tiles = tile_map.map_height / tile_map.tile_height;
 
+    tile_map.search_mask = search_mask;
+
     // Max space required to store Tile Map is
     // width x height in tiles (if every map tile is unique)
     tile_map.size = (tile_map.width_in_tiles * tile_map.height_in_tiles);
 
-    //tile_map.tile_id_list = malloc(tile_map.size * sizeof(int32_t)); // Why was this uint32_t?
+    // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t -> uint32_t
+    //tile_map.tile_id_list = malloc(tile_map.size * sizeof(uint32_t));
     tile_map.tile_id_list = malloc(tile_map.size);
-
     if (!tile_map.tile_id_list)
+            return(false);
+
+    tile_map.tile_attribs_list = malloc(tile_map.size * sizeof(uint16_t));
+    if (!tile_map.tile_attribs_list)
             return(false);
 
 
@@ -55,53 +59,45 @@ int tilemap_initialize(image_data * p_src_img) {
 
 
 
-unsigned char tilemap_export_process(image_data * p_src_img) {
+unsigned char tilemap_export_process(image_data * p_src_img, int check_flip) {
+
+    uint16_t search_mask;
+
+    if (check_flip) search_mask = TILE_FLIP_BITS_XY;
+        else        search_mask = TILE_FLIP_BITS_NONE;
 
     if ( check_dimensions_valid(p_src_img) ) {
-        if (!tilemap_initialize(p_src_img)) // Success, prep for processing
+        if (!tilemap_initialize(p_src_img, search_mask)) { // Success, prep for processing
             return (false); // Signal failure and exit
+        }
     }
-    else
+    else {
         return (false); // Signal failure and exit
+    }
 
     if ( ! process_tiles(p_src_img) )
         return (false); // Signal failure and exit
+
+    return (true);
 }
 
 
 
 unsigned char process_tiles(image_data * p_src_img) {
 
-    int         img_x, img_y;
-    uint32_t  * tile_buf_intermediary; // Needs to be 32 bit aligned for hash function
-    tile_data   tile;
-    uint32_t    tile_size_bytes;
-    uint32_t    tile_size_bytes_hash_padding; // Make sure hashed data is multiple of 32 bits
-    uint64_t    tile_hash;
-    uint32_t    img_buf_offset;
-    int32_t     tile_id;
-    int32_t     map_slot;
+    int             img_x, img_y;
+
+    tile_data       tile, flip_tiles[2];
+    tile_map_entry  map_entry;
+    uint32_t        img_buf_offset;
+    int32_t         map_slot;
 
     map_slot = 0;
 
-    tile.raw_bytes_per_pixel = p_src_img->bytes_per_pixel;
-    tile.raw_width           = tile_map.tile_width;
-    tile.raw_height          = tile_map.tile_height;
-    tile.raw_size_bytes      = tile.raw_height * tile.raw_width * tile.raw_bytes_per_pixel;
-
-    // Make sure buffer is an even multiple of 32 bits (for hash function)
-    tile_size_bytes_hash_padding = tile_size_bytes % sizeof(uint32_t);
-
-    // Allocate buffer for temporary working tile raw image
-    // Use a uint32 for initial allocation, then hand it off to the uint8
-    // TODO: fix this hack. rumor is that in PC world uint8 buffers always get 32 bit alligned?
-    tile_buf_intermediary = malloc(tile_size_bytes + tile_size_bytes_hash_padding);
-    tile.p_img_raw        = (uint8_t *)tile_buf_intermediary;
-
-    // Make sure padding bytes are zeroed
-    memset(tile.p_img_raw, 0x00, tile_size_bytes_hash_padding);
-
-
+    // Use pre-initialized values from tilemap_initialize()
+    tile_initialize(&tile, &tile_map, &tile_set);
+    tile_initialize(&flip_tiles[0], &tile_map, &tile_set);
+    tile_initialize(&flip_tiles[1], &tile_map, &tile_set);
 
     if (tile.p_img_raw) {
 
@@ -119,41 +115,48 @@ unsigned char process_tiles(image_data * p_src_img) {
                                           img_buf_offset);
 
                 // TODO! Don't hash transparent pixels? Have to overwrite second byte?
-                tile.hash = xtea_hash_u32((tile.raw_size_bytes + tile_size_bytes_hash_padding) / sizeof(uint32_t),
-                                          (uint32_t *)tile.p_img_raw);
+                tile.hash[0] = MurmurHash2( tile.p_img_raw, tile.raw_size_bytes, 0xF0A5); // len is u8count, 0xF0A5 is seed
 
-                tile_id = tile_find_matching(tile.hash, &tile_set);
+                map_entry = tile_find_match(tile.hash[0], &tile_set, tile_map.search_mask);
 
 
                 // Tile not found, create a new entry
-                if (tile_id == TILE_ID_NOT_FOUND) {
+                if (map_entry.id == TILE_ID_NOT_FOUND) {
 
-                    tile_id = tile_register_new(&tile, &tile_set);
+                    // Calculate remaining hash flip variations
+                    // (only for tiles that get registered)
+                    if (tile_map.search_mask)
+                        tile_calc_alternate_hashes(&tile, flip_tiles);
 
-                    if (tile_id <= TILE_ID_OUT_OF_SPACE) {
-                        free(tile.p_img_raw);
+                    map_entry = tile_register_new(&tile, &tile_set);
+
+                    if (map_entry.id == TILE_ID_OUT_OF_SPACE) {
+                        tile_free(&tile);
+                        tile_free(&flip_tiles[0]);
+                        tile_free(&flip_tiles[1]);
+                        tilemap_free_resources();
+
+                        printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
                         return (false); // Ran out of tile space, exit
                     }
                 }
 
-                int32_t test;
-                test = tile_id;
+                tile_map.tile_id_list[map_slot]      = map_entry.id;
+                tile_map.tile_attribs_list[map_slot] = map_entry.attribs;
 
-                tile_map.tile_id_list[map_slot] = test; // = tile_id; // TODO: IMPORTANT, SOMETHING IS VERY WRONG
-
-// printf("Map Slot %d: tile_id=%d tilemap[]=%d, %08lx\n",map_slot, tile_id, tile_map.tile_id_list[map_slot], tile.hash);
                 map_slot++;
             }
         }
 
     } else { // else if (tile.p_img_raw) {
-        if (tile_map.tile_id_list)
-            free(tile_map.tile_id_list);
+        tilemap_free_resources();
         return (false); // Failed to allocate buffer, exit
     }
 
-    if (tile.p_img_raw)
-        free(tile.p_img_raw);
+    // Free resources
+    tile_free(&tile);
+    tile_free(&flip_tiles[0]);
+    tile_free(&flip_tiles[1]);
 
     printf("Total Tiles=%d\n", tile_set.tile_count);
 }
@@ -171,26 +174,41 @@ static int32_t check_dimensions_valid(image_data * p_src_img) {
 
 
 
-void tilemap_free_resources() {
 
-    int c;
+void tilemap_free_tile_set(void) {
+        int c;
 
     // Free all the tile set data
     for (c = 0; c < tile_set.tile_count; c++) {
 
         if (tile_set.tiles[c].p_img_encoded)
             free(tile_set.tiles[c].p_img_encoded);
+        tile_set.tiles[c].p_img_encoded = NULL;
 
         if (tile_set.tiles[c].p_img_raw)
             free(tile_set.tiles[c].p_img_raw);
+        tile_set.tiles[c].p_img_raw = NULL;
     }
 
-    // Free tile map data
-    if (tile_map.tile_id_list)
-        free(tile_map.tile_id_list);
-
+    tile_set.tile_count  = 0;
 }
 
+void tilemap_free_resources(void) {
+
+    tilemap_free_tile_set();
+
+    // Free tile map data
+    if (tile_map.tile_id_list) {
+        free(tile_map.tile_id_list);
+        tile_map.tile_id_list = NULL;
+    }
+
+    if (tile_map.tile_attribs_list) {
+        free(tile_map.tile_attribs_list);
+        tile_map.tile_id_list = NULL;
+    }
+
+}
 
 
 

@@ -32,34 +32,34 @@ gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) 
 
     uint16_t index;
 
-    gbm_tile_record tile;
+    gbm_tile_record map_tile;
 
     index = (x + (y * p_gbm->map.width)) * GBM_MAP_TILE_RECORD_SIZE;
 
     if ((index + 2) > p_gbm->map_tile_data.length_bytes) {
-        tile.num = 0xFFFF;
-        return tile;  // TODO: use/signal proper failure return code here
+        map_tile.num = 0xFFFF;
+        return map_tile;  // TODO: use/signal proper failure return code here
     }
 
-    tile.flip_h = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_H_BYTE;
-    tile.flip_v = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_V_BYTE;
+    map_tile.flip_h = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_H_BYTE;
+    map_tile.flip_v = p_gbm->map_tile_data.records[index] & GBM_MAP_TILE_FLIP_V_BYTE;
 
-    tile.pal_cgb_id    = (p_gbm->map_tile_data.records[index+1] >> GBM_MAP_TILE_PAL_CGB_BITSHIFT) & GBM_MAP_TILE_PAL_CGB_BYTE;
-    tile.pal_noncgb_id =  p_gbm->map_tile_data.records[index]                                     & GBM_MAP_TILE_PAL_NONCGB_BYTE;
+    map_tile.pal_cgb_id    = (p_gbm->map_tile_data.records[index+1] >> GBM_MAP_TILE_PAL_CGB_BITSHIFT) & GBM_MAP_TILE_PAL_CGB_BYTE;
+    map_tile.pal_noncgb_id =  p_gbm->map_tile_data.records[index]                                     & GBM_MAP_TILE_PAL_NONCGB_BYTE;
 
-    tile.num = ((uint16_t)p_gbm->map_tile_data.records[index+2] |
+    map_tile.num = ((uint16_t)p_gbm->map_tile_data.records[index+2] |
                ((uint16_t)p_gbm->map_tile_data.records[index+1] >> 8)) & GBM_MAP_TILE_NUM;
 
-        printf(" %d", tile.num);
+        printf(" %d", map_tile.num);
         if ((x % p_gbm->map.width) == 0) printf("\n");
 
-    return tile;
+    return map_tile;
 
 }
 
 
 
-uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_t tile_index) {
+uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_t tile_index, uint16_t tile_attribs) {
 
     uint32_t index;
 
@@ -70,14 +70,13 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
         printf("gbm_map_tile_set_xy: FAILED: %d, %d \n", x,y);
     }
 
-    // Flip H & V (cgb)
-    p_gbm->map_tile_data.records[index]  = 0;
-    p_gbm->map_tile_data.records[index] |= 0; // TODO: GBM_MAP_TILE_FLIP_H_BYTE
-    p_gbm->map_tile_data.records[index] |= 0; // TODO: GBM_MAP_TILE_FLIP_V_BYTE
+    // Flip H & V (cgb) and CGB/SGB-NONCGB Palette can be loaded directly
+    p_gbm->map_tile_data.records[index    ] = (tile_attribs >> 8) & 0xFF;
+    p_gbm->map_tile_data.records[index +1 ] = tile_attribs  & 0xFF;
 
-    // Tile Num
-    p_gbm->map_tile_data.records[index + 1] = (uint8_t)((tile_index & GBM_MAP_TILE_NUM) << 8);
-    p_gbm->map_tile_data.records[index + 2] = (uint8_t) (tile_index & GBM_MAP_TILE_NUM);
+    // Add in the Tile Number
+    p_gbm->map_tile_data.records[index + 1] |= (uint8_t)((tile_index & GBM_MAP_TILE_NUM) << 8);
+    p_gbm->map_tile_data.records[index + 2] |= (uint8_t) (tile_index & GBM_MAP_TILE_NUM);
 
         printf(" %d", tile_index);
         if ((x % p_gbm->map.width) == 0) printf("\n");
@@ -151,7 +150,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
 }
 
 
-int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data, uint32_t map_data_count) {
+int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data, uint16_t * p_map_attribs, uint32_t map_data_count) {
 
     uint16_t map_x, map_y;
 
@@ -171,7 +170,10 @@ int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data,
             for (map_x=0; map_x < p_gbm->map.width; map_x++) {
 
                     // Set the map tile
-                    if (! gbm_map_tile_set_xy(p_gbm, map_x, map_y, *(p_map_data++)))
+                    if (! gbm_map_tile_set_xy(p_gbm, map_x, map_y,
+                                             *(p_map_data++), // map tile index
+                                             *(p_map_attribs++)) // map tile attrib data
+                        )
                         return false;
             }
         }

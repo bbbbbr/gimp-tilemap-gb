@@ -10,26 +10,70 @@
 #include "tilemap_tiles.h"
 
 #include "lib_rom_bin.h"
+#include "hash.h"
+
+const uint16_t tile_flip_bits[] = {
+    TILE_FLIP_BITS_NONE,
+    TILE_FLIP_BITS_X,
+    TILE_FLIP_BITS_Y,
+    TILE_FLIP_BITS_XY };
+
+void tile_free(tile_data * p_tile) {
+
+    if (p_tile->p_img_raw)
+        free(p_tile->p_img_raw);
+
+    p_tile->p_img_raw = NULL;
+}
 
 
+void tile_initialize(tile_data * p_tile, tile_map_data * p_tile_map, tile_set_data * p_tile_set) {
 
-int32_t tile_register_new(tile_data * p_src_tile, tile_set_data * tile_set) {
+    uint32_t    tile_size_bytes;
+    uint32_t    tile_size_bytes_hash_padding; // Make sure hashed data is multiple of 32 bits
 
-    int32_t     tile_id;
-    tile_data * new_tile;
+    // Use pre-initialized values sourced from tilemap_initialize()
+    p_tile->raw_bytes_per_pixel = p_tile_set->tile_bytes_per_pixel;
+    p_tile->raw_width           = p_tile_map->tile_width;
+    p_tile->raw_height          = p_tile_map->tile_height;
+    p_tile->raw_size_bytes      = p_tile->raw_height * p_tile->raw_width * p_tile->raw_bytes_per_pixel;
+
+    tile_size_bytes = p_tile->raw_size_bytes;
+
+    // Make sure buffer is an even multiple of 32 bits (for hash function)
+    tile_size_bytes_hash_padding = tile_size_bytes % sizeof(uint32_t);
+
+    // Allocate buffer for temporary working tile raw image, 32 bit aligned
+    p_tile->p_img_raw = aligned_alloc(sizeof(uint32_t), (tile_size_bytes + tile_size_bytes_hash_padding));
+
+    // Make sure padding bytes are zeroed
+    memset(p_tile->p_img_raw, 0x00, tile_size_bytes + tile_size_bytes_hash_padding);
+}
+
+
+tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_set) {
+
+    int             h;
+    tile_map_entry  new_map_entry;
+    tile_data     * new_tile;
 
 // printf("tile_register_new %d\n",tile_set->tile_count);
 
     if (tile_set->tile_count < TILES_MAX_DEFAULT) {
 
         // Set tile id to the current tile
-        tile_id = tile_set->tile_count;
+        new_map_entry.id = tile_set->tile_count;
+
+        // Default: no attributes (no flip x/y, no special palette)
+        new_map_entry.attribs = 0;
 
         // Use an easier to read name for the new tile entry
-        new_tile = &tile_set->tiles[tile_id];
+        new_tile = &tile_set->tiles[new_map_entry.id];
 
         // Store hash and encoded image data into tile
-        new_tile->hash = p_src_tile->hash;
+        for (h = TILE_FLIP_MIN; h <= TILE_FLIP_MAX; h++)
+            new_tile->hash[h] = p_src_tile->hash[h];
+
         new_tile->encoded_size_bytes = 0;
         new_tile->raw_bytes_per_pixel = p_src_tile->raw_bytes_per_pixel;
         new_tile->raw_width           = p_src_tile->raw_width;
@@ -47,25 +91,25 @@ int32_t tile_register_new(tile_data * p_src_tile, tile_set_data * tile_set) {
 
 
             // Copy encoded tile data into tile buffer
-            tile_encode(&(tile_set->tiles[tile_id]),
+            tile_encode(&(tile_set->tiles[new_map_entry.id]),
                         BIN_MODE_SNESGB_2BPP);
 
-            if (tile_set->tiles[tile_id].encoded_size_bytes) {
+            if (tile_set->tiles[new_map_entry.id].encoded_size_bytes) {
                 // Move to new tile
                 tile_set->tile_count++;
 
             } else // encoding failed
-                tile_id = TILE_ID_FAILED_ENCODE;
+                new_map_entry.id = TILE_ID_FAILED_ENCODE;
 
         } else // malloc failed
-            tile_id = TILE_ID_OUT_OF_SPACE;
+            new_map_entry.id = TILE_ID_OUT_OF_SPACE;
     }
     else
-        tile_id TILE_ID_OUT_OF_SPACE;
+        new_map_entry.id TILE_ID_OUT_OF_SPACE;
 
 // printf("tile_register_new tile_id=%d\n",tile_id);
 
-    return (tile_id);
+    return (new_map_entry);
 }
 
 
@@ -124,19 +168,36 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
 
 
 
-int32_t tile_find_matching(uint64_t hash_sig, tile_set_data * tile_set) {
+tile_map_entry tile_find_match(uint64_t hash_sig, tile_set_data * tile_set, uint16_t search_mask) {
 
     int c;
+    int h, h_range;
+    tile_map_entry tile_match_rec;
 
+    // TODO: for now flip X and flip Y are joined together, so always check each permutation if either is turned on
+    if (!search_mask) h_range = TILE_FLIP_MIN;
+    else h_range = TILE_FLIP_MAX;
+
+    // Loop through all tiles in the set
     for (c = 0; c < tile_set->tile_count; c++) {
-        if (hash_sig == tile_set->tiles[c].hash) {
-            // found a matching tile, return it's ID
-            return(c);
+        // Loop through all hashes that are present
+        for (h = TILE_FLIP_MIN; h <= h_range; h++) {
+            // If a mash matches then return it (along with flip attributes_
+            if (hash_sig == tile_set->tiles[c].hash[h]) {
+
+                tile_match_rec.id       = c; // found a matching tile, return it's ID
+                tile_match_rec.attribs  = tile_flip_bits[h]; // Set flip x/y bits if present
+
+                if (h == 3)
+                    printf("Tilemap: Search: Flip: Found at %d -> %d\n", c, h);
+                return(tile_match_rec);
+            }
         }
     }
 
     // No matching tile found
-    return(TILE_ID_NOT_FOUND);
+    tile_match_rec.id = TILE_ID_NOT_FOUND;
+    return(tile_match_rec);
 }
 
 
@@ -214,3 +275,101 @@ void tile_print_buffer_encoded(tile_data tile) {
 
     printf(" \n");
 }
+
+
+
+
+void tile_flip_y(tile_data * p_src_tile, tile_data * p_dst_tile) {
+
+    uint16_t  y;
+    uint8_t * p_src_top;
+    uint8_t * p_dst_bottom;
+    uint16_t  row_stride;
+
+    row_stride = (p_src_tile->raw_width * p_src_tile->raw_bytes_per_pixel);
+
+    // Set up pointers to opposite top/bottom rows of image
+    // Start of First row / Start of Last row
+    p_src_top    = p_src_tile->p_img_raw;
+    p_dst_bottom = p_dst_tile->p_img_raw + ((p_src_tile->raw_height - 1) * row_stride);
+
+    // Copy Source rows from top to bottom into Dest from bottom to top
+    for (y = 0; y < p_src_tile->raw_height; y++) {
+        memcpy(p_dst_bottom, p_src_top, row_stride);
+        p_src_top    += row_stride;
+        p_dst_bottom -= row_stride;
+    }
+}
+
+
+void tile_flip_x(tile_data * p_src_tile, tile_data * p_dst_tile) {
+
+    uint16_t  x, y;
+    uint8_t * p_src_left;
+    uint8_t * p_dst_right;
+    uint8_t   bpp;
+    uint16_t  dest_row_increment, dest_pixel_increment;
+
+    // Set up pointers to opposite sides of the first line
+    bpp = p_src_tile->raw_bytes_per_pixel;
+
+    p_src_left  = p_src_tile->p_img_raw;
+    p_dst_right = p_dst_tile->p_img_raw + ((p_src_tile->raw_width - 1) * bpp);
+
+    // * Source will end up where it needs to
+    //   be automatically for the next row
+    // * Dest needs to be advanced by two rows
+    dest_row_increment   = (p_src_tile->raw_width * 2) * bpp;
+    dest_pixel_increment = (bpp * 2) - 1;
+
+    for (y = 0; y < p_src_tile->raw_height; y++) {
+
+        for (x = 0; x < p_src_tile->raw_width; x++) {
+
+            // Copy row contents in reverse order
+            // Source increments (right) and Dest decrements_left
+            switch (bpp) {
+                //case 1: *p_dst_right-- = *p_src_left++;
+                //         break;
+
+                // For each higher bit depth, copy one more pixel
+                case 4: *p_dst_right++ = *p_src_left++;
+                case 3: *p_dst_right++ = *p_src_left++;
+                case 2: *p_dst_right++ = *p_src_left++;
+
+                case 1: *p_dst_right   = *p_src_left;
+                        // Finished copying pixels
+                        // Rewind Dest buffer and advance source
+                         p_dst_right -= dest_pixel_increment;
+                         p_src_left++;
+                        break;
+            }
+        }
+
+        p_dst_right += dest_row_increment;
+    }
+}
+
+
+void tile_calc_alternate_hashes(tile_data * p_tile, tile_data flip_tiles[]) {
+
+    //        if (mask_test & tile_map.search_mask) {
+
+    // TODO: for now flip X and flip Y are joined together, so always check each permutation
+
+    // Check for X flip (new copy of data)
+    tile_flip_x(p_tile, &flip_tiles[0]);
+    p_tile->hash[1] = MurmurHash2( flip_tiles[0].p_img_raw, flip_tiles[0].raw_size_bytes, 0xF0A5); // len is u8count
+
+    // Check for Y flip (new copy of data)
+    tile_flip_y(p_tile, &flip_tiles[0]);
+    p_tile->hash[2] = MurmurHash2( flip_tiles[0].p_img_raw, flip_tiles[0].raw_size_bytes, 0xF0A5); // len is u8count
+
+    // Check for X-Y flip (re-use data from previous Y flip -> second flip tile)
+    tile_flip_x(&flip_tiles[0], &flip_tiles[1]);
+    p_tile->hash[3] = MurmurHash2( flip_tiles[1].p_img_raw, flip_tiles[1].raw_size_bytes, 0xF0A5); // len is u8count
+
+    memcpy(p_tile->p_img_raw, flip_tiles[1].p_img_raw, flip_tiles[1].raw_size_bytes);
+}
+
+

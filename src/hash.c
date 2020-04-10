@@ -1,13 +1,16 @@
-// xtea_hash.c
+// hash.c
 //
-// A minimal xtea hashing implementation
+// A minimal xtea & others hashing implementation
+
+// See:
+// https://softwareengineering.stackexchange.com/questions/49550/which-hashing-algorithm-is-best-for-uniqueness-and-speed
 
 #include <stdio.h>
-#include "xtea.h"
+#include "hash.h"
 
 
  // Arbitrary key 4 x uint32_t
-static uint32_t key[4] = {0x3326D2BB, 0x86F7E7BB, 0xD1A4C2D5, 0x5C9E8974};
+static uint32_t xtea_key[4] = {0x3326D2BB, 0x86F7E7BB, 0xD1A4C2D5, 0x5C9E8974};
 
 
 // Hash some data using the xtea cryptographic algorithm
@@ -29,10 +32,10 @@ uint64_t xtea_hash(uint32_t u64count, uint32_t * p_source_data)
     uint32_t working_key[4];
 
     // Initialize key
-    working_key[0] = key[0];
-    working_key[1] = key[1];
-    working_key[2] = key[2];
-    working_key[3] = key[3];
+    working_key[0] = xtea_key[0];
+    working_key[1] = xtea_key[1];
+    working_key[2] = xtea_key[2];
+    working_key[3] = xtea_key[3];
 
     // Initialize delta
     delta = 0x9E3779B9;
@@ -94,10 +97,10 @@ uint64_t xtea_hash_u32(uint32_t u32count, uint32_t * p_source_data)
     uint32_t working_key[4];
 
     // Initialize key
-    working_key[0] = key[0];
-    working_key[1] = key[1];
-    working_key[2] = key[2];
-    working_key[3] = key[3];
+    working_key[0] = xtea_key[0];
+    working_key[1] = xtea_key[1];
+    working_key[2] = xtea_key[2];
+    working_key[3] = xtea_key[3];
 
     // Initialize delta
     delta = 0x9E3779B9;
@@ -140,4 +143,64 @@ uint64_t xtea_hash_u32(uint32_t u32count, uint32_t * p_source_data)
     // Return final result into hash output that gets returned
     return( (uint64_t)working_key[0] | ((uint64_t)working_key[1] >> 32) );
 }
+
+
+
+// MurmurHash2 was written by Austin Appleby, and is placed in the public
+// domain. The author hereby disclaims copyright to this source code.
+//
+// * len: is u8count
+// * About 8x faster than xtea_hash_u32()
+//
+uint32_t MurmurHash2 ( const void * key, int len, uint32_t seed )
+{
+  // 'm' and 'r' are mixing constants generated offline.
+  // They're not really 'magic', they just happen to work well.
+
+  const uint32_t m = 0x5bd1e995;
+  const int r = 24;
+
+  // Initialize the hash to a 'random' value
+
+  uint32_t h = seed ^ len;
+
+  // Mix 4 bytes at a time into the hash
+
+  const unsigned char * data = (const unsigned char *)key;
+
+  while(len >= 4)
+  {
+    uint32_t k = *(uint32_t*)data;
+
+    k *= m;
+    k ^= k >> r;
+    k *= m;
+
+    h *= m;
+    h ^= k;
+
+    data += 4;
+    len -= 4;
+  }
+
+  // Handle the last few bytes of the input array
+
+  switch(len)
+  {
+  case 3: h ^= data[2] << 16;
+  case 2: h ^= data[1] << 8;
+  case 1: h ^= data[0];
+      h *= m;
+  };
+
+  // Do a few final mixes of the hash to ensure the last few
+  // bytes are well-incorporated.
+
+  h ^= h >> 13;
+  h *= m;
+  h ^= h >> 15;
+
+  return h;
+}
+
 

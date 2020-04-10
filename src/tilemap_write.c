@@ -45,6 +45,8 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
 
+    int      check_flip = true;  // TODO
+
     FILE * file;
 
 
@@ -111,7 +113,7 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
     if (status) {
         switch (image_mode) {
             case EXPORT_FORMAT_GBDK_C_SOURCE:
-                status = tilemap_export_process(&app_image);
+                status = tilemap_export_process(&app_image, check_flip);
                 printf("tilemap_export_process: status= %d\n", status);
 
 
