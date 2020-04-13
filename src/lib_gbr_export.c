@@ -531,6 +531,17 @@ int32_t gbr_export_tileset_color_settings(gbr_record * p_gbr, uint16_t gb_mode) 
     p_gbr->tile_pal.sgb_count = p_gbr->tile_data.count;
     p_gbr->tile_pal.sgb_color_set_size_bytes = p_gbr->tile_pal.count * GBR_TILE_PAL_COLOR_SET_REC_SIZE;
 
+    // printf("gbr_export_tileset_color_settings(): gb_mode = %d, "
+    //        "tile_settings.color_set = %d, tile_settings.pal_data_size = %d,"
+    //        "tile_pal.count = %d,tile_pal.color_set_size_bytes = %d,"
+    //         "tile_pal.sgb_count = %d, tile_pal.sgb_color_set_size_bytes = %d \n",
+    //         gb_mode,
+    //         p_gbr->tile_settings.color_set,
+    //         p_gbr->tile_settings.pal_data_size,
+    //         p_gbr->tile_pal.count,
+    //         p_gbr->tile_pal.color_set_size_bytes,
+    //         p_gbr->tile_pal.sgb_count,
+    //         p_gbr->tile_pal.sgb_color_set_size_bytes);
 }
 
 
@@ -626,14 +637,19 @@ int32_t gbr_export_set_defaults(gbr_record * p_gbr) {
     memset(p_gbr->tile_data.name, 0x00, GBR_TILE_DATA_NAME_SIZE);
 
     // The values below get updated during export
-p_gbr->tile_data.width  = 0;
-p_gbr->tile_data.height = 0;
-p_gbr->tile_data.count  = 0;
-p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOR_SET_SIZE;
-p_gbr->tile_data.tile_data_size = 0;
+    p_gbr->tile_data.width  = 0;
+    p_gbr->tile_data.height = 0;
+    p_gbr->tile_data.count  = 0;
+    p_gbr->tile_data.pal_data_size = GBR_TILE_DATA_COLOR_SET_SIZE;
+    p_gbr->tile_data.tile_data_size = 0;
 
-memset(p_gbr->tile_data.color_set,  0x00, GBR_TILE_DATA_COLOR_SET_SIZE);
-memset(p_gbr->tile_data.color_set,  0x00, PASCAL_OBJECT_MAX_SIZE);
+    //memset(p_gbr->tile_data.color_set,  0x00, GBR_TILE_DATA_COLOR_SET_SIZE);
+    memset(p_gbr->tile_data.color_set,  0x00, PASCAL_OBJECT_MAX_SIZE);
+    // Default palette for DMG/Pocket mode
+    p_gbr->tile_data.color_set[0] = 0;
+    p_gbr->tile_data.color_set[1] = 1;
+    p_gbr->tile_data.color_set[2] = 2;
+    p_gbr->tile_data.color_set[3] = 3;
 
 
     // TILE_SETTINGS
