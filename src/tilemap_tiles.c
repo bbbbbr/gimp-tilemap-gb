@@ -58,10 +58,14 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
     tile_map_entry  new_map_entry;
     tile_data     * new_tile;
 
+    // Default status to found
+    new_map_entry.status = TILE_ID_OK;
+
 // printf("tile_register_new %d\n",tile_set->tile_count);
 
     if (tile_set->tile_count < TILES_MAX_DEFAULT) {
 
+        // == FIRST INITIALIZE THE TILE'S MAP ENTRY ==
         // Set tile id to the current tile
         new_map_entry.id = tile_set->tile_count;
 
@@ -69,6 +73,8 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
         new_map_entry.flip_bits   = TILE_FLIP_BITS_NONE;
         new_map_entry.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
 
+
+        // == THEN COPY THE TILE DATA INTO THE NEW TILE ==
         // Use an easier to read name for the new tile entry
         new_tile = &tile_set->tiles[new_map_entry.id];
 
@@ -80,6 +86,8 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
         new_tile->raw_bytes_per_pixel = p_src_tile->raw_bytes_per_pixel;
         new_tile->raw_width           = p_src_tile->raw_width;
         new_tile->raw_height          = p_src_tile->raw_height;
+        new_tile->palette_num         = p_src_tile->palette_num;
+
 
         // Copy raw tile data into tile image buffer
         new_tile->raw_size_bytes = p_src_tile->raw_size_bytes;
@@ -104,13 +112,13 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
 
 
             } else // encoding failed
-                new_map_entry.id = TILE_ID_FAILED_ENCODE;
+                new_map_entry.status = TILE_ID_FAILED_ENCODE;
 
         } else // malloc failed
-            new_map_entry.id = TILE_ID_OUT_OF_SPACE;
+            new_map_entry.status = TILE_ID_OUT_OF_SPACE;
     }
     else
-        new_map_entry.id TILE_ID_OUT_OF_SPACE;
+        new_map_entry.status = TILE_ID_OUT_OF_SPACE;
 
 // printf("tile_register_new tile_id=%d\n",tile_id);
 
@@ -179,6 +187,9 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
     int h, h_range;
     tile_map_entry tile_match_rec;
 
+    // Default status to found
+    tile_match_rec.status = TILE_ID_OK;
+
     // Earlier checking will enforce CGB mode only for tile_dedupe_flips
     // TODO: for now flip X and flip Y are joined together, so always check each flip permutation
     if (p_tile_map->options.tile_dedupe_flips)
@@ -205,18 +216,14 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
                     // If the palettes didn't match
                     // Enable the palette override by setting palette number
                     if (p_tile->palette_num != tile_set->tiles[c].palette_num) {
-                        printf("Tilemap: Search: Dedupe on Palette at: %d -> %d = %d\n", c, h, tile_set->tiles[c].palette_num);
+                        // printf(" -> Dedupe  Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
 
-                        tile_match_rec.palette_num = tile_set->tiles[c].palette_num;
+                        // Use this map location's identified (tile) palette as an override instead of the source tile's palette
+                        tile_match_rec.palette_num = p_tile->palette_num;
                     } else {
-                        // Otherwise set the flag to use the default palette
+                        // Otherwise set the flag to use the default palette from the source tile
+                        // printf(" -> Default Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
                         tile_match_rec.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
-                    }
-
-
-                    // Log if the match was a flipped tile
-                    if (h > 0) {
-                        printf("Tilemap: Search: Dedupe on Tile Flip at: %d -> %d\n", c, h);
                     }
 
                     return(tile_match_rec);
@@ -230,7 +237,7 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
     } // Tile set loop
 
     // No matching tile found
-    tile_match_rec.id = TILE_ID_NOT_FOUND;
+    tile_match_rec.status = TILE_ID_NOT_FOUND;
     return(tile_match_rec);
 }
 
@@ -400,8 +407,6 @@ void tile_calc_alternate_hashes(tile_data * p_tile, tile_data flip_tiles[]) {
     // Check for X-Y flip (re-use data from previous Y flip -> second flip tile)
     tile_flip_x(&flip_tiles[0], &flip_tiles[1]);
     p_tile->hash[3] = MurmurHash2( flip_tiles[1].p_img_raw, flip_tiles[1].raw_size_bytes, 0xF0A5); // len is u8count
-
-    memcpy(p_tile->p_img_raw, flip_tiles[1].p_img_raw, flip_tiles[1].raw_size_bytes);
 }
 
 // See tile_palette_identify_and_strip()
@@ -497,6 +502,7 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
     }
 
 
+// printf("-> pal id as: %d :", palette);
     p_tile->palette_num = palette;
 
     return true;

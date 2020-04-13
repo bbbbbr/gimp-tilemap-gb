@@ -112,8 +112,12 @@ unsigned char process_tiles(image_data * p_src_img) {
         // Iterate over the map, top -> bottom, left -> right
         img_buf_offset = 0;
 
+        printf("process_tiles(): %d x %d: tiles %d x %d\n", tile_map.map_width, tile_map.map_height, tile_map.tile_width, tile_map.tile_height);
+
         for (img_y = 0; img_y < tile_map.map_height; img_y += tile_map.tile_height) {
             for (img_x = 0; img_x < tile_map.map_width; img_x += tile_map.tile_width) {
+
+                // printf(" %4d,%4d :", img_x, img_y);
 
                 // Set buffer offset to upper left of current tile
                 img_buf_offset = (img_x + (img_y * tile_map.map_width)) * p_src_img->bytes_per_pixel;
@@ -127,8 +131,8 @@ unsigned char process_tiles(image_data * p_src_img) {
                 //
                 // NOTE: This needs to happen *BEFORE* any deduplication hashing
                 //       The palette also gets re-applied below
-                if (tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode) == false) {
-                    printf("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
+                if ( ! tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode)) {
+                    // printf("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
                     return (false); // Exit
                 }
 
@@ -140,7 +144,7 @@ unsigned char process_tiles(image_data * p_src_img) {
 
 
                 // Tile not found, create a new entry
-                if (map_entry.id == TILE_ID_NOT_FOUND) {
+                if (map_entry.status == TILE_ID_NOT_FOUND) {
 
                     // Calculate remaining hash flip variations
                     // (only for tiles that get registered)
@@ -153,24 +157,28 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                     map_entry = tile_register_new(&tile, &tile_set);
 
-                    if (map_entry.id == TILE_ID_OUT_OF_SPACE) {
+                    if (map_entry.status == TILE_ID_OUT_OF_SPACE) {
                         tile_free(&tile);
                         tile_free(&flip_tiles[0]);
                         tile_free(&flip_tiles[1]);
                         tilemap_free_resources();
 
-                        printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
+                        // printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
                         return (false); // Ran out of tile space, exit
                     }
+                    // printf(" -> NEW tile %d ", map_entry.id);
                 }
+                // else printf(" -> use tile %d ", map_entry.id);
 
                 tile_map.tile_id_list[map_slot]     = map_entry.id;
                 tile_map.flip_bits_list[map_slot]   = map_entry.flip_bits;
                 tile_map.palette_num_list[map_slot] = map_entry.palette_num;
 
                 map_slot++;
-            }
-        }
+
+                // printf("\n");
+            } // for (img_x = 0
+        } // for (img_y = 0
 
     } else { // else if (tile.p_img_raw) {
         tilemap_free_resources();
@@ -278,7 +286,8 @@ int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
     p_img->size   = tile_set.tile_size   * tile_set.tile_count;
     p_img->bytes_per_pixel = tile_set.tile_bytes_per_pixel;
 
-printf("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
+    printf("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
+
     // Allocate a buffer for the image
     p_img->p_img_data = malloc(p_img->size);
 
@@ -292,7 +301,7 @@ printf("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width
                 // Copy from the tile's raw image buffer (indexed)
                 // into the composite image
 
-tile_print_buffer_raw(tile_set.tiles[c]); // TODO: remove
+                //tile_print_buffer_raw(tile_set.tiles[c]); // TODO: remove
 
                 memcpy(p_img->p_img_data + img_offset,
                        tile_set.tiles[c].p_img_raw,
@@ -309,12 +318,12 @@ tile_print_buffer_raw(tile_set.tiles[c]); // TODO: remove
 
     printf("== TILEMAP -> IMG COPIED BUFF\n");
 
-    // Iterate over each tile, top -> bottom, left -> right
-    for (c = 0; c < p_img->size; c++) {
-        printf(" %2x", *(p_img->p_img_data + c));
-        if ((c % 8) ==0) printf("\n");
-    }
-    printf(" \n");
+    // // Iterate over each tile, top -> bottom, left -> right
+    // for (c = 0; c < p_img->size; c++) {
+    //     printf(" %2x", *(p_img->p_img_data + c));
+    //     if ((c % 8) ==0) printf("\n");
+    // }
+    // printf(" \n");
 
     return true;
 }

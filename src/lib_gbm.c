@@ -113,6 +113,10 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
     }
 
 
+    printf("gbm_save(): %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
+            p_src_image->width, p_src_image->height,
+            export_options.gb_mode, export_options.tile_dedupe_flips, export_options.tile_dedupe_palettes);
+
     status = tilemap_export_process(p_src_image, export_options);
     printf("(gbm) tilemap_export_process: status= %d\n", status);
 
@@ -143,6 +147,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
                 // Initialize shared GBM map structure with defaults
                 gbm_export_set_defaults(&gbm);
+                gbm_export_update_color_set(&gbm, export_options.gb_mode);
 
                 // Set GBR tile file name for the GBM file to use (exported above)
                 snprintf(gbm.map.tile_file, GBM_MAP_TILE_FILE_SIZE, "%s", get_filename_from_path(gbr_path));
@@ -161,9 +166,9 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
                                                         p_map->flip_bits_list,
                                                         p_map->palette_num_list,
                                                         p_map->size);
-printf("(gbm) gbm_convert_image_to_map: status= %d\n", status);
+                printf("(gbm) gbm_convert_image_to_map: status= %d\n", status);
 
-printf("gbm_save_file\n");
+                printf("gbm_save_file\n");
                 if (status) {
                     status = gbm_save_file(filename);
 
@@ -175,7 +180,7 @@ printf("gbm_save_file\n");
             status = false;
     }
 
-printf("(gbm) gbm_save_file END: status= %d\n", status);
+    printf("(gbm) gbm_save_file END: status= %d\n", status);
 
     // Free temp composite image of tiles
     if (tile_set_deduped_image.p_img_data)

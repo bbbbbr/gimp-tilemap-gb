@@ -8,6 +8,8 @@
 #include "lib_gbm_file_utils.h"
 #include "lib_gbm_ops.h"
 
+#include "lib_tilemap.h" // TODO: FIXME: only included here for : if (gb_mode == MODE_CGB_32_COLOR)
+
 
 
 int32_t gbm_object_producer_encode(gbm_record * p_gbm, gbm_file_object * p_obj) {
@@ -262,6 +264,10 @@ int32_t gbm_object_tile_data_encode(gbm_record * p_gbm, gbm_file_object * p_obj)
 
     printf("----- ENCODE MAP TILES %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
     gbm_map_tiles_print(p_gbm);
+    printf("----- ENCODE MAP TILES : FLIP X/Y %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    gbm_map_tiles_flip_print(p_gbm);
+    printf("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    gbm_map_tiles_pal_print(p_gbm);
 }
 
 
@@ -371,4 +377,13 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
     memset(p_gbm->map_export_prop.props, 0x00, GBM_MAP_EXPORT_PROPS_SIZE);
 
     return true;
+}
+
+void gbm_export_update_color_set(gbm_record * p_gbm, uint16_t gb_mode) {
+
+    // Handle CGB/DMG color mode setting (ignore SGB/GB Pocket for now)
+    if (gb_mode == MODE_CGB_32_COLOR)
+        p_gbm->map_settings.color_set = gbm_color_set_gbc;
+    else
+        p_gbm->map_settings.color_set = gbm_color_set_game_boy;
 }

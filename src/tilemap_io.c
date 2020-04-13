@@ -44,19 +44,19 @@ int32_t tilemap_export_raw_binary(const int8_t * filename,
     // Write all the tile set data to a file
     for (c = 0; c < tile_set->tile_count; c++) {
 
-printf("* Writing tile %d of %d : %d bytes\n", c +1, tile_set->tile_count, tile_set->tiles[c].encoded_size_bytes);
+        // printf("* Writing tile %d of %d : %d bytes\n", c +1, tile_set->tile_count, tile_set->tiles[c].encoded_size_bytes);
 
         if (tile_set->tiles[c].p_img_encoded) {
 
-// tile_print_buffer_encoded(tile_set->tiles[c]);
+        // tile_print_buffer_encoded(tile_set->tiles[c]);
 
             fwrite(tile_set->tiles[c].p_img_encoded,
                    tile_set->tiles[c].encoded_size_bytes,
                    1, file);
         }
 
-printf("OUTPUT tile %d\n", c);
-// tile_print_buffer_raw(tile_set->tiles[c]);
+            printf("OUTPUT tile %d\n", c);
+            // tile_print_buffer_raw(tile_set->tiles[c]);
 
             // TODO: hex output encoding
             //if (tile_set->tiles[c].p_img_raw)

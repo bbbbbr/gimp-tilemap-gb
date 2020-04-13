@@ -462,7 +462,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         // TODO: FIXME this is linear for now and assumes an 8 x N dest image
 
         for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
-            printf("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
+            // printf("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
 
             if (!gbr_tile_set_buf(&p_image->p_img_data[offset],
                                   p_gbr,
@@ -476,7 +476,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
         // Now add padding tiles to achieve the minimum required size
         for (tile_id=p_gbr->tile_data.count; tile_id < (p_gbr->tile_data.count + p_gbr->tile_data.padding_tile_count); tile_id++) {
-            printf("PADDING EXPORT Tile:%d\n", tile_id);
+            // printf("PADDING EXPORT Tile:%d\n", tile_id);
             if (!gbr_tile_set_buf_padding(p_gbr,
                                           tile_id))
                 return false;

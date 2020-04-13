@@ -30,6 +30,4 @@ void gbm_write_uint16(uint16_t * p_src_val, gbm_file_object * p_obj);
 void gbm_write_uint8(uint8_t * p_src_val, gbm_file_object * p_obj);
 void gbm_write_bool(uint8_t * p_src_val, gbm_file_object * p_obj);
 
-void gbm_map_tiles_print(gbm_record * p_gbm);
-
 #endif

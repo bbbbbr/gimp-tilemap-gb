@@ -17,12 +17,6 @@
     #define TILE_WIDTH_DEFAULT  8
     #define TILE_HEIGHT_DEFAULT 8
 
-    #define TILE_ID_NOT_FOUND     -1
-    #define TILE_ID_OUT_OF_SPACE  -2
-    #define TILE_ID_FAILED_ENCODE -3
-    #define TILE_ID_PALETTE_ERROR -4
-
-
     #define TILE_FLIP_BITS_NONE 0x00
     #define TILE_FLIP_BITS_X    0x01
     #define TILE_FLIP_BITS_Y    0x02
@@ -38,6 +32,15 @@
 
     #define TILE_DMG_COLORS_MAX (TILE_DMG_PALETTE_COUNT * TILE_COLORS_PER_PALETTE)
     #define TILE_CGB_COLORS_MAX (TILE_CGB_PALETTE_COUNT * TILE_COLORS_PER_PALETTE)
+
+
+    enum tile_id_status {
+        TILE_ID_OK,
+        TILE_ID_NOT_FOUND,
+        TILE_ID_OUT_OF_SPACE,
+        TILE_ID_FAILED_ENCODE,
+        TILE_ID_PALETTE_ERROR
+    };
 
 
     enum tile_palettes {
@@ -101,8 +104,9 @@
     // Tile Map Entry records
     typedef struct {
         uint16_t id; // if TILES_MAX_DEFAULT > 255, this must be larger than uint8_t
-        uint8_t flip_bits;
-        uint8_t palette_num;
+        uint8_t  flip_bits;
+        uint8_t  palette_num;
+        uint8_t  status;
     } tile_map_entry;
 
 

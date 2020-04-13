@@ -20,3 +20,4 @@ int32_t gbm_object_map_deleted_1_encode(gbm_record * p_gbm, gbm_file_object * p_
 int32_t gbm_object_map_deleted_2_encode(gbm_record * p_gbm, gbm_file_object * p_obj);
 
 int32_t gbm_export_set_defaults(gbm_record * p_gbm);
+void gbm_export_update_color_set(gbm_record * p_gbm, uint16_t gb_mode);
