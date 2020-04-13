@@ -95,13 +95,27 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
     gbr_record      gbr;
 
-// TODO: pass in search mask, CGB mode/etc
-    int check_duplicates = true;
-    int cgb_mode    = true;
-    int check_flip  = true; // only if (cgb_mode == true)
+    tile_process_options export_options;
 
-    status = tilemap_export_process(p_src_image, check_flip);
-printf("(gbm) tilemap_export_process: status= %d\n", status);
+
+    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
+    if (p_colors->color_count <= TILE_DMG_COLORS_MAX) {
+
+        export_options.gb_mode = MODE_DMG_4_COLOR;
+        export_options.tile_dedupe_flips = false;
+        export_options.tile_dedupe_palettes = false;
+    }
+    else if (p_colors->color_count <= TILE_CGB_COLORS_MAX) {
+
+        export_options.gb_mode = MODE_CGB_32_COLOR;
+        export_options.tile_dedupe_flips = true;
+        export_options.tile_dedupe_palettes = true;
+    }
+
+
+    status = tilemap_export_process(p_src_image, export_options);
+    printf("(gbm) tilemap_export_process: status= %d\n", status);
+
 
     if (status) {
 
@@ -111,16 +125,18 @@ printf("(gbm) tilemap_export_process: status= %d\n", status);
         p_map      = tilemap_get_map();
         p_tile_set = tilemap_get_tile_set();
         status     = tilemap_get_image_of_deduped_tile_set(&tile_set_deduped_image);
-printf("(gbm) tilemap_get_image_of_deduped_tile_set: status= %d\n", status);
+        printf("(gbm) tilemap_get_image_of_deduped_tile_set: status= %d\n", status);
+
 
         if (p_map && p_tile_set && status) {
 
             // == EXPORT TILE SET AS GBR ==
             char gbr_path[STR_FILENAME_MAX];
             snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  filename, ".tiles.gbr");
-printf("calling gbr save:%s:\n", gbr_path);
-            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors);
-printf("(gbm) gbr_save_file: status= %d\n", status);
+
+            printf("calling gbr save:%s:\n", gbr_path);
+            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, export_options.gb_mode);
+            printf("(gbm) gbr_save_file: status= %d\n", status);
 
             if (status) {
                 // == EXPORT MAP AS GBM ==
@@ -140,7 +156,11 @@ printf("(gbm) gbr_save_file: status= %d\n", status);
                 if (gbm.map_tile_data.length_bytes > GBM_MAP_TILE_DATA_RECORDS_SIZE)
                     status = false;
 
-                status = gbm_convert_tilemap_buf_to_map(&gbm, p_map->tile_id_list, p_map->tile_attribs_list, p_map->size);
+                status = gbm_convert_tilemap_buf_to_map(&gbm,
+                                                        p_map->tile_id_list,
+                                                        p_map->flip_bits_list,
+                                                        p_map->palette_num_list,
+                                                        p_map->size);
 printf("(gbm) gbm_convert_image_to_map: status= %d\n", status);
 
 printf("gbm_save_file\n");

@@ -62,16 +62,17 @@
 // TODO: original pascal says bits 0..8 ~ 0-511, but uses 0x3FF. Which is right?
 #define GBM_MAP_TILE_NUM      0x0001FF //.0-8
 #define GBM_MAP_TILE_RESERVED 0x3FFE00 //.9-21
+
 #define GBM_MAP_TILE_PAL_CGB  0x003C00 //.10-13
 #define GBM_MAP_TILE_PAL_SGB  0x070000 //.17-19
 #define GBM_MAP_TILE_PAL_CGB_BYTE     0x0F // Middle Byte
 #define GBM_MAP_TILE_PAL_CGB_BITSHIFT    2 // Downshift to align when loading from Middle Byte
 #define GBM_MAP_TILE_PAL_NONCGB_BYTE  0x07 // LS Byte
+
 #define GBM_MAP_TILE_FLIP_H   0x400000 //.24
 #define GBM_MAP_TILE_FLIP_V   0x800000 //.23
 #define GBM_MAP_TILE_FLIP_H_BYTE   0x40 // MS Byte
 #define GBM_MAP_TILE_FLIP_V_BYTE   0x80 // MS Byte
-#define GBM_MAP_TILE_FLIP_BYTESHIFT 8 //
 
 #define GBM_MAP_TILE_PAL_CGB_DEFAULT  0
 #define GBM_MAP_TILE_PAL_NONCGB_DEFAULT  0

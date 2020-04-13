@@ -32,12 +32,13 @@ int32_t gbr_load(const int8_t * filename) {
 
 
 
-// TODO: Import calette color data?
+// TODO: Import palette color data?
 // TODO: Try to maintain palette color order? Store in Gimp Parasite?
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors) {
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, uint16_t gb_mode) {
 
     int32_t status;
+
 
     // Initialize shared GBR structure with defaults
     gbr_export_set_defaults(&gbr);
@@ -45,7 +46,7 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
     // TODO: check
     // TODO: MIN 16 tiles required in file?
     // Convert the image data to tiles
-    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors);
+    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors, gb_mode);
 
     // Load and parse the file
     if (status)

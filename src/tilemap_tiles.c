@@ -37,6 +37,7 @@ void tile_initialize(tile_data * p_tile, tile_map_data * p_tile_map, tile_set_da
     p_tile->raw_width           = p_tile_map->tile_width;
     p_tile->raw_height          = p_tile_map->tile_height;
     p_tile->raw_size_bytes      = p_tile->raw_height * p_tile->raw_width * p_tile->raw_bytes_per_pixel;
+    p_tile->palette_num         = TILE_PAL_DEFAULT;
 
     tile_size_bytes = p_tile->raw_size_bytes;
 
@@ -65,7 +66,8 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
         new_map_entry.id = tile_set->tile_count;
 
         // Default: no attributes (no flip x/y, no special palette)
-        new_map_entry.attribs = 0;
+        new_map_entry.flip_bits   = TILE_FLIP_BITS_NONE;
+        new_map_entry.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
 
         // Use an easier to read name for the new tile entry
         new_tile = &tile_set->tiles[new_map_entry.id];
@@ -83,8 +85,10 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
         new_tile->raw_size_bytes = p_src_tile->raw_size_bytes;
         new_tile->p_img_raw      = malloc(p_src_tile->raw_size_bytes);
 
+        // Only proceed if the alloc worked
         if (new_tile->p_img_raw) {
 
+            // Copy data from source to new tile
             memcpy(new_tile->p_img_raw,
                    p_src_tile->p_img_raw,
                    p_src_tile->raw_size_bytes);
@@ -97,6 +101,7 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
             if (tile_set->tiles[new_map_entry.id].encoded_size_bytes) {
                 // Move to new tile
                 tile_set->tile_count++;
+
 
             } else // encoding failed
                 new_map_entry.id = TILE_ID_FAILED_ENCODE;
@@ -168,32 +173,61 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
 
 
 
-tile_map_entry tile_find_match(uint64_t hash_sig, tile_set_data * tile_set, uint16_t search_mask) {
+tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, tile_map_data * p_tile_map) {
 
     int c;
     int h, h_range;
     tile_map_entry tile_match_rec;
 
-    // TODO: for now flip X and flip Y are joined together, so always check each permutation if either is turned on
-    if (!search_mask) h_range = TILE_FLIP_MIN;
-    else h_range = TILE_FLIP_MAX;
+    // Earlier checking will enforce CGB mode only for tile_dedupe_flips
+    // TODO: for now flip X and flip Y are joined together, so always check each flip permutation
+    if (p_tile_map->options.tile_dedupe_flips)
+        h_range = TILE_FLIP_MAX;
+    else
+        h_range = TILE_FLIP_MIN;
 
     // Loop through all tiles in the set
     for (c = 0; c < tile_set->tile_count; c++) {
+
         // Loop through all hashes that are present
         for (h = TILE_FLIP_MIN; h <= h_range; h++) {
-            // If a mash matches then return it (along with flip attributes_
-            if (hash_sig == tile_set->tiles[c].hash[h]) {
+            // If a hash matches then return it (along with flip attributes)
+            if (p_tile->hash[0] == tile_set->tiles[c].hash[h]) {
 
-                tile_match_rec.id       = c; // found a matching tile, return it's ID
-                tile_match_rec.attribs  = tile_flip_bits[h]; // Set flip x/y bits if present
+                // Either palette must match, or dedupe tiles
+                // based on palettes must be enabled (CGB Mode only)
+                if ((p_tile->palette_num == tile_set->tiles[c].palette_num)
+                    || (p_tile_map->options.tile_dedupe_palettes)) {
 
-                if (h == 3)
-                    printf("Tilemap: Search: Flip: Found at %d -> %d\n", c, h);
-                return(tile_match_rec);
-            }
-        }
-    }
+                    tile_match_rec.id        = c; // found a matching tile, return it's ID
+                    tile_match_rec.flip_bits = tile_flip_bits[h]; // Set flip x/y bits if present
+
+                    // If the palettes didn't match
+                    // Enable the palette override by setting palette number
+                    if (p_tile->palette_num != tile_set->tiles[c].palette_num) {
+                        printf("Tilemap: Search: Dedupe on Palette at: %d -> %d = %d\n", c, h, tile_set->tiles[c].palette_num);
+
+                        tile_match_rec.palette_num = tile_set->tiles[c].palette_num;
+                    } else {
+                        // Otherwise set the flag to use the default palette
+                        tile_match_rec.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
+                    }
+
+
+                    // Log if the match was a flipped tile
+                    if (h > 0) {
+                        printf("Tilemap: Search: Dedupe on Tile Flip at: %d -> %d\n", c, h);
+                    }
+
+                    return(tile_match_rec);
+
+                } // Palette test
+
+            } // Hash test
+
+        } // Hash flip permutations loop
+
+    } // Tile set loop
 
     // No matching tile found
     tile_match_rec.id = TILE_ID_NOT_FOUND;
@@ -353,8 +387,6 @@ void tile_flip_x(tile_data * p_src_tile, tile_data * p_dst_tile) {
 
 void tile_calc_alternate_hashes(tile_data * p_tile, tile_data flip_tiles[]) {
 
-    //        if (mask_test & tile_map.search_mask) {
-
     // TODO: for now flip X and flip Y are joined together, so always check each permutation
 
     // Check for X flip (new copy of data)
@@ -372,4 +404,100 @@ void tile_calc_alternate_hashes(tile_data * p_tile, tile_data flip_tiles[]) {
     memcpy(p_tile->p_img_raw, flip_tiles[1].p_img_raw, flip_tiles[1].raw_size_bytes);
 }
 
+// See tile_palette_identify_and_strip()
+// palette_id is 0 (DMG) or 0..7 (CGB)
+void tile_palette_reapply_offsets(tile_data * p_tile) {
 
+    int32_t tile_y;
+    int32_t tile_x;
+
+    uint8_t * indexed_pixel_data;
+
+    // Set up pointer to indexed pixel data
+    indexed_pixel_data = p_tile->p_img_raw;
+
+    // Iterate over each tile, top -> bottom, left -> right
+    for (tile_y = 0; tile_y < p_tile->raw_height; tile_y++) {
+        for (tile_x = 0; tile_x < p_tile->raw_width; tile_x++) {
+
+            // Convert the palette from 0-3 colors back to 0..3 or 0..31
+            *indexed_pixel_data = (*indexed_pixel_data) += (TILE_COLORS_PER_PALETTE * p_tile->palette_num);
+
+            // Move to the next pixel
+            indexed_pixel_data += p_tile->raw_bytes_per_pixel;
+
+        } // End: for (tile_x
+    } // End: for (tile_y ...
+}
+
+
+// Identifies and strips the color palette off during the first pass.
+//
+// Required for performing hash based de-duplication of tiles without their palette
+//
+// TODO: CGB MODE: this could be avoided by having the hash operate on (pixel % 4) instead of just pixel
+//
+// It then needs to get re-applied later since map processing produces
+// a bitmapped image of the tile set (with possibly deduped colors)
+// which will then have it's palette stripped one last time on export
+int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
+
+    int32_t tile_y;
+    int32_t tile_x;
+
+    uint8_t palette;
+    uint8_t last_palette;
+
+    uint8_t * indexed_pixel_data;
+
+    // Set up pointer to indexed pixel data
+    indexed_pixel_data = p_tile->p_img_raw;
+
+    // Prime the palette testing in the loop
+    last_palette = (*indexed_pixel_data) / TILE_COLORS_PER_PALETTE;
+
+    // Iterate over each tile, top -> bottom, left -> right
+    for (tile_y = 0; tile_y < p_tile->raw_height; tile_y++) {
+        for (tile_x = 0; tile_x < p_tile->raw_width; tile_x++) {
+
+            // Identify which color palette is used for the tile based
+            // on the color's location in the indexed palette.
+            // Palette is zero based
+            // Example: Index color 13 = (13 / 4) = Palette 3
+            palette = (*indexed_pixel_data) / TILE_COLORS_PER_PALETTE;
+
+            // Return error and abort if...
+            // * extracted palette num was out of bounds or
+            // * the tile tried to use more than one palette
+            if ((palette > TILE_PAL_MAX) || (palette != last_palette)) {
+
+                return (false);
+            }
+            else {
+                // Update palette for next pass
+                palette != last_palette;
+            }
+
+            // Remap the palette so it's only colors 0-3, relative to the identified palette
+            // Example: Index color 13 = (13 % 4) = Color 1 of Palette 3
+            *indexed_pixel_data = (*indexed_pixel_data) % TILE_COLORS_PER_PALETTE;
+
+            // Move to the next pixel
+            indexed_pixel_data += p_tile->raw_bytes_per_pixel;
+
+        } // End: for (tile_x
+    } // End: for (tile_y ...
+
+    // Check for Palette out of range
+    if ((palette > TILE_PAL_DMG_MAX) && (gb_mode == MODE_DMG_4_COLOR)) {
+        return (false);
+
+    } else if ((palette > TILE_PAL_CGB_MAX) && (gb_mode == MODE_CGB_32_COLOR)) {
+        return (false);
+    }
+
+
+    p_tile->palette_num = palette;
+
+    return true;
+}

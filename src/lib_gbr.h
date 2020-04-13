@@ -254,9 +254,8 @@ color_data * gbr_get_colors(void);
 void gbr_set_image(image_data * p_src_image);
 void gbr_set_colors(color_data * p_src_colors);
 
-
 int32_t gbr_load(const int8_t * filename);
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, uint16_t gb_mode);
 
 void gbr_free_resources(void);
 

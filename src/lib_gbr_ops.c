@@ -4,6 +4,8 @@
 
 #include "lib_gbr_ops.h"
 
+#include "lib_tilemap.h" // TODO: This is only here for MODE_CGB_32_COLOR/etc. Find a better way to handle mode so that it can be omitted
+
 
 // TODO: THIS IS DEPRECATED?
 // TODO: Bounds checking! max_size
@@ -99,6 +101,7 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
     // Choose which color palette to use:
     // * Tile's built-in palette ID, or the Map's per-tile optional override palette ID
     if (map_tile_pal_id == GBR_MAP_TILE_PAL_OVERRIDE_NONE) {
+
         // CGB color palette loading
         // Remap tile colors if there are multiple palettes
         // Look up palette for tile, then calculate it's 4-bytes-per-palette offset
@@ -109,6 +112,7 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
         tile_pal_offset = (map_tile_pal_id - GBR_MAP_TILE_PAL_OFFSET)  * GBR_TILE_DATA_COLOR_SET_SIZE;
     }
 
+    printf("gbr: gbr_tile_remap_colors: tile_id=%d tile_pal=%d map_tile_pal=%d (0=use tile default)\n",tile_index, p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ], map_tile_pal_id);
 
     // Now remap the palette
     for (index = 0; index < tile_size; index++) {
@@ -118,6 +122,96 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
 
     }
 }
+
+
+// WARNING: assumes bytes per pixel = 1 in DEST buffer
+int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, uint16_t tile_index, int32_t tile_size, uint16_t gb_mode) {
+
+    int32_t index;
+
+    uint8_t tile_pal_setting;
+    uint8_t tile_pal_setting_last;
+
+    // Prime the palette testing in the loop
+    tile_pal_setting_last = (*p_buf) / GBR_TILE_DATA_COLOR_SET_SIZE;
+
+
+    // Unmap the palette from the color
+    for (index = 0; index < tile_size; index++) {
+
+
+        // Identify which color palette is used for the tile based
+        // on the color's location in the indexed palette.
+        // Palette is zero based
+        // Example: Index color 13 = (13 / 4) = Palette 3
+        tile_pal_setting = (*p_buf) / GBR_TILE_DATA_COLOR_SET_SIZE;
+
+        // Return error and abort if...
+        // * extracted palette num was out of bounds or
+        // * the tile tried to use more than one palette
+        if ((tile_pal_setting != tile_pal_setting_last)) {
+
+            printf("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile\n");
+            return (false);
+        }
+        else {
+            // Update palette for next pass
+            tile_pal_setting != tile_pal_setting_last;
+        }
+
+        // Remap the palette so it's only colors 0-3, relative to the identified palette
+        // Example: Index color 13 = (13 % 4) = Color 1 of Palette 3
+        *p_buf = (*p_buf) % TILE_COLORS_PER_PALETTE;
+
+        // Move to the next pixel
+        p_buf++;
+    }
+
+    // TODO: FIX ME CGB /DMG Detection handling
+    // Check for Palette out of range
+    if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_DMG) && (gb_mode == MODE_DMG_4_COLOR)) {
+
+        printf("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for DMG 4 color: %d\n", tile_pal_setting);
+        return (false);
+
+    } else if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_CGB) && (gb_mode == MODE_CGB_32_COLOR)) {
+
+        printf("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for CGB 16 color: %d\n",tile_pal_setting );
+        return (false);
+    }
+
+    // Set palette number for tile
+    // For CGB/DMG
+    p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ] = tile_pal_setting;
+    // Set it for SGB too
+    p_gbr->tile_pal.sgb_color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ] = tile_pal_setting;
+
+    return (true);
+}
+
+
+
+// Identifies and strips the color palette off during the first pass.
+//
+// Required for performing hash based de-duplication of tiles without their palette
+//
+// TODO: CGB MODE: this could be avoided by having the hash operate on (pixel % 4) instead of just pixel
+//
+// It then needs to get re-applied later since map processing produces
+// a bitmapped image of the tile set (with possibly deduped colors)
+// which will then have it's palette stripped one last time on export
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // TODO: FIXME this is making assumptions about bytes per pixel = 1 in both SOURCE and DEST buffers
@@ -151,8 +245,11 @@ int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_i
 }
 
 
+// TODO: CGB MODE: move reprocessing of indexed color vs palette here tile_palette_remap_and_identify()
+
 // Copy pixels from an image into a tile sized slice of the tile list buffer
-int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index) {
+// TODO: FIXME this is linear for now and assumes an 8 x N image
+int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index, uint16_t gb_mode) {
 
     int32_t offset;
     int32_t tile_size;
@@ -175,6 +272,11 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
 
 
     memcpy(&(p_gbr->tile_data.tile_list[offset]), src_buf, tile_size);
+
+    // Remap the colors to 2bpp + palette index (and store palette in list)
+    if (!gbr_tile_palette_assign_and_strip(&(p_gbr->tile_data.tile_list[offset]), p_gbr, tile_index, tile_size, gb_mode))
+        return false;
+
 /*
 
     printf("==gbr_tile_set_buf\n");

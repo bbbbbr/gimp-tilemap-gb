@@ -45,10 +45,9 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
 
-    int      check_flip = true;  // TODO
-
     FILE * file;
 
+    tile_process_options export_options;
 
 
     status = true; // Default to success
@@ -107,13 +106,31 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
     printf("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
+
+
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 //    if (status != 0) { };
 
     if (status) {
+
+        // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
+        if (app_colors.color_count <= TILE_DMG_COLORS_MAX) {
+
+            export_options.gb_mode = MODE_DMG_4_COLOR;
+            export_options.tile_dedupe_flips = false;
+            export_options.tile_dedupe_palettes = false;
+        }
+        else if (app_colors.color_count <= TILE_CGB_COLORS_MAX) {
+
+            export_options.gb_mode = MODE_CGB_32_COLOR;
+            export_options.tile_dedupe_flips = true;
+            export_options.tile_dedupe_palettes = true;
+        }
+
         switch (image_mode) {
             case EXPORT_FORMAT_GBDK_C_SOURCE:
-                status = tilemap_export_process(&app_image, check_flip);
+
+                status = tilemap_export_process(&app_image, export_options);
                 printf("tilemap_export_process: status= %d\n", status);
 
 
@@ -127,7 +144,7 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
             case EXPORT_FORMAT_GBR:
 
-                status = gbr_save(filename, &app_image, &app_colors);
+                status = gbr_save(filename, &app_image, &app_colors, export_options.gb_mode);
                 printf("gbr_save: status= %d\n", status);
                 break;
 

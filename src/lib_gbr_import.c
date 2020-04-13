@@ -275,7 +275,7 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
             gbr_read_padding_bytes(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
 
 
-            printf("tile pal:\n%d\n%d\n%d\n",
+            printf("gbr:tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,
                                  p_gbr->tile_pal.count,
                                  p_gbr->tile_pal.sgb_count);

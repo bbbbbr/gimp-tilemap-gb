@@ -2,6 +2,7 @@
 // lib_gbm_ops.c
 //
 
+#include "lib_tilemap.h" // TODO: This is only here for things like : TILE_FLIP_BITS_X, find a better way to handle that
 #include "lib_gbm_ops.h"
 
 
@@ -59,7 +60,7 @@ gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) 
 
 
 
-uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_t tile_index, uint16_t tile_attribs) {
+uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_t tile_index, uint8_t flip_bits, uint8_t palette_num) {
 
     uint32_t index;
 
@@ -70,16 +71,34 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
         printf("gbm_map_tile_set_xy: FAILED: %d, %d \n", x,y);
     }
 
-    // Flip H & V (cgb) and CGB/SGB-NONCGB Palette can be loaded directly
-    p_gbm->map_tile_data.records[index    ] = (tile_attribs >> 8) & 0xFF;
-    p_gbm->map_tile_data.records[index +1 ] = tile_attribs  & 0xFF;
+    // Set Tile Number
+    p_gbm->map_tile_data.records[index + 1] = (uint8_t)((tile_index & GBM_MAP_TILE_NUM) << 8);
+    p_gbm->map_tile_data.records[index + 2] = (uint8_t) (tile_index & GBM_MAP_TILE_NUM);
 
-    // Add in the Tile Number
-    p_gbm->map_tile_data.records[index + 1] |= (uint8_t)((tile_index & GBM_MAP_TILE_NUM) << 8);
-    p_gbm->map_tile_data.records[index + 2] |= (uint8_t) (tile_index & GBM_MAP_TILE_NUM);
+    // // Handle CGB mode options if enabled
+    // if (gb_mode == MODE_CGB_32_COLOR) {
 
-        printf(" %d", tile_index);
-        if ((x % p_gbm->map.width) == 0) printf("\n");
+    if (flip_bits & TILE_FLIP_BITS_X)
+        p_gbm->map_tile_data.records[index] |= GBM_MAP_TILE_FLIP_H_BYTE;
+
+    if (flip_bits & TILE_FLIP_BITS_Y)
+        p_gbm->map_tile_data.records[index] |= GBM_MAP_TILE_FLIP_V_BYTE;
+
+    // Set CGB Palette if enabled
+    if (palette_num == TILE_PAL_MAP_USE_DEFAULT_FROM_TILE) {
+        p_gbm->map_tile_data.records[index + 1] |= ((GBM_MAP_TILE_PAL_CGB_DEFAULT & GBM_MAP_TILE_PAL_CGB_BYTE) << GBM_MAP_TILE_PAL_CGB_BITSHIFT);
+
+    } else {
+        // Actual palette number is +1 from value since 0 indicates default
+        p_gbm->map_tile_data.records[index + 1] |= (((palette_num & GBM_MAP_TILE_PAL_CGB_BYTE) + GBM_MAP_TILE_PAL_CGB_OFFSET) << GBM_MAP_TILE_PAL_CGB_BITSHIFT);
+    }
+
+    // Set Non-CGB Palette
+    // TODO: For now, always forced to Palette Zero
+    p_gbm->map_tile_data.records[index] |= (GBM_MAP_TILE_PAL_NONCGB_DEFAULT & GBM_MAP_TILE_PAL_NONCGB_BYTE);
+
+    printf(" %d", tile_index);
+    if ((x % p_gbm->map.width) == 0) printf("\n");
 
     return true;
 }
@@ -150,7 +169,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
 }
 
 
-int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data, uint16_t * p_map_attribs, uint32_t map_data_count) {
+int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint16_t * p_map_tile_ids, uint8_t * p_map_flip_bits, uint8_t * p_map_palette_nums, uint32_t map_data_count) {
 
     uint16_t map_x, map_y;
 
@@ -163,7 +182,7 @@ int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data,
         return false;
 
     // Copy the tile data into the file_file image from tiles
-    if (p_map_data) {
+    if (p_map_tile_ids) {
 
         // Loop through tile map, get tile number and copy respective tiles into image
         for (map_y=0; map_y < p_gbm->map.height; map_y++) {
@@ -171,8 +190,9 @@ int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint8_t * p_map_data,
 
                     // Set the map tile
                     if (! gbm_map_tile_set_xy(p_gbm, map_x, map_y,
-                                             *(p_map_data++), // map tile index
-                                             *(p_map_attribs++)) // map tile attrib data
+                                             *(p_map_tile_ids++), // map tile index
+                                             *(p_map_flip_bits++), // map tile flip data
+                                             *(p_map_palette_nums++)) // map tile palette data
                         )
                         return false;
             }

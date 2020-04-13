@@ -16,9 +16,11 @@ tile_map_data tile_map;
 tile_set_data tile_set;
 
 
+void set_options(int dedupe_flip, int dedupe_palette, int gb_mode);
+
 
 // TODO: support configurable tile size
-int tilemap_initialize(image_data * p_src_img, uint16_t search_mask) {
+int tilemap_initialize(image_data * p_src_img, tile_process_options export_options) {
 
     // Tile Map
     tile_map.map_width   = p_src_img->width;
@@ -30,22 +32,23 @@ int tilemap_initialize(image_data * p_src_img, uint16_t search_mask) {
     tile_map.width_in_tiles  = tile_map.map_width  / tile_map.tile_width;
     tile_map.height_in_tiles = tile_map.map_height / tile_map.tile_height;
 
-    tile_map.search_mask = search_mask;
-
     // Max space required to store Tile Map is
     // width x height in tiles (if every map tile is unique)
     tile_map.size = (tile_map.width_in_tiles * tile_map.height_in_tiles);
 
-    // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t -> uint32_t
-    //tile_map.tile_id_list = malloc(tile_map.size * sizeof(uint32_t));
-    tile_map.tile_id_list = malloc(tile_map.size);
+    // See struct: tile_map_entry
+    // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t (it is)
+    tile_map.tile_id_list = malloc(tile_map.size * sizeof(uint16_t));
     if (!tile_map.tile_id_list)
             return(false);
 
-    tile_map.tile_attribs_list = malloc(tile_map.size * sizeof(uint16_t));
-    if (!tile_map.tile_attribs_list)
+    tile_map.flip_bits_list = malloc(tile_map.size * sizeof(uint8_t));
+    if (!tile_map.flip_bits_list)
             return(false);
 
+    tile_map.palette_num_list = malloc(tile_map.size * sizeof(uint8_t));
+    if (!tile_map.palette_num_list)
+            return(false);
 
     // Tile Set
     tile_set.tile_bytes_per_pixel = p_src_img->bytes_per_pixel;
@@ -54,20 +57,25 @@ int tilemap_initialize(image_data * p_src_img, uint16_t search_mask) {
     tile_set.tile_size   = tile_set.tile_width * tile_set.tile_height * tile_set.tile_bytes_per_pixel;
     tile_set.tile_count  = 0;
 
+
+    // Processing Options
+    tile_map.options = export_options;
+
+    // Enforce valid processing options (options not allowed in CGB mode)
+    if (tile_map.options.gb_mode == MODE_DMG_4_COLOR) {
+        tile_map.options.tile_dedupe_flips = false;
+        tile_map.options.tile_dedupe_palettes = false;
+    }
+
     return (true);
 }
 
 
 
-unsigned char tilemap_export_process(image_data * p_src_img, int check_flip) {
-
-    uint16_t search_mask;
-
-    if (check_flip) search_mask = TILE_FLIP_BITS_XY;
-        else        search_mask = TILE_FLIP_BITS_NONE;
+unsigned char tilemap_export_process(image_data * p_src_img, tile_process_options export_options) {
 
     if ( check_dimensions_valid(p_src_img) ) {
-        if (!tilemap_initialize(p_src_img, search_mask)) { // Success, prep for processing
+        if (!tilemap_initialize(p_src_img, export_options)) { // Success, prep for processing
             return (false); // Signal failure and exit
         }
     }
@@ -114,10 +122,21 @@ unsigned char process_tiles(image_data * p_src_img) {
                                           &tile,
                                           img_buf_offset);
 
+
+                // Extract tile color palette and remap indexed colors to be 0..3 based relative to the palette
+                //
+                // NOTE: This needs to happen *BEFORE* any deduplication hashing
+                //       The palette also gets re-applied below
+                if (tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode) == false) {
+                    printf("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
+                    return (false); // Exit
+                }
+
+
                 // TODO! Don't hash transparent pixels? Have to overwrite second byte?
                 tile.hash[0] = MurmurHash2( tile.p_img_raw, tile.raw_size_bytes, 0xF0A5); // len is u8count, 0xF0A5 is seed
 
-                map_entry = tile_find_match(tile.hash[0], &tile_set, tile_map.search_mask);
+                map_entry = tile_find_match(&tile, &tile_set, &tile_map);
 
 
                 // Tile not found, create a new entry
@@ -125,8 +144,12 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                     // Calculate remaining hash flip variations
                     // (only for tiles that get registered)
-                    if (tile_map.search_mask)
+                    if (tile_map.options.tile_dedupe_flips)
                         tile_calc_alternate_hashes(&tile, flip_tiles);
+
+                    // Re-apply the Gameboy palette offset for indexed color
+                    // NOTE: This needs to happen *AFTER* tile_calc_alternate_hashes and *BEFORE* tile_register_new
+                    tile_palette_reapply_offsets(&tile);
 
                     map_entry = tile_register_new(&tile, &tile_set);
 
@@ -141,8 +164,9 @@ unsigned char process_tiles(image_data * p_src_img) {
                     }
                 }
 
-                tile_map.tile_id_list[map_slot]      = map_entry.id;
-                tile_map.tile_attribs_list[map_slot] = map_entry.attribs;
+                tile_map.tile_id_list[map_slot]     = map_entry.id;
+                tile_map.flip_bits_list[map_slot]   = map_entry.flip_bits;
+                tile_map.palette_num_list[map_slot] = map_entry.palette_num;
 
                 map_slot++;
             }
@@ -203,9 +227,14 @@ void tilemap_free_resources(void) {
         tile_map.tile_id_list = NULL;
     }
 
-    if (tile_map.tile_attribs_list) {
-        free(tile_map.tile_attribs_list);
-        tile_map.tile_id_list = NULL;
+    if (tile_map.flip_bits_list) {
+        free(tile_map.flip_bits_list);
+        tile_map.flip_bits_list = NULL;
+    }
+
+    if (tile_map.palette_num_list) {
+        free(tile_map.palette_num_list);
+        tile_map.palette_num_list = NULL;
     }
 
 }
