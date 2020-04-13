@@ -264,6 +264,9 @@ int32_t gbr_save_file(const int8_t * filename);
 
 gbr_record * gbr_get_ptr(void);
 
+uint32_t  gbr_get_export_rec_size(void);
+uint8_t * gbr_get_export_rec_buffer(void);
+void      gbr_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf);
 
 int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr);
 int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_image);

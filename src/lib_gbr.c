@@ -12,6 +12,9 @@ static color_data colors;
 
 static gbr_record gbr;
 
+static gbr_tile_export settings_gbr_tile_export;
+static uint32_t        settings_gbr_tile_export_populated = false;
+
 
 int32_t gbr_load(const int8_t * filename) {
 
@@ -42,6 +45,12 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
 
     // Initialize shared GBR structure with defaults
     gbr_export_set_defaults(&gbr);
+
+    // Overlay any cached export settings
+    if (settings_gbr_tile_export_populated) {
+        memcpy(&(gbr.tile_export), &settings_gbr_tile_export, sizeof(gbr_tile_export));
+    }
+
 
     // TODO: check
     // TODO: MIN 16 tiles required in file?
@@ -92,6 +101,31 @@ void gbr_set_colors(color_data * p_src_colors) {
     memcpy(&colors, p_src_colors, sizeof(color_data));
 }
 
+
+uint32_t gbr_get_export_rec_size(void) {
+    return( (uint32_t) sizeof(gbr_tile_export) );
+}
+
+uint8_t * gbr_get_export_rec_buffer(void) {
+    return ( (uint8_t *) &(gbr.tile_export));
+}
+
+
+void gbr_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
+
+    // Only copy structure if size matches
+    if (buffer_size == (uint32_t) sizeof(gbr_tile_export)) {
+
+        printf("gbr_set_export_from_buffer(): loading...\n");
+
+        settings_gbr_tile_export_populated = true;
+        memcpy(&settings_gbr_tile_export, p_src_buf, buffer_size);
+    } else {
+
+        printf("gbr_set_export_from_buffer(): buffer size mismatch. don't load\n");
+    }
+
+}
 
 
 // Load and parse a .GBR file

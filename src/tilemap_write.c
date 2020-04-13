@@ -31,13 +31,44 @@
 
 #include "lib_rom_bin.h"
 
+
+static void tilemap_export_parasite_gbr(gint image_id) {
+
+    GimpParasite * img_parasite;
+    img_parasite = gimp_image_get_parasite(image_id, "GBR-EXPORT-SETTINGS");
+
+    if (img_parasite) {
+        printf("GBR: Found parasite size %d\n", img_parasite->size);
+
+        // Load settings cached in the gimp metadata parasite
+        gbr_set_export_from_buffer(img_parasite->size, (unsigned char *)img_parasite->data);
+
+    } else printf("GBR: No parasite found\n");
+}
+
+
+static void tilemap_export_parasite_gbm(gint image_id) {
+
+    GimpParasite * img_parasite;
+
+    img_parasite = gimp_image_get_parasite(image_id, "GBM-EXPORT-SETTINGS");
+
+    if (img_parasite) {
+        printf("GBM: Found parasite size %d\n", img_parasite->size);
+
+        // Load settings cached in the gimp metadata parasite
+        gbm_set_export_from_buffer(img_parasite->size, (unsigned char *)img_parasite->data);
+
+    } else printf("GBM: No parasite found\n");
+}
+
+
 int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
 {
     int32_t status;
 
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
-    GimpParasite * img_parasite;
 
     image_data app_image;
     color_data app_colors;
@@ -144,12 +175,20 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
             case EXPORT_FORMAT_GBR:
 
+                // Load cached settings in the image parasite metadata
+                tilemap_export_parasite_gbr(image_id);
+
                 status = gbr_save(filename, &app_image, &app_colors, export_options.gb_mode);
                 printf("gbr_save: status= %d\n", status);
                 break;
 
             case EXPORT_FORMAT_GBM:
-                // Get processed Map tile set and map array
+
+                // Load cached settings in the image parasite metadata
+                tilemap_export_parasite_gbr(image_id);
+                tilemap_export_parasite_gbm(image_id);
+
+                // Set processed Map tile set and map array
                 status = gbm_save(filename, &app_image, &app_colors);
                 printf("gbm_save: status= %d\n", status);
                 break;

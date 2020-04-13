@@ -247,6 +247,10 @@ color_data * gbm_get_colors(void);
 void gbm_set_image(image_data * p_src_image);
 void gbm_set_colors(color_data * p_src_colors);
 
+uint32_t gbm_get_export_rec_size(void);
+uint8_t * gbm_get_export_rec_buffer(void);
+void gbm_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf);
+
 
 void gbm_free_resources(void);
 

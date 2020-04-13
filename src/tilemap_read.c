@@ -33,6 +33,33 @@ static void tilemap_read_free_resources(int image_mode) {
     }
 }
 
+void tilemap_import_parasite_gbr(gint image_id) {
+
+    // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
+    if (gbr_get_export_rec_size()) {
+        printf("GBR: Storing parasite %d bytes\n",gbr_get_export_rec_size());
+        gimp_image_attach_new_parasite(image_id,
+                                      "GBR-EXPORT-SETTINGS",
+                                       GIMP_PARASITE_PERSISTENT,
+                                       gbr_get_export_rec_size(),
+                                       gbr_get_export_rec_buffer());
+    } else printf("GBR: Failed to store parasite\n");
+}
+
+
+void tilemap_import_parasite_gbm(gint image_id) {
+
+    // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
+    if (gbm_get_export_rec_size()) {
+        printf("GBM: Storing parasite %d bytes\n", gbm_get_export_rec_size());
+        gimp_image_attach_new_parasite(image_id,
+                                      "GBM-EXPORT-SETTINGS",
+                                       GIMP_PARASITE_PERSISTENT,
+                                       gbm_get_export_rec_size(),
+                                       gbm_get_export_rec_buffer());
+    } else printf("GBR: Failed to store parasite\n");
+}
+
 
 int tilemap_read(const gchar * filename, int image_mode)
 {
@@ -47,43 +74,6 @@ int tilemap_read(const gchar * filename, int image_mode)
     image_data * p_loaded_image; // TODO: rename?
     color_data * p_loaded_colors;
 
-/*
-    FILE * file;
-
-
-    app_gfx_data   app_gfx;
-    app_color_data colorpal; // TODO: rename to app_colorpal?
-    rom_gfx_data   rom_gfx;
-
-
-    rom_bin_init_structs(&rom_gfx, &app_gfx, &colorpal);
-
-    app_gfx.image_mode      = image_mode;
-    app_gfx.bytes_per_pixel = BIN_BITDEPTH_INDEXED_ALPHA;
-
-
-    // Try to open the file
-    file = fopen(filename, "rb");
-    if(!file)
-        return -1;
-
-    // Get the file size
-    fseek(file, 0, SEEK_END);
-    rom_gfx.size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-
-    // Now prepare a buffer of that size
-    // and read the data.
-    rom_gfx.p_data = malloc(rom_gfx.size);
-    fread(rom_gfx.p_data, rom_gfx.size, 1, file);
-
-    // Close the file
-    fclose(file);
-
-    // Make sure the alloc succeeded
-    if(rom_gfx.p_data == NULL)
-        return -1;
-*/
 
     switch (image_mode) {
         case IMPORT_FORMAT_GBR:
@@ -136,12 +126,16 @@ int tilemap_read(const gchar * filename, int image_mode)
 
 
     // Set up the indexed color map
+    // and cache any export settings
     switch (image_mode) {
         case IMPORT_FORMAT_GBR:
             p_loaded_colors = gbr_get_colors();
             gimp_image_set_colormap(new_image_id,
                                     &(p_loaded_colors->pal[0]),
                                     p_loaded_colors->color_count);
+
+            // Cache export settings in the image parasite metadata
+            tilemap_import_parasite_gbr(new_image_id);
             break;
 
         case IMPORT_FORMAT_GBM:
@@ -149,6 +143,10 @@ int tilemap_read(const gchar * filename, int image_mode)
             gimp_image_set_colormap(new_image_id,
                                     &(p_loaded_colors->pal[0]),
                                     p_loaded_colors->color_count);
+
+            // Cache export settings in the image parasite metadata
+            tilemap_import_parasite_gbr(new_image_id);
+            tilemap_import_parasite_gbm(new_image_id);
             break;
     }
 
@@ -168,24 +166,6 @@ int tilemap_read(const gchar * filename, int image_mode)
                             p_loaded_image->width,
                             p_loaded_image->height);
 
-
-/*
-    if ((app_gfx.surplus_bytes_size > 0) &&
-        (app_gfx.p_surplus_bytes != NULL)) {
-
-        // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
-         parasite = gimp_parasite_new("ROM-BIN-SURPLUS-BYTES",
-                                       GIMP_PARASITE_PERSISTENT,
-                                       app_gfx.surplus_bytes_size,
-                                       app_gfx.p_surplus_bytes);
-         gimp_image_attach_parasite(new_image_id,
-                                    parasite);
-         gimp_parasite_free (parasite);
-
-//        // Free the surplus bytes now that they are stored as a parasite
-  //      free(app_gfx.p_surplus_bytes);
-    }
-*/
 
     // We're done with the drawable
     gimp_drawable_flush(drawable);
