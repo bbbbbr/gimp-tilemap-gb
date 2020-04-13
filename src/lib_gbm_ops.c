@@ -15,16 +15,19 @@ void gbm_map_tiles_print(gbm_record * p_gbm) {
     gbm_tile_record tile;
 
     index = 0;
+
     for (y=0; y < p_gbm->map.height; y++) {
-        for (x=0; x < p_gbm->map.width; x++)
+        for (x=0; x < p_gbm->map.width; x++) {
 
             tile = gbm_map_tile_get_xy(p_gbm, x, y);
             index++;
 
-            printf(" %d", tile.num);
-            if ((index % p_gbm->map.width) == 0) printf("\n");
-
+            // printf(" %d", tile.num);
+            // if ((index % p_gbm->map.width) == 0) printf("\n");
         }
+    }
+
+    printf("\n");
 }
 
 
@@ -51,8 +54,9 @@ gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) 
     map_tile.num = ((uint16_t)p_gbm->map_tile_data.records[index+2] |
                ((uint16_t)p_gbm->map_tile_data.records[index+1] >> 8)) & GBM_MAP_TILE_NUM;
 
-        printf(" %d", map_tile.num);
-        if ((x % p_gbm->map.width) == 0) printf("\n");
+        //printf("gbm_map_tile_get_xy() at %d , %d: map_tile.num=%d\n", x,y, map_tile.num);
+        printf(" %3d", map_tile.num);
+        if (((x + 1) % p_gbm->map.width) == 0) printf("\n");
 
     return map_tile;
 
@@ -97,7 +101,7 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
     // TODO: For now, always forced to Palette Zero
     p_gbm->map_tile_data.records[index] |= (GBM_MAP_TILE_PAL_NONCGB_DEFAULT & GBM_MAP_TILE_PAL_NONCGB_BYTE);
 
-    printf(" %d", tile_index);
+    printf("gbm_map_tile_set_xy() at %d, %d: index = %d", x,y, tile_index);
     if ((x % p_gbm->map.width) == 0) printf("\n");
 
     return true;
@@ -124,9 +128,9 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
     // tile width and height, and number of tiles
     p_image->size = p_image->width * p_image->height * p_image->bytes_per_pixel;
 
-    printf("gbm_convert_map_to_image: %dx%d @ size%d\n", p_image->width,
-                                                         p_image->height,
-                                                         p_image->size);
+    printf("gbm_convert_map_to_image(): %d x %d @ size: %d\n", p_image->width,
+                                                             p_image->height,
+                                                             p_image->size);
 
     // Allocate image buffer, free if needed beforehand
     if (p_image->p_img_data)
@@ -163,6 +167,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
         status = false;
     }
 
+    printf("\n");
 
     // Return success
     return status;

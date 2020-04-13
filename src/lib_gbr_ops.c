@@ -112,7 +112,7 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
         tile_pal_offset = (map_tile_pal_id - GBR_MAP_TILE_PAL_OFFSET)  * GBR_TILE_DATA_COLOR_SET_SIZE;
     }
 
-    printf("gbr: gbr_tile_remap_colors: tile_id=%d tile_pal=%d map_tile_pal=%d (0=use tile default)\n",tile_index, p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ], map_tile_pal_id);
+//    printf("gbr: gbr_tile_remap_colors: tile_id=%d tile_pal=%d map_tile_pal=%d (0=use tile default)\n",tile_index, p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ], map_tile_pal_id);
 
     // Now remap the palette
     for (index = 0; index < tile_size; index++) {
