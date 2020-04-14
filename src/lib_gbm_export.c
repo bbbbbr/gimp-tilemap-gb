@@ -240,8 +240,21 @@ int32_t gbm_object_map_export_prop_encode(gbm_record * p_gbm, gbm_file_object * 
     p_obj->object_id = 9; // TODO: this should probably increment on write instead of being hardwired
     p_obj->master_id = 8;
 
-    // TODO: figure this out
-    gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_PROPS_SIZE);
+
+    // Set length of real data bytes in record (might be different than size in file due to junk padding)
+    // TODO: there might be a min size here of 160 bytes (20 records x 8 bytes)
+    p_gbm->map_export_prop.length_bytes = p_gbm->map_export.prop_count * GBM_MAP_EXPORT_PROPS_REC_SIZE;
+
+    // Length of real data can't be longer than the record itself
+    if (p_gbm->map_export_prop.length_bytes > GBM_MAP_EXPORT_PROPS_SIZE_MAX)
+        return false;
+
+    // Write the map export prop settings (location format) buffer
+    // Always write full size?
+    // gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_PROPS_SIZE_MAX);
+    gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, p_gbm->map_export_prop.length_bytes);
+
+    printf("WROTE gbm_object_map_export_prop_encode: length_bytes=%d\n", p_gbm->map_export_prop.length_bytes);
     return true;
 }
 
@@ -374,7 +387,7 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
 
 
     // MAP PROP COLORS
-    memset(p_gbm->map_export_prop.props, 0x00, GBM_MAP_EXPORT_PROPS_SIZE);
+    memset(p_gbm->map_export_prop.props, 0x00, GBM_MAP_EXPORT_PROPS_SIZE_MAX);
 
     return true;
 }

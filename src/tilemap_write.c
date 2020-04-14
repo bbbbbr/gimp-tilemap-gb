@@ -49,17 +49,31 @@ static void tilemap_export_parasite_gbr(gint image_id) {
 
 static void tilemap_export_parasite_gbm(gint image_id) {
 
-    GimpParasite * img_parasite;
+    GimpParasite * img_parasite_map_export;
+    GimpParasite * img_parasite_map_export_prop;
 
-    img_parasite = gimp_image_get_parasite(image_id, "GBM-EXPORT-SETTINGS");
+    img_parasite_map_export = gimp_image_get_parasite(image_id, "GBM-EXPORT-SETTINGS");
 
-    if (img_parasite) {
-        printf("GBM: Found parasite size %d\n", img_parasite->size);
+    if (img_parasite_map_export) {
+        printf("GBM: map export: Found parasite size %d\n", img_parasite_map_export->size);
 
         // Load settings cached in the gimp metadata parasite
-        gbm_set_export_from_buffer(img_parasite->size, (unsigned char *)img_parasite->data);
+        gbm_set_map_export_from_buffer(img_parasite_map_export->size, (unsigned char *)img_parasite_map_export->data);
 
-    } else printf("GBM: No parasite found\n");
+    } else printf("GBM: map export: No parasite found\n");
+
+
+    img_parasite_map_export_prop = gimp_image_get_parasite(image_id, "GBM-EXPORT-PROP-SETTINGS");
+
+    if (img_parasite_map_export_prop) {
+        printf("GBM: map export: Found parasite size %d\n", img_parasite_map_export_prop->size);
+
+        // Load settings cached in the gimp metadata parasite
+        gbm_set_map_export_prop_from_buffer(img_parasite_map_export_prop->size, (unsigned char *)img_parasite_map_export_prop->data);
+
+    } else printf("GBM: map export: No parasite found\n");
+
+
 }
 
 

@@ -24,38 +24,39 @@
 #define GBM_PRODUCER_SIZE  GBM_PRODUCER_NAME_SIZE + GBM_PRODUCER_VERSION_SIZE + GBM_PRODUCER_INFO_SIZE
 
 // TODO: inspect strings and determine if all the + 1 _STR stuff can be remove (are strings always null terminated in data file despite being pascal/delphi?)
-#define GBM_PRODUCER_NAME_SIZE_STR    GBM_PRODUCER_NAME_SIZE    + 1 // space for trailing \0
-#define GBM_PRODUCER_VERSION_SIZE_STR GBM_PRODUCER_VERSION_SIZE + 1
-#define GBM_PRODUCER_INFO_SIZE_STR    GBM_PRODUCER_INFO_SIZE    + 1
+#define GBM_PRODUCER_NAME_SIZE_STR    (GBM_PRODUCER_NAME_SIZE    + 1) // space for trailing \0
+#define GBM_PRODUCER_VERSION_SIZE_STR (GBM_PRODUCER_VERSION_SIZE + 1)
+#define GBM_PRODUCER_INFO_SIZE_STR    (GBM_PRODUCER_INFO_SIZE    + 1)
 
 #define GBM_MAP_NAME_SIZE      128
 #define GBM_MAP_TILE_FILE_SIZE 256
 
-#define GBM_MAP_SIZE           20 + GBM_MAP_NAME_SIZE + GBM_MAP_TILE_FILE_SIZE
+#define GBM_MAP_SIZE           (20 + GBM_MAP_NAME_SIZE + GBM_MAP_TILE_FILE_SIZE)
 
 #define GBM_OBJECT_MAX_SIZE 65535 // This may not be true, it's just for convenience :)
 
 #define GBM_MAP_TILE_DATA_RECORDS_SIZE  GBM_OBJECT_MAX_SIZE
-#define GBM_MAP_TILE_DATA_PADDING_UNKNOWN 4800 - 2160 // TODO: what is this, and is it variable?
+#define GBM_MAP_TILE_DATA_PADDING_UNKNOWN (4800 - 2160) // TODO: what is this, and is it variable?
 
 #define GBM_MAP_PROP_NAME_SIZE 32
 
 #define GBM_MAP_SETTINGS_BOOKMARK_COUNT 3
-#define GBM_MAP_SETTINGS_BOOKMARK_SIZE  GBM_MAP_SETTINGS_BOOKMARK_COUNT * sizeof(uint16_t)
+#define GBM_MAP_SETTINGS_BOOKMARK_SIZE  (GBM_MAP_SETTINGS_BOOKMARK_COUNT * sizeof(uint16_t))
 
-#define GBM_MAP_SETTINGS_MIN_SIZE    29 + GBM_MAP_SETTINGS_BOOKMARK_SIZE
+#define GBM_MAP_SETTINGS_MIN_SIZE    (29 + GBM_MAP_SETTINGS_BOOKMARK_SIZE)
 
 #define GBM_MAP_PROP_COLORS_COLORS_COUNT 2
-#define GBM_MAP_PROP_COLORS_COLORS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 * 4 // uint24?
+#define GBM_MAP_PROP_COLORS_COLORS_SIZE  (GBM_MAP_PROP_COLORS_COLORS_COUNT * 3 * 4) // uint24?
 
 #define GBM_MAP_EXPORT_FILE_NAME_SIZE    255
 #define GBM_MAP_EXPORT_SECTION_NAME_SIZE 40
 #define GBM_MAP_EXPORT_LABEL_NAME_SIZE   40
 
-#define GBM_MAP_EXPORT_SIZE 19 + GBM_MAP_EXPORT_FILE_NAME_SIZE + GBM_MAP_EXPORT_SECTION_NAME_SIZE + GBM_MAP_EXPORT_LABEL_NAME_SIZE
+#define GBM_MAP_EXPORT_SIZE (19 + GBM_MAP_EXPORT_FILE_NAME_SIZE + GBM_MAP_EXPORT_SECTION_NAME_SIZE + GBM_MAP_EXPORT_LABEL_NAME_SIZE)
 
-#define GBM_MAP_EXPORT_PROPS_COUNT 2  // It's possible this should be larger
-#define GBM_MAP_EXPORT_PROPS_SIZE  GBM_MAP_PROP_COLORS_COLORS_COUNT * 4 // Maybe uint32? // 3 // uint24
+#define GBM_MAP_EXPORT_PROPS_COUNT_MAX 32  //
+#define GBM_MAP_EXPORT_PROPS_REC_SIZE  8   // 8 bytes: Actual records are: uint8_t("nm") + 24 bits(0x00),  + uint32_t ("size")
+#define GBM_MAP_EXPORT_PROPS_SIZE_MAX (GBM_MAP_EXPORT_PROPS_COUNT_MAX * GBM_MAP_EXPORT_PROPS_REC_SIZE)
 
 // These are used with: map_tile_data.record
 #define GBM_MAP_TILE_RECORD_SIZE  3 // 24 bits per record
@@ -81,6 +82,11 @@
 
 #define GBM_MAP_EXPORT_DELETED_1_SIZE 0x012C
 #define GBM_MAP_EXPORT_DELETED_2_SIZE 0x0
+
+typedef struct {
+    uint32_t  nr;    // Export Row Type Actual. NOTE: In app var is only uint8_t, but gets export padded (with garbage bytes) up to uint32_t. This is export property attribute row in location format table
+    uint32_t size;   // Export number of bits
+} gbm_map_export_prop_rec;
 
 
 enum gbm_tileset_colorset {
@@ -209,8 +215,10 @@ typedef struct {
 
 
 typedef struct {
-    uint8_t   props[GBM_MAP_EXPORT_PROPS_SIZE];  // uint24? uint32?
-} gbm_map_export_prop;
+    uint8_t   props[GBM_MAP_EXPORT_PROPS_SIZE_MAX]; // This is actually composed of structs: gbm_map_export_prop_rec
+    // End of native structure
+    uint32_t  length_bytes;
+} gbm_map_export_prop; // For now, this doesn't actually get decoded, just saved and restored as-is
 
 
 
@@ -247,10 +255,6 @@ color_data * gbm_get_colors(void);
 void gbm_set_image(image_data * p_src_image);
 void gbm_set_colors(color_data * p_src_colors);
 
-uint32_t gbm_get_export_rec_size(void);
-uint8_t * gbm_get_export_rec_buffer(void);
-void gbm_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf);
-
 
 void gbm_free_resources(void);
 
@@ -258,6 +262,16 @@ int32_t gbm_load(const int8_t * filename);
 int32_t gbm_load_file(const int8_t * filename);
 int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors);
 int32_t gbm_save_file(const int8_t * filename);
+
+uint32_t  gbm_get_map_export_rec_size(void);
+uint8_t * gbm_get_map_export_rec_buffer(void);
+void      gbm_set_map_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf);
+uint32_t  gbm_get_map_export_prop_rec_size(void);
+uint8_t * gbm_get_map_export_prop_rec_buffer(void);
+void      gbm_set_map_export_prop_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf);
+
+void gbm_overlay_cached_settings(void);
+
 
 
 #endif // LIB_GBM_FILE_HEADER

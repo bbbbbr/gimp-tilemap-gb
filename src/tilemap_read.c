@@ -34,10 +34,10 @@ static void tilemap_read_free_resources(int image_mode) {
 }
 
 void tilemap_import_parasite_gbr(gint image_id) {
+    printf("GBR import: Parasite %d bytes\n",gbr_get_export_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbr_get_export_rec_size()) {
-        printf("GBR: Storing parasite %d bytes\n",gbr_get_export_rec_size());
         gimp_image_attach_new_parasite(image_id,
                                       "GBR-EXPORT-SETTINGS",
                                        GIMP_PARASITE_PERSISTENT,
@@ -48,16 +48,26 @@ void tilemap_import_parasite_gbr(gint image_id) {
 
 
 void tilemap_import_parasite_gbm(gint image_id) {
+    printf("GBM import: map export: Parasite %d bytes\n", gbm_get_map_export_rec_size());
+    printf("GBM import: map export prop: Parasite %d bytes\n", gbm_get_map_export_prop_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
-    if (gbm_get_export_rec_size()) {
-        printf("GBM: Storing parasite %d bytes\n", gbm_get_export_rec_size());
+    if (gbm_get_map_export_rec_size()) {
         gimp_image_attach_new_parasite(image_id,
                                       "GBM-EXPORT-SETTINGS",
                                        GIMP_PARASITE_PERSISTENT,
-                                       gbm_get_export_rec_size(),
-                                       gbm_get_export_rec_buffer());
-    } else printf("GBR: Failed to store parasite\n");
+                                       gbm_get_map_export_rec_size(),
+                                       gbm_get_map_export_rec_buffer());
+    }
+
+    // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
+    if (gbm_get_map_export_prop_rec_size()) {
+        gimp_image_attach_new_parasite(image_id,
+                                      "GBM-EXPORT-PROP-SETTINGS",
+                                       GIMP_PARASITE_PERSISTENT,
+                                       gbm_get_map_export_prop_rec_size(),
+                                       gbm_get_map_export_prop_rec_buffer());
+    }
 }
 
 

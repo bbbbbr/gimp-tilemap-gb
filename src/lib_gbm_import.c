@@ -209,11 +209,23 @@ printf("gbm_object_map_export_decode:\n%s\n%d\n%s\n%s\n %d\n%d\n%d\n",
 
 int32_t gbm_object_map_export_prop_decode(gbm_record * p_gbm, gbm_file_object * p_obj) {
 
-    if (p_obj->length_bytes < GBM_MAP_EXPORT_PROPS_SIZE)
+
+    if (p_obj->length_bytes > GBM_MAP_EXPORT_PROPS_SIZE_MAX)
         return false;
 
-    // TODO: figure this out
-    gbm_read_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_PROPS_SIZE);
+    // Set length of real data bytes in record (might be different than size in file due to junk padding)
+    // TODO: there might be a min size here of 160 bytes (20 records x 8 bytes)
+    p_gbm->map_export_prop.length_bytes = p_gbm->map_export.prop_count * GBM_MAP_EXPORT_PROPS_REC_SIZE;
+
+    // Length of real data can't be longer than the record itself
+    if (p_gbm->map_export_prop.length_bytes > p_obj->length_bytes)
+        return false;
+
+    // Read the whole buffer, even if the length of real data is shorter
+    gbm_read_buf(&(p_gbm->map_export_prop.props[0]), p_obj, p_obj->length_bytes);
+
+    printf("gbm_object_map_export_prop_decode: length_bytes=%d\n",p_gbm->map_export_prop.length_bytes);
+
     return true;
 }
 

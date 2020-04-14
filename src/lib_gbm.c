@@ -22,8 +22,12 @@ static color_data colors;
 
 static gbm_record gbm;
 
-static gbm_map_export settings_gbm_map_export;
-static uint32_t       settings_gbm_map_export_populated = false;
+static gbm_map_export      settings_gbm_map_export;
+static uint32_t            settings_gbm_map_export_populated = false;
+
+static gbm_map_export_prop settings_gbm_map_export_prop;
+static uint32_t            settings_gbm_map_export_prop_populated = false;
+
 
 
 int32_t gbm_load(const int8_t * filename) {
@@ -150,11 +154,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
                 // Initialize shared GBM map structure with defaults
                 gbm_export_set_defaults(&gbm);
                 gbm_export_update_color_set(&gbm, export_options.gb_mode);
-                // Overlay any cached export settings (from gimp parasite metadata)
-                if (settings_gbm_map_export_populated) {
-                    memcpy(&(gbm.map_export), &settings_gbm_map_export, sizeof(gbm_map_export));
-                }
-
+                gbm_overlay_cached_settings();
 
                 // Set GBR tile file name for the GBM file to use (exported above)
                 snprintf(gbm.map.tile_file, GBM_MAP_TILE_FILE_SIZE, "%s", get_filename_from_path(gbr_path));
@@ -398,16 +398,29 @@ void gbm_set_colors(color_data * p_src_colors) {
 
 
 
-uint32_t gbm_get_export_rec_size(void) {
+void gbm_free_resources(void) {
+
+    if (image.p_img_data)
+        free(image.p_img_data);
+
+    // Free any resources of the tile file used when loading the map
+    gbr_free_resources();
+
+    tilemap_free_resources();
+};
+
+
+
+uint32_t gbm_get_map_export_rec_size(void) {
     return( (uint32_t) sizeof(gbm.map_export) );
 }
 
-uint8_t * gbm_get_export_rec_buffer(void) {
+uint8_t * gbm_get_map_export_rec_buffer(void) {
     return ( (uint8_t *) &(gbm.map_export));
 }
 
 
-void gbm_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
+void gbm_set_map_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
 
     // Only copy structure if size matches
     if (buffer_size == (uint32_t) sizeof(gbm.map_export)) {
@@ -423,18 +436,43 @@ void gbm_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
 
 }
 
+// TODO: consolidate these into generalized accessor functions
 
-void gbm_free_resources(void) {
+uint32_t gbm_get_map_export_prop_rec_size(void) {
+    return( (uint32_t) sizeof(gbm.map_export_prop) );
+}
 
-    if (image.p_img_data)
-        free(image.p_img_data);
-
-    // Free any resources of the tile file used when loading the map
-    gbr_free_resources();
-
-    tilemap_free_resources();
-};
+uint8_t * gbm_get_map_export_prop_rec_buffer(void) {
+    return ( (uint8_t *) &(gbm.map_export_prop));
+}
 
 
+void gbm_set_map_export_prop_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
+
+    // Only copy structure if size matches
+    if (buffer_size == (uint32_t) sizeof(gbm.map_export_prop)) {
+
+        printf("gbm_set_map_export_prop_from_buffer(): loading...\n");
+
+        settings_gbm_map_export_prop_populated = true;
+        memcpy(&settings_gbm_map_export_prop, p_src_buf, buffer_size);
+    } else {
+
+        printf("gbm_set_map_export_prop_from_buffer(): buffer size mismatch. don't load\n");
+    }
+
+}
 
 
+void gbm_overlay_cached_settings(void) {
+    // Overlay any cached export settings (from gimp parasite metadata)
+    if (settings_gbm_map_export_populated) {
+        memcpy(&(gbm.map_export), &settings_gbm_map_export, sizeof(gbm_map_export));
+    }
+
+
+    // Overlay any cached export settings (from gimp parasite metadata)
+    if (settings_gbm_map_export_prop_populated) {
+        memcpy(&(gbm.map_export_prop), &settings_gbm_map_export_prop, sizeof(gbm_map_export_prop));
+    }
+}

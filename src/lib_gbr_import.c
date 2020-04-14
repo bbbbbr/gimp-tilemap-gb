@@ -159,12 +159,13 @@ int32_t gbr_object_tile_export_decode(gbr_record * p_gbr, gbr_file_object * p_ob
     gbr_read_uint8 (&p_gbr->tile_export.sel_tab,        p_obj);
 
 
-printf("TILE_EXPORT:\n%d\n%s\n%d\n%s\n%s\n",
+printf("TILE_EXPORT:\n%d\n%s\n%d\n%s\nTiles: %d - %d\n",
                                  p_gbr->tile_export.tile_id,
                                  p_gbr->tile_export.file_name,
                                  p_gbr->tile_export.file_type,
                                  p_gbr->tile_export.section_name,
-                                 p_gbr->tile_export.section_name);
+                                 p_gbr->tile_export.from,
+                                 p_gbr->tile_export.upto);
 
   return true;
 }

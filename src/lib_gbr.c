@@ -48,6 +48,7 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
 
     // Overlay any cached export settings
     if (settings_gbr_tile_export_populated) {
+        printf("gbr_save(): Overlay any cached export settings - found\n");
         memcpy(&(gbr.tile_export), &settings_gbr_tile_export, sizeof(gbr_tile_export));
     }
 
