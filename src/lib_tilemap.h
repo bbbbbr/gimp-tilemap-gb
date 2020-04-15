@@ -8,6 +8,8 @@
 
 #include "image_info.h"
 #include "lib_gbm.h"
+#include "options.h"
+
 
 #ifndef LIB_TILEMAP_HEADER
 #define LIB_TILEMAP_HEADER
@@ -87,19 +89,6 @@
         EXPORT_FORMAT_LAST
     };
 
-    enum tile_process_modes {
-        MODE_DMG_4_COLOR,
-        MODE_CGB_32_COLOR
-    };
-
-
-    typedef struct {
-        uint16_t gb_mode;              // MODE_DMG_4_COLOR, MODE_CGB_32_COLOR
-        uint16_t tile_dedupe_flips;    // only if (gb_mode == PROC_MODE_CGB_32_COLOR)
-        uint16_t tile_dedupe_palettes;
-
-    } tile_process_options;
-
 
     // Tile Map Entry records
     typedef struct {
@@ -152,6 +141,7 @@
     } tile_set_data;
 
 
+    void           tilemap_options_set_defaults(color_data * p_colors, tile_process_options * p_export_options);
     void           tilemap_free_tile_set(void);
     void           tilemap_free_resources(void);
     static int32_t check_dimensions_valid(image_data * p_src_img);

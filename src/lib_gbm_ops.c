@@ -135,8 +135,8 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
     p_gbm->map_tile_data.records[index + 1] = (uint8_t)((tile_index & GBM_MAP_TILE_NUM) << 8);
     p_gbm->map_tile_data.records[index + 2] = (uint8_t) (tile_index & GBM_MAP_TILE_NUM);
 
-    // // Handle CGB mode options if enabled
-    // if (gb_mode == MODE_CGB_32_COLOR) {
+    // Below assumes that proper feature enable/disable has occured for DMG vs CGB
+    // such as: if (gb_mode == MODE_CGB_32_COLOR)
 
     if (flip_bits & TILE_FLIP_BITS_X)
         p_gbm->map_tile_data.records[index] |= GBM_MAP_TILE_FLIP_H_BYTE;

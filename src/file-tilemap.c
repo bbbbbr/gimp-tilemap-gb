@@ -10,13 +10,10 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
-// #include "lib_rom_bin.h"
 #include "tilemap_write.h"
 #include "tilemap_read.h"
 
 #include "lib_tilemap.h"
-
-// #include "export-dialog.h"
 
 const char SAVE_PROCEDURE_TMAP_C_SOURCE[] = "file-save-tilemap-c-source";
 const char SAVE_PROCEDURE_GBR[] = "file-save-gbr";
@@ -304,24 +301,17 @@ static void run(const gchar * name,
             case GIMP_EXPORT_EXPORT:
             case GIMP_EXPORT_IGNORE:
 
-/*
-              // TODO: Now get the settings via a pop-up dialog
-              if(!export_dialog(&image_mode, name))
-              {
-                  return_values[0].data.d_status = GIMP_PDB_CANCEL;
-                  return;
-              }
-*/
-              // This is the main call to convert and save the image
-              // in the desired output format
-              status = write_tilemap(param[3].data.d_string,
+                // This is the main call to convert and save the image
+                // in the desired output format
+                status = write_tilemap(param[3].data.d_string,
                                      image_id,
                                      drawable_id,
-                                     image_mode);
+                                     image_mode,
+                                     name);
 
-              gimp_image_delete(image_id);
+                gimp_image_delete(image_id);
 
-              break;
+                break;
 
             case GIMP_EXPORT_CANCEL:
                 return_values[0].data.d_status = GIMP_PDB_CANCEL;

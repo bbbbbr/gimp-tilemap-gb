@@ -28,8 +28,10 @@
 #include "lib_gbm.h"
 
 #include "image_info.h"
-
 #include "lib_rom_bin.h"
+
+#include "export-dialog.h"
+#include "options.h"
 
 
 static void tilemap_export_parasite_gbr(gint image_id) {
@@ -77,7 +79,7 @@ static void tilemap_export_parasite_gbm(gint image_id) {
 }
 
 
-int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode)
+int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode, const gchar * name)
 {
     int32_t status;
 
@@ -153,24 +155,24 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
 
 
+    if (status) {
+        if (image_mode == EXPORT_FORMAT_GBR)
+            export_options.export_type = EXPORT_GBR;
+        else if (image_mode == EXPORT_FORMAT_GBM)
+            export_options.export_type = EXPORT_GBM;
+
+        // Load default export options
+        tilemap_options_set_defaults(&app_colors, &export_options);
+
+        // Prompt the user for export options in a dialog
+        status = export_dialog(&export_options, name);
+    }
+
+
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 //    if (status != 0) { };
 
     if (status) {
-
-        // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
-        if (app_colors.color_count <= TILE_DMG_COLORS_MAX) {
-
-            export_options.gb_mode = MODE_DMG_4_COLOR;
-            export_options.tile_dedupe_flips = false;
-            export_options.tile_dedupe_palettes = false;
-        }
-        else if (app_colors.color_count <= TILE_CGB_COLORS_MAX) {
-
-            export_options.gb_mode = MODE_CGB_32_COLOR;
-            export_options.tile_dedupe_flips = true;
-            export_options.tile_dedupe_palettes = true;
-        }
 
         switch (image_mode) {
             case EXPORT_FORMAT_GBDK_C_SOURCE:
@@ -189,21 +191,25 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
             case EXPORT_FORMAT_GBR:
 
+                export_options.export_type = EXPORT_GBR;
+
                 // Load cached settings in the image parasite metadata
                 tilemap_export_parasite_gbr(image_id);
 
-                status = gbr_save(filename, &app_image, &app_colors, export_options.gb_mode);
+                status = gbr_save(filename, &app_image, &app_colors, export_options); // TODO: CGB MODE: send entire export_options struct down?
                 printf("gbr_save: status= %d\n", status);
                 break;
 
             case EXPORT_FORMAT_GBM:
+
+                export_options.export_type = EXPORT_GBM;
 
                 // Load cached settings in the image parasite metadata
                 tilemap_export_parasite_gbr(image_id);
                 tilemap_export_parasite_gbm(image_id);
 
                 // Set processed Map tile set and map array
-                status = gbm_save(filename, &app_image, &app_colors);
+                status = gbm_save(filename, &app_image, &app_colors, export_options);
                 printf("gbm_save: status= %d\n", status);
                 break;
         }

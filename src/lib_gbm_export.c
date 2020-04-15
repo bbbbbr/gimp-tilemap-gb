@@ -8,7 +8,7 @@
 #include "lib_gbm_file_utils.h"
 #include "lib_gbm_ops.h"
 
-#include "lib_tilemap.h" // TODO: FIXME: only included here for : if (gb_mode == MODE_CGB_32_COLOR)
+#include "options.h"
 
 
 

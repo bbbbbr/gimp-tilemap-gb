@@ -10,13 +10,48 @@
 #include "tilemap_io.h"
 
 #include "hash.h"
+#include "options.h"
 
 // Globals
 tile_map_data tile_map;
 tile_set_data tile_set;
 
 
-void set_options(int dedupe_flip, int dedupe_palette, int gb_mode);
+void tilemap_options_set_defaults(color_data * p_colors, tile_process_options * p_export_options) {
+
+    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
+    if (p_colors->color_count <= TILE_DMG_COLORS_MAX) {
+
+        p_export_options->gb_mode = MODE_DMG_4_COLOR;
+
+        // only enable dedupe on GBM export (basic tiled edupe only)
+        p_export_options->tile_dedupe_enabled  = (p_export_options->export_type == EXPORT_GBM);
+        p_export_options->tile_dedupe_flips    = false;
+        p_export_options->tile_dedupe_palettes = false;
+    }
+    else if (p_colors->color_count <= TILE_CGB_COLORS_MAX) {
+
+        p_export_options->gb_mode = MODE_CGB_32_COLOR;
+
+        // only enable dedupe on GBM export (all types)
+        p_export_options->tile_dedupe_enabled  = (p_export_options->export_type == EXPORT_GBM);
+        p_export_options->tile_dedupe_flips    = (p_export_options->export_type == EXPORT_GBM);
+        p_export_options->tile_dedupe_palettes = (p_export_options->export_type == EXPORT_GBM);
+    }
+    else {
+        // Too many colors
+        p_export_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
+    }
+
+    printf("==== tilemap_options_set_defaults() ====\n");
+    printf("export_type:          %d\n", p_export_options->export_type);
+    printf("gb_mode:              %d\n", p_export_options->gb_mode);
+    printf("tile_dedupe_enabled:  %d\n", p_export_options->tile_dedupe_enabled);
+    printf("tile_dedupe_flips:    %d\n", p_export_options->tile_dedupe_flips);
+    printf("tile_dedupe_palettes: %d\n", p_export_options->tile_dedupe_palettes);
+    printf("\n");
+}
+
 
 
 // TODO: support configurable tile size
@@ -140,7 +175,10 @@ unsigned char process_tiles(image_data * p_src_img) {
                 // TODO! Don't hash transparent pixels? Have to overwrite second byte?
                 tile.hash[0] = MurmurHash2( tile.p_img_raw, tile.raw_size_bytes, 0xF0A5); // len is u8count, 0xF0A5 is seed
 
-                map_entry = tile_find_match(&tile, &tile_set, &tile_map);
+                if (tile_map.options.tile_dedupe_enabled)
+                    map_entry = tile_find_match(&tile, &tile_set, &tile_map);
+                else
+                    map_entry.status = TILE_ID_NOT_FOUND;
 
 
                 // Tile not found, create a new entry
@@ -163,7 +201,7 @@ unsigned char process_tiles(image_data * p_src_img) {
                         tile_free(&flip_tiles[1]);
                         tilemap_free_resources();
 
-                        // printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
+                        printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
                         return (false); // Ran out of tile space, exit
                     }
                     // printf(" -> NEW tile %d ", map_entry.id);

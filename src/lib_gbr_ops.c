@@ -4,7 +4,7 @@
 
 #include "lib_gbr_ops.h"
 
-#include "lib_tilemap.h" // TODO: This is only here for MODE_CGB_32_COLOR/etc. Find a better way to handle mode so that it can be omitted
+#include "options.h"
 
 
 // TODO: THIS IS DEPRECATED?
@@ -161,7 +161,7 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
 
         // Remap the palette so it's only colors 0-3, relative to the identified palette
         // Example: Index color 13 = (13 % 4) = Color 1 of Palette 3
-        *p_buf = (*p_buf) % TILE_COLORS_PER_PALETTE;
+        *p_buf = (*p_buf) % GBR_TILE_DATA_COLOR_SET_SIZE;
 
         // Move to the next pixel
         p_buf++;

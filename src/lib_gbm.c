@@ -14,7 +14,6 @@
 
 #include "lib_tilemap.h"
 #include "tilemap_path_ops.h"
-
 #include "image_info.h"
 
 static image_data image;
@@ -62,7 +61,7 @@ int32_t gbm_load(const int8_t * filename) {
 
     if (status) {
         p_gbr = gbr_get_ptr();
-//            p_tile_image = gbr_get_image(); //TODO: maybe don't need?
+        // p_tile_image = gbr_get_image(); //TODO: maybe don't need?... see below: gbm_convert_map_to_image(&gbm, p_gbr, &image)
         p_tile_colors = gbr_get_colors();
 
         // copy colors if possible, otherwise signal failure
@@ -77,22 +76,17 @@ int32_t gbm_load(const int8_t * filename) {
         if (status)
             status = gbm_convert_map_to_image(&gbm, p_gbr, &image);
    }
-/*
-
-    // TODO: Store imported GBR structure as metadata in GimpParasite? (then write out on export )
 
     // TODO: Open the loaded tiles as a separate image?
-*/
+
 
     return status;
 };
 
 
 
-// TODO: Import calette color data?
-// TODO: Try to maintain palette color order? Store in Gimp Parasite?
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors) {
+int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options export_options) {
 
     int32_t status;
     tile_map_data * p_map;
@@ -100,23 +94,6 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
     image_data      tile_set_deduped_image;
 
     gbr_record      gbr;
-
-    tile_process_options export_options;
-
-
-    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
-    if (p_colors->color_count <= TILE_DMG_COLORS_MAX) {
-
-        export_options.gb_mode = MODE_DMG_4_COLOR;
-        export_options.tile_dedupe_flips = false;
-        export_options.tile_dedupe_palettes = false;
-    }
-    else if (p_colors->color_count <= TILE_CGB_COLORS_MAX) {
-
-        export_options.gb_mode = MODE_CGB_32_COLOR;
-        export_options.tile_dedupe_flips = true;
-        export_options.tile_dedupe_palettes = true;
-    }
 
 
     printf("gbm_save(): %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
@@ -145,7 +122,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
             snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  filename, ".tiles.gbr");
 
             printf("calling gbr save:%s:\n", gbr_path);
-            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, export_options.gb_mode);
+            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, export_options);
             printf("(gbm) gbr_save_file: status= %d\n", status);
 
             if (status) {

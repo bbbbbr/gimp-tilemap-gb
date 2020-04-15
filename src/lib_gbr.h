@@ -14,6 +14,7 @@
 #include <stdio.h>
 
 #include "image_info.h"
+#include "options.h"
 
 #ifndef LIB_GBR_FILE_HEADER
 #define LIB_GBR_FILE_HEADER
@@ -32,7 +33,7 @@
 
 #define GBR_TILE_DATA_NAME_SIZE       30
 #define GBR_TILE_DATA_NAME_SIZE_STR   GBR_TILE_DATA_NAME_SIZE + 1
-#define GBR_TILE_DATA_COLOR_SET_SIZE 4
+#define GBR_TILE_DATA_COLOR_SET_SIZE  4
 #define GBR_TILE_DATA_SIZE_MIN        GBR_TILE_DATA_NAME_SIZE + 2 + 2 + 2 + GBR_TILE_DATA_COLOR_SET_SIZE
 #define GBR_TILE_DATA_PALETTE_SIZE_DMG (4 * 1)
 #define GBR_TILE_DATA_PALETTE_SIZE_CGB (4 * 8)
@@ -255,7 +256,7 @@ void gbr_set_image(image_data * p_src_image);
 void gbr_set_colors(color_data * p_src_colors);
 
 int32_t gbr_load(const int8_t * filename);
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, uint16_t gb_mode);
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options export_options);
 
 void gbr_free_resources(void);
 

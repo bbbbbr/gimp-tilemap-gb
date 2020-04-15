@@ -12,6 +12,8 @@
 #include "lib_rom_bin.h"
 #include "hash.h"
 
+#include "options.h"
+
 const uint16_t tile_flip_bits[] = {
     TILE_FLIP_BITS_NONE,
     TILE_FLIP_BITS_X,

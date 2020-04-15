@@ -6,7 +6,7 @@
 #include "lib_gbr_file_utils.h"
 #include "lib_gbr_ops.h"
 
-#include "lib_tilemap.h" // TODO: This is only here for MODE_CGB_32_COLOR/etc. Find a better way to handle mode so that it can be omitted
+#include "options.h"
 
 
 static uint8_t CGB_DEFAULT_PAL_SETS[0x80] = {
@@ -164,8 +164,7 @@ printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
 
 int32_t gbr_object_tile_export_encode(gbr_record * p_gbr, gbr_file_object * p_obj) {
 
-//    if (p_obj->length_bytes != GBR_TILE_EXPORT_SIZE)
-//        return false;
+    // These settings may have been restored from imported data cached in a GIMP Parasite
 
     p_obj->length_bytes = 0;
     p_obj->offset = 0;
