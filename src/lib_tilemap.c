@@ -4,13 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
-
 #include "lib_tilemap.h"
 #include "tilemap_tiles.h"
 #include "tilemap_io.h"
+#include "tilemap_error.h"
 
 #include "hash.h"
 #include "options.h"
+
 
 // Globals
 tile_map_data tile_map;
@@ -137,10 +138,13 @@ unsigned char tilemap_export_process(image_data * p_src_img) {
 
     if ( check_dimensions_valid(p_src_img) ) {
         if (!tilemap_initialize(p_src_img)) { // Success, prep for processing
+
+            tilemap_error_set(TILE_ID_OUT_OF_SPACE);
             return (false); // Signal failure and exit
         }
     }
     else {
+        tilemap_error_set(TILE_ID_INVALID_DIMENSIONS);
         return (false); // Signal failure and exit
     }
 
@@ -192,8 +196,10 @@ unsigned char process_tiles(image_data * p_src_img) {
                 //
                 // NOTE: This needs to happen *BEFORE* any deduplication hashing
                 //       The palette also gets re-applied below
-                if ( ! tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode)) {
+                map_entry.status = tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode);
+                if (map_entry.status != TILE_ID_OK) {
                     // printf("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
+                    tilemap_error_set(map_entry.status);
                     return (false); // Exit
                 }
 
@@ -221,7 +227,7 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                     map_entry = tile_register_new(&tile, &tile_set);
 
-                    if (map_entry.status == TILE_ID_OUT_OF_SPACE) {
+                    if (map_entry.status != TILE_ID_OK) {
                         tile_free(&tile);
                         tile_free(&flip_tiles[0]);
                         tile_free(&flip_tiles[1]);
@@ -229,6 +235,7 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                         // TODO: propegate errors upward
                         printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
+                        tilemap_error_set(map_entry.status);
                         return (false); // Ran out of tile space, exit
                     }
                     // printf(" -> NEW tile %d ", map_entry.id);
@@ -246,6 +253,7 @@ unsigned char process_tiles(image_data * p_src_img) {
         } // for (img_y = 0
 
     } else { // else if (tile.p_img_raw) {
+        tilemap_error_set(TILE_ID_OUT_OF_SPACE);
         tilemap_free_resources();
         return (false); // Failed to allocate buffer, exit
     }

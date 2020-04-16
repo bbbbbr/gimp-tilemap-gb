@@ -120,7 +120,7 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
             new_map_entry.status = TILE_ID_OUT_OF_SPACE;
     }
     else
-        new_map_entry.status = TILE_ID_OUT_OF_SPACE;
+        new_map_entry.status = TILE_ID_EXCEEDED_LIMIT;
 
 // printf("tile_register_new tile_id=%d\n",tile_id);
 
@@ -476,11 +476,15 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
             // Return error and abort if...
             // * extracted palette num was out of bounds or
             // * the tile tried to use more than one palette
-            if ((palette > TILE_PAL_MAX) || (palette != last_palette)) {
+            if (palette > TILE_PAL_MAX) {
 
-                return (false);
-            }
-            else {
+                return (TILE_ID_TOO_MANY_COLORS);
+
+            } else if (palette != last_palette) {
+
+                return (TILE_ID_MULTIPLE_PALETTES_IN_TILE);
+
+            } else {
                 // Update palette for next pass
                 palette != last_palette;
             }
@@ -497,15 +501,15 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
 
     // Check for Palette out of range
     if ((palette > TILE_PAL_DMG_MAX) && (gb_mode == MODE_DMG_4_COLOR)) {
-        return (false);
+        return (TILE_ID_TOO_MANY_COLORS);
 
     } else if ((palette > TILE_PAL_CGB_MAX) && (gb_mode == MODE_CGB_32_COLOR)) {
-        return (false);
+        return (TILE_ID_TOO_MANY_COLORS);
     }
 
 
 // printf("-> pal id as: %d :", palette);
     p_tile->palette_num = palette;
 
-    return true;
+    return TILE_ID_OK;
 }

@@ -12,6 +12,7 @@
 
 #include "tilemap_write.h"
 #include "tilemap_read.h"
+#include "tilemap_error.h"
 
 #include "lib_tilemap.h"
 
@@ -222,6 +223,9 @@ static void run(const gchar * plugin_procedure_name,
     printf("plugin_procedure_name=%s\n", plugin_procedure_name);
 
 
+    tilemap_error_clear();
+
+
 // Check to see if this is the load procedure
     if( (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBR)) ||
         (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBM)) )
@@ -259,7 +263,6 @@ static void run(const gchar * plugin_procedure_name,
              (!strcmp(plugin_procedure_name, SAVE_PROCEDURE_GBM)))
 
     {
-printf("Saving...\n");
         // === This is the export procedure ===
 
         gint32 image_id, drawable_id;
@@ -270,7 +273,6 @@ printf("Saving...\n");
         if(nparams != 9) // Should match save_arguments[]
         {
             return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
-printf("Incorrect param number\n");
             return;
         }
 
@@ -278,12 +280,9 @@ printf("Incorrect param number\n");
         drawable_id = param[2].data.d_int32;
         // plugin_options.image_format is set above
 
-printf("file-tilemap.c: Export\n");
 
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
-
-printf("file-tilemap.c: Call Export\n");
 
 
         // Handle the different run modes
@@ -292,10 +291,9 @@ printf("file-tilemap.c: Call Export\n");
             case GIMP_RUN_INTERACTIVE:
                 // Only pop up the export dialog if it's interactive mode
                 // Set defaults first
-printf("tilemap_options_get()\n");
+
                 tilemap_options_load_defaults(colormap_size_get(image_id), &plugin_options);
 
-printf("export_dialog()\n");
 
                 // Prompt the user for export options in a dialog
                 // // Allow user to override the defaults
@@ -304,7 +302,7 @@ printf("export_dialog()\n");
                     return_values[0].data.d_status = GIMP_PDB_CANCEL;
                     return;
                 }
-printf("tilemap_options_set()\n");
+
                 // Re-apply any changes to the defaults
                 tilemap_options_set(&plugin_options);
                 break;
@@ -387,10 +385,16 @@ printf("tilemap_options_set()\n");
                 break;
         }
 
-        if(!status)
+        gimp_set_data (plugin_procedure_name, &plugin_options, sizeof(tile_process_options));
+
+        if(!status) {
             return_values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
 
-        gimp_set_data (plugin_procedure_name, &plugin_options, sizeof(tile_process_options));
+            if (tilemap_error_get() != TILE_ID_OK) {
+                gimp_message(tilemap_error_get_string());
+            }
+        }
+
     } // End === SAVE PROCEDURE ===
     else
         return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;

@@ -168,6 +168,11 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         update_enabled_ui_controls();
 
+        // Set "Export" button as default with focus
+        // (allows user to press "Enter Key" to save without making changes)
+        gtk_widget_grab_focus(gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK));
+
+
         // Show the dialog and run it
         gtk_widget_show(dialog);
         gimp_dialog_run(GIMP_DIALOG(dialog));
