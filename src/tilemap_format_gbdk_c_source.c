@@ -19,7 +19,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
     int t,c;
     FILE * file;
-    // TODO: change char to int8_t
+
     char path_without_filename[STR_FILENAME_MAX];
 
     char filename_tiles_c[STR_FILENAME_MAX];

@@ -4,7 +4,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
+#include "win_aligned_alloc.h" // Needed for aligned_alloc cross compile
 
 #include "lib_tilemap.h"
 #include "tilemap_tiles.h"
@@ -47,6 +49,7 @@ void tile_initialize(tile_data * p_tile, tile_map_data * p_tile_map, tile_set_da
     tile_size_bytes_hash_padding = tile_size_bytes % sizeof(uint32_t);
 
     // Allocate buffer for temporary working tile raw image, 32 bit aligned
+    // Note: requires: #include "win_aligned_alloc.h" // Needed for aligned_alloc cross compile
     p_tile->p_img_raw = aligned_alloc(sizeof(uint32_t), (tile_size_bytes + tile_size_bytes_hash_padding));
 
     // Make sure padding bytes are zeroed
@@ -428,7 +431,7 @@ void tile_palette_reapply_offsets(tile_data * p_tile) {
         for (tile_x = 0; tile_x < p_tile->raw_width; tile_x++) {
 
             // Convert the palette from 0-3 colors back to 0..3 or 0..31
-            *indexed_pixel_data = (*indexed_pixel_data) += (TILE_COLORS_PER_PALETTE * p_tile->palette_num);
+            (*indexed_pixel_data) += (TILE_COLORS_PER_PALETTE * p_tile->palette_num);
 
             // Move to the next pixel
             indexed_pixel_data += p_tile->raw_bytes_per_pixel;
@@ -486,7 +489,7 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
 
             } else {
                 // Update palette for next pass
-                palette != last_palette;
+                palette = last_palette;
             }
 
             // Remap the palette so it's only colors 0-3, relative to the identified palette

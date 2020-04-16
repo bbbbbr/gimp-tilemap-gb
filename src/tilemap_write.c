@@ -91,8 +91,6 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, const
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
 
-    FILE * file;
-
     tile_process_options plugin_options;
 
 

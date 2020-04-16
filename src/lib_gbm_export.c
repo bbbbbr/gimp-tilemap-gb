@@ -281,6 +281,8 @@ int32_t gbm_object_tile_data_encode(gbm_record * p_gbm, gbm_file_object * p_obj)
     gbm_map_tiles_flip_print(p_gbm);
     printf("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
     gbm_map_tiles_pal_print(p_gbm);
+
+    return true;
 }
 
 

@@ -3,6 +3,7 @@
 //
 
 #include "lib_gbr_ops.h"
+#include "lib_gbm_ops.h"
 
 #include "options.h"
 
@@ -156,7 +157,7 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         }
         else {
             // Update palette for next pass
-            tile_pal_setting != tile_pal_setting_last;
+            tile_pal_setting = tile_pal_setting_last;
         }
 
         // Remap the palette so it's only colors 0-3, relative to the identified palette
@@ -337,8 +338,8 @@ int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr,
     int32_t image_copy_end;
     int16_t row;
     uint8_t tile_row[p_gbr->tile_data.width];
-    int16_t c;
-    uint8_t temp_pixel;
+    // int16_t c;
+    // uint8_t temp_pixel;
 
 
     // Find the start of the tile in the tile list buffer

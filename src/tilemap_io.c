@@ -11,7 +11,7 @@
 #include "tilemap_format_gbdk_c_source.h"
 
 
-int32_t tilemap_export(const int8_t * filename,
+int32_t tilemap_export(const char * filename,
                        uint32_t   export_format,
                        tile_map_data * tile_map,
                        tile_set_data * tile_set) {
@@ -25,8 +25,8 @@ int32_t tilemap_export(const int8_t * filename,
 }
 
 
-// TODO: should this be uint8_t vs int8_t?
-int32_t tilemap_export_raw_binary(const int8_t * filename,
+
+int32_t tilemap_export_raw_binary(const char * filename,
                                tile_map_data * tile_map,
                                tile_set_data * tile_set) {
 
@@ -64,4 +64,5 @@ int32_t tilemap_export_raw_binary(const int8_t * filename,
 
     fclose(file);
 
+    return true;
 }

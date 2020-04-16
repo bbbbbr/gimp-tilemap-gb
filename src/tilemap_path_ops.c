@@ -17,7 +17,7 @@ const char kPathSeparator =
                             '/';
 #endif
 
-// TODO: fix up const / int8_t mixing
+
 const char * get_filename_from_path(const char * path)
 {
     size_t i;

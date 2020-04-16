@@ -206,13 +206,13 @@ static void run(const gchar * plugin_procedure_name,
 {
     // Create the return value.
     static GimpParam return_values[2];
+    GimpRunMode   run_mode;
+    tile_process_options plugin_options;
+
     *nreturn_vals = 1;
     *return_vals  = return_values;
-
-    GimpRunMode   run_mode;
     run_mode      = param[0].data.d_int32;
 
-    tile_process_options plugin_options;
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;

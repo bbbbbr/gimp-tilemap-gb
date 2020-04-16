@@ -121,14 +121,14 @@ enum gbr_tileset_splitorder {
 
 
 typedef struct {
-    int8_t name[GBR_PRODUCER_NAME_SIZE_STR];
-    int8_t version[GBR_PRODUCER_VERSION_SIZE_STR];
-    int8_t info[GBR_PRODUCER_INFO_SIZE_STR];
+    char name[GBR_PRODUCER_NAME_SIZE_STR];
+    char version[GBR_PRODUCER_VERSION_SIZE_STR];
+    char info[GBR_PRODUCER_INFO_SIZE_STR];
 } gbr_producer;
 
 
 typedef struct {
-    int8_t     name[GBR_TILE_DATA_NAME_SIZE_STR];
+    char       name[GBR_TILE_DATA_NAME_SIZE_STR];
     uint16_t   width;
     uint16_t   height;
     uint16_t   count;
@@ -166,10 +166,10 @@ typedef struct {
 
 typedef struct {
     uint16_t   tile_id;
-    int8_t     file_name[GBR_TILE_EXPORT_FILE_NAME_SIZE_STR];
+    char       file_name[GBR_TILE_EXPORT_FILE_NAME_SIZE_STR];
     uint8_t    file_type;
-    int8_t     section_name[GBR_TILE_EXPORT_SECTION_NAME_SIZE_STR];
-    int8_t     label_name[GBR_TILE_EXPORT_LABEL_NAME_SIZE_STR];
+    char       section_name[GBR_TILE_EXPORT_SECTION_NAME_SIZE_STR];
+    char       label_name[GBR_TILE_EXPORT_LABEL_NAME_SIZE_STR];
     uint8_t    bank;
     uint8_t    tile_array;
     uint8_t    format;
@@ -191,7 +191,7 @@ typedef struct {
 
 typedef struct {
     uint16_t  tile_id;
-    int8_t    file_name[GBR_TILE_IMPORT_FILE_NAME_SIZE];
+    char      file_name[GBR_TILE_IMPORT_FILE_NAME_SIZE];
     uint8_t   file_type;
     uint16_t  from_tile;
     uint16_t  to_tile;
@@ -255,13 +255,13 @@ color_data * gbr_get_colors(void);
 void gbr_set_image(image_data * p_src_image);
 void gbr_set_colors(color_data * p_src_colors);
 
-int32_t gbr_load(const int8_t * filename);
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options);
+int32_t gbr_load(const char * filename);
+int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options);
 
 void gbr_free_resources(void);
 
-int32_t gbr_load_file(const int8_t * filename);
-int32_t gbr_save_file(const int8_t * filename);
+int32_t gbr_load_file(const char * filename);
+int32_t gbr_save_file(const char * filename);
 
 gbr_record * gbr_get_ptr(void);
 

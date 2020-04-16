@@ -8,7 +8,7 @@
 int32_t gbr_read_header_key(FILE * p_file) {
 
     // Check to make sure the start of the file is "GBO"
-    int8_t sig[3];
+    char sig[3];
 
     if (fread(sig, 3, 1, p_file))
         if ((sig[0] == 'G') && (sig[1] == 'B') && (sig[2] == 'O'))
@@ -37,7 +37,7 @@ int32_t gbr_write_header_key(FILE * p_file) {
 
     // Check to make sure the start of the file is "GBO"
 
-    int8_t sig[3] = {'G', 'B', 'O'};
+    char sig[3] = {'G', 'B', 'O'};
 
     if (fwrite(sig, 3, 1, p_file))
         return true; // return success
@@ -49,7 +49,7 @@ int32_t gbr_write_header_key(FILE * p_file) {
 int32_t gbr_write_version(FILE * p_file) {
 
     // Write default version to GBR file
-    int8_t version[3] = {'0'};
+    char version[3] = {'0'};
 
     if (fwrite(version, 1, 1, p_file))
         return true; // return success
@@ -105,7 +105,7 @@ int32_t gbr_write_object_to_file(gbr_file_object * p_obj, FILE * p_file) {
 
 
 // WARNING: Expects buffer size to be (n_bytes + 1) for appending null terminator
-void gbr_read_str(int8_t * p_dest_str, gbr_file_object * p_obj, uint32_t n_bytes) {
+void gbr_read_str(char * p_dest_str, gbr_file_object * p_obj, uint32_t n_bytes) {
 
     // Copy string, add terminator, move offset to next data
     memcpy(p_dest_str, &p_obj->p_data[ p_obj->offset ], n_bytes);
@@ -127,7 +127,7 @@ void gbr_read_padding_bytes(gbr_file_object * p_obj, uint32_t n_bytes) {
 }
 
 
-void gbr_read_buf(int8_t * p_dest_buf, gbr_file_object * p_obj, uint32_t n_bytes) {
+void gbr_read_buf(uint8_t * p_dest_buf, gbr_file_object * p_obj, uint32_t n_bytes) {
 
     printf("gbr_read_buf @ %d -> ", p_obj->offset);
 
@@ -196,7 +196,7 @@ void gbr_write_padding(gbr_file_object * p_obj, uint32_t n_bytes) {
 
 
 // WARNING: Expects source buffer size to be (n_bytes + 1) for appending null terminator
-void gbr_write_str(int8_t * p_src_str, gbr_file_object * p_obj, uint32_t n_bytes) {
+void gbr_write_str(char * p_src_str, gbr_file_object * p_obj, uint32_t n_bytes) {
 
     // Copy string (without terminator), move offset to next data
     memcpy(&p_obj->p_data[ p_obj->offset ], p_src_str, n_bytes);
@@ -207,7 +207,7 @@ void gbr_write_str(int8_t * p_src_str, gbr_file_object * p_obj, uint32_t n_bytes
 }
 
 
-void gbr_write_buf(int8_t * p_src_buf, gbr_file_object * p_obj, uint32_t n_bytes) {
+void gbr_write_buf(uint8_t * p_src_buf, gbr_file_object * p_obj, uint32_t n_bytes) {
 
     printf("gbr_write_buf @ %d -> ", p_obj->offset);
 

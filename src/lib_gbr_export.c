@@ -506,7 +506,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 }
 
 
-int32_t gbr_export_tileset_color_settings(gbr_record * p_gbr, uint16_t gb_mode) {
+void gbr_export_tileset_color_settings(gbr_record * p_gbr, uint16_t gb_mode) {
 
     // Set up GBR tile settings -> color mode
     // The palette size is fixed base on the color mode

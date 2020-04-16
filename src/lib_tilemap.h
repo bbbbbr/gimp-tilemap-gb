@@ -143,11 +143,11 @@
 
     void           tilemap_free_tile_set(void);
     void           tilemap_free_resources(void);
-    static int32_t check_dimensions_valid(image_data * p_src_img);
+    int32_t        check_dimensions_valid(image_data * p_src_img);
     unsigned char  process_tiles(image_data * p_src_img);
     unsigned char  tilemap_export_process(image_data * p_src_img);
     int32_t        tilemap_initialize(image_data * p_src_img);
-    int32_t        tilemap_save(const int8_t * filename, uint32_t export_format);
+    int32_t        tilemap_save(const char * filename, uint32_t export_format);
 
     tile_map_data * tilemap_get_map(void);
     tile_set_data * tilemap_get_tile_set(void);

@@ -16,7 +16,7 @@ static gbr_tile_export settings_gbr_tile_export;
 static uint32_t        settings_gbr_tile_export_populated = false;
 
 
-int32_t gbr_load(const int8_t * filename) {
+int32_t gbr_load(const char * filename) {
 
     int32_t status;
 
@@ -38,7 +38,7 @@ int32_t gbr_load(const int8_t * filename) {
 // TODO: Import palette color data?
 // TODO: Try to maintain palette color order? Store in Gimp Parasite?
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
+int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
 
     int32_t status;
 
@@ -131,7 +131,7 @@ void gbr_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
 
 // Load and parse a .GBR file
 //
-int32_t gbr_load_file(const int8_t * filename) {
+int32_t gbr_load_file(const char * filename) {
 
     FILE               * p_file;
     gbr_file_object   obj;
@@ -208,7 +208,7 @@ int32_t gbr_load_file(const int8_t * filename) {
 
 // Save to a .GBR file
 //
-int32_t gbr_save_file(const int8_t * filename) {
+int32_t gbr_save_file(const char * filename) {
 
     FILE               * p_file;
     gbr_file_object   obj;

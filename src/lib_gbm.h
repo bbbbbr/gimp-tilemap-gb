@@ -123,18 +123,18 @@ enum gbm_object_types {
 
 
 typedef struct {
-    int8_t name[GBM_PRODUCER_NAME_SIZE_STR];
-    int8_t version[GBM_PRODUCER_VERSION_SIZE_STR];
-    int8_t info[GBM_PRODUCER_INFO_SIZE_STR];
+    char name[GBM_PRODUCER_NAME_SIZE_STR];
+    char version[GBM_PRODUCER_VERSION_SIZE_STR];
+    char info[GBM_PRODUCER_INFO_SIZE_STR];
 } gbm_producer;
 
 
 typedef struct {
-    int8_t   name[GBM_MAP_NAME_SIZE];
+    char     name[GBM_MAP_NAME_SIZE];
     uint32_t width;
     uint32_t height;
     uint32_t prop_count;
-    int8_t   tile_file[GBM_MAP_TILE_FILE_SIZE];
+    char     tile_file[GBM_MAP_TILE_FILE_SIZE];
     uint32_t tile_count;
     uint32_t prop_color_count;
     // End of native structure
@@ -151,7 +151,7 @@ typedef struct {
 typedef struct {
     uint32_t p_type;
     uint32_t size;
-    int8_t   name[GBM_MAP_PROP_NAME_SIZE];
+    char     name[GBM_MAP_PROP_NAME_SIZE];
 } gbm_map_prop;
 
 
@@ -193,10 +193,10 @@ typedef struct {
 
 
 typedef struct {
-    int8_t   file_name[GBM_MAP_EXPORT_FILE_NAME_SIZE];
+    char     file_name[GBM_MAP_EXPORT_FILE_NAME_SIZE];
     uint8_t  file_type;
-    int8_t   section_name[GBM_MAP_EXPORT_SECTION_NAME_SIZE];
-    int8_t   label_name[GBM_MAP_EXPORT_LABEL_NAME_SIZE];
+    char     section_name[GBM_MAP_EXPORT_SECTION_NAME_SIZE];
+    char     label_name[GBM_MAP_EXPORT_LABEL_NAME_SIZE];
     uint8_t  bank;
 
     uint16_t  plane_count;
@@ -240,7 +240,7 @@ typedef struct {
 
 
 typedef struct {
-    uint8_t   marker[6];    // Should match "HPJMTL"
+    char      marker[6];    // Should match "HPJMTL"
     uint16_t  id;
     uint16_t  object_id;
     uint16_t  master_id;
@@ -259,10 +259,10 @@ void gbm_set_colors(color_data * p_src_colors);
 
 void gbm_free_resources(void);
 
-int32_t gbm_load(const int8_t * filename);
-int32_t gbm_load_file(const int8_t * filename);
-int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options);
-int32_t gbm_save_file(const int8_t * filename);
+int32_t gbm_load(const char * filename);
+int32_t gbm_load_file(const char * filename);
+int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options);
+int32_t gbm_save_file(const char * filename);
 
 uint32_t  gbm_get_map_export_rec_size(void);
 uint8_t * gbm_get_map_export_rec_buffer(void);

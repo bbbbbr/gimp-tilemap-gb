@@ -29,15 +29,14 @@ static uint32_t            settings_gbm_map_export_prop_populated = false;
 
 
 
-int32_t gbm_load(const int8_t * filename) {
+int32_t gbm_load(const char * filename) {
 
     int32_t status;
 
-    image_data * p_tile_image;
+    // image_data * p_tile_image;
     color_data * p_tile_colors;
     gbr_record * p_gbr;
 
-    // TODO: change char to int8_t?
     char path_without_filename[STR_FILENAME_MAX];
     char gbr_path[STR_FILENAME_MAX];
 
@@ -86,15 +85,15 @@ int32_t gbm_load(const int8_t * filename) {
 
 
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
+int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
 
     int32_t status;
     tile_map_data * p_map;
     tile_set_data * p_tile_set;
     image_data      tile_set_deduped_image;
 
-    gbr_record      gbr;
-
+    tile_set_deduped_image.p_img_data = NULL;
+    // gbr_record      gbr;
 
     printf("gbm_save(): %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
             p_src_image->width, p_src_image->height,
@@ -177,7 +176,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
 // Load and parse a .GBM file
 //
-int32_t gbm_load_file(const int8_t * filename) {
+int32_t gbm_load_file(const char * filename) {
 
     FILE               * p_file;
     gbm_file_object      obj;
@@ -269,7 +268,7 @@ int32_t gbm_load_file(const int8_t * filename) {
 
 // Save to a .gbm file
 //
-int32_t gbm_save_file(const int8_t * filename) {
+int32_t gbm_save_file(const char * filename) {
 
 
     FILE            * p_file;

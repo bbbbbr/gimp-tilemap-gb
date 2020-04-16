@@ -264,10 +264,12 @@ unsigned char process_tiles(image_data * p_src_img) {
     tile_free(&flip_tiles[1]);
 
     printf("Total Tiles=%d\n", tile_set.tile_count);
+
+    return true;
 }
 
 
-static int32_t check_dimensions_valid(image_data * p_src_img) {
+int32_t check_dimensions_valid(image_data * p_src_img) {
 
     // Image dimensions must be exact multiples of tile size
     if ( ((p_src_img->width % TILE_WIDTH_DEFAULT) != 0) ||
@@ -322,7 +324,7 @@ void tilemap_free_resources(void) {
 
 
 
-int32_t tilemap_save(const int8_t * filename, uint32_t export_format) {
+int32_t tilemap_save(const char * filename, uint32_t export_format) {
 
     return( tilemap_export(filename,
                            export_format,

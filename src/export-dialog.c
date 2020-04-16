@@ -29,7 +29,7 @@ static void combo_set_active_entry_by_string(GtkWidget *combo, gchar * string_to
 
 static void on_settings_gb_mode_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
-static void update_enabled_ui_controls();
+static void update_enabled_ui_controls(void);
 
 static void on_response(GtkDialog * dialog, gint response_id, gpointer user_data) {
 
@@ -59,8 +59,6 @@ static void on_response(GtkDialog * dialog, gint response_id, gpointer user_data
 int export_dialog(tile_process_options * p_src_plugin_options, const char * plugin_procedure_name) {
 
     int response = false;
-
-    int idx;
 
     GtkWidget * dialog;
     GtkWidget * vbox;
@@ -244,7 +242,7 @@ static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gp
 }
 
 
-static void update_enabled_ui_controls(tile_process_options plugin_options) {
+static void update_enabled_ui_controls(void) {
 
     //         Dedupe-Tile  Dedupe-Flip  Dedupe-Palette
     // DMG     Enabled         NO            NO

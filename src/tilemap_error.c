@@ -2,8 +2,10 @@
 // tilemap_error.c
 //
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
+#include "tilemap_error.h"
 #include "lib_tilemap.h"
 
 
@@ -27,8 +29,8 @@ void tilemap_error_clear(void) {
 }
 
 
-void tilemap_error_set(uint16_t errors_num) {
-    tilemap_error_status = errors_num;
+void tilemap_error_set(uint16_t error_num) {
+    tilemap_error_status = error_num;
 }
 
 

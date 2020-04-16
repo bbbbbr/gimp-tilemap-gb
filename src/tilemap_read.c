@@ -17,6 +17,8 @@
 #include "lib_gbm.h"
 
 static void tilemap_read_free_resources(uint16_t image_format);
+void tilemap_import_parasite_gbr(gint image_id);
+void tilemap_import_parasite_gbm(gint image_id);
 
 static void tilemap_read_free_resources(uint16_t image_format) {
 
@@ -34,39 +36,47 @@ static void tilemap_read_free_resources(uint16_t image_format) {
 }
 
 void tilemap_import_parasite_gbr(gint image_id) {
+    GimpParasite * p_parasite;
+
     printf("GBR import: Parasite %d bytes\n",gbr_get_export_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbr_get_export_rec_size()) {
-        gimp_image_attach_new_parasite(image_id,
-                                      "GBR-EXPORT-SETTINGS",
-                                       GIMP_PARASITE_PERSISTENT,
-                                       gbr_get_export_rec_size(),
-                                       gbr_get_export_rec_buffer());
+        p_parasite = gimp_parasite_new("GBR-EXPORT-SETTINGS",
+                           GIMP_PARASITE_PERSISTENT,
+                           gbr_get_export_rec_size(),
+                           gbr_get_export_rec_buffer());
+        gimp_image_attach_parasite(image_id, p_parasite);
+        if (p_parasite) gimp_parasite_free(p_parasite);
     } else printf("GBR: Failed to store parasite\n");
 }
 
 
 void tilemap_import_parasite_gbm(gint image_id) {
+    GimpParasite * p_parasite;
+
     printf("GBM import: map export: Parasite %d bytes\n", gbm_get_map_export_rec_size());
     printf("GBM import: map export prop: Parasite %d bytes\n", gbm_get_map_export_prop_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbm_get_map_export_rec_size()) {
-        gimp_image_attach_new_parasite(image_id,
-                                      "GBM-EXPORT-SETTINGS",
-                                       GIMP_PARASITE_PERSISTENT,
-                                       gbm_get_map_export_rec_size(),
-                                       gbm_get_map_export_rec_buffer());
+        p_parasite = gimp_parasite_new("GBM-EXPORT-SETTINGS",
+                           GIMP_PARASITE_PERSISTENT,
+                           gbm_get_map_export_rec_size(),
+                           gbm_get_map_export_rec_buffer());
+        gimp_image_attach_parasite(image_id, p_parasite);
+        if (p_parasite) gimp_parasite_free(p_parasite);
     }
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbm_get_map_export_prop_rec_size()) {
-        gimp_image_attach_new_parasite(image_id,
-                                      "GBM-EXPORT-PROP-SETTINGS",
-                                       GIMP_PARASITE_PERSISTENT,
-                                       gbm_get_map_export_prop_rec_size(),
-                                       gbm_get_map_export_prop_rec_buffer());
+        p_parasite = gimp_parasite_new("GBM-EXPORT-PROP-SETTINGS",
+                          GIMP_PARASITE_PERSISTENT,
+                          gbm_get_map_export_prop_rec_size(),
+                          gbm_get_map_export_prop_rec_buffer());
+
+        gimp_image_attach_parasite(image_id, p_parasite);
+        if (p_parasite) gimp_parasite_free(p_parasite);
     }
 }
 
@@ -79,7 +89,6 @@ int tilemap_read(const gchar * filename, uint16_t image_format)
            new_layer_id;
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
-    GimpParasite * parasite;
 
     image_data * p_loaded_image; // TODO: rename?
     color_data * p_loaded_colors;
