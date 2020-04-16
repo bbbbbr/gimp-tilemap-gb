@@ -86,7 +86,7 @@ int32_t gbm_load(const int8_t * filename) {
 
 
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options export_options) {
+int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
 
     int32_t status;
     tile_map_data * p_map;
@@ -98,9 +98,9 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
     printf("gbm_save(): %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
             p_src_image->width, p_src_image->height,
-            export_options.gb_mode, export_options.tile_dedupe_flips, export_options.tile_dedupe_palettes);
+            plugin_options.gb_mode, plugin_options.tile_dedupe_flips, plugin_options.tile_dedupe_palettes);
 
-    status = tilemap_export_process(p_src_image, export_options);
+    status = tilemap_export_process(p_src_image);
     printf("(gbm) tilemap_export_process: status= %d\n", status);
 
 
@@ -122,7 +122,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
             snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  filename, ".tiles.gbr");
 
             printf("calling gbr save:%s:\n", gbr_path);
-            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, export_options);
+            status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, plugin_options);
             printf("(gbm) gbr_save_file: status= %d\n", status);
 
             if (status) {
@@ -130,7 +130,7 @@ int32_t gbm_save(const int8_t * filename, image_data * p_src_image, color_data *
 
                 // Initialize shared GBM map structure with defaults
                 gbm_export_set_defaults(&gbm);
-                gbm_export_update_color_set(&gbm, export_options.gb_mode);
+                gbm_export_update_color_set(&gbm, plugin_options.gb_mode);
                 gbm_overlay_cached_settings();
 
                 // Set GBR tile file name for the GBM file to use (exported above)

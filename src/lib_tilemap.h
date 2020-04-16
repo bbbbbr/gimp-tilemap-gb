@@ -65,13 +65,6 @@
 
 
 
-    enum import_formats {
-        IMPORT_FORMAT_GBDK_C_SOURCE = 1, // TODO  // For : GBDK/ZGB Game Boy Dev Kit
-        IMPORT_FORMAT_GBR,  // For: Game Boy Tile Designer / GBTD
-        IMPORT_FORMAT_GBM,  // For: Game Boy Map Builder / GBMB
-        IMPORT_FORMAT_LAST
-    };
-
     // App image bit depths/modes
     enum image_modes {
         IMG_BITDEPTH_INDEXED = 1,
@@ -141,13 +134,16 @@
     } tile_set_data;
 
 
-    void           tilemap_options_set_defaults(color_data * p_colors, tile_process_options * p_export_options);
+    void           tilemap_options_set(tile_process_options * p_src_plugin_options);
+    void           tilemap_options_get(tile_process_options * p_dest_plugin_options);
+    void           tilemap_options_load_defaults(int color_count, tile_process_options * p_dest_plugin_options);
+
     void           tilemap_free_tile_set(void);
     void           tilemap_free_resources(void);
     static int32_t check_dimensions_valid(image_data * p_src_img);
     unsigned char  process_tiles(image_data * p_src_img);
-    unsigned char  tilemap_export_process(image_data * p_src_img, tile_process_options export_options);
-    int32_t        tilemap_initialize(image_data * p_src_img, tile_process_options export_options);
+    unsigned char  tilemap_export_process(image_data * p_src_img);
+    int32_t        tilemap_initialize(image_data * p_src_img);
     int32_t        tilemap_save(const int8_t * filename, uint32_t export_format);
 
     tile_map_data * tilemap_get_map(void);

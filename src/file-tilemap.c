@@ -15,6 +15,8 @@
 
 #include "lib_tilemap.h"
 
+#include "export-dialog.h"
+
 const char SAVE_PROCEDURE_TMAP_C_SOURCE[] = "file-save-tilemap-c-source";
 const char SAVE_PROCEDURE_GBR[] = "file-save-gbr";
 const char LOAD_PROCEDURE_GBR[] = "file-load-gbr";
@@ -26,7 +28,7 @@ const char BINARY_NAME[]    = "file-tilemap";
 // Predeclare our entrypoints
 static void query(void);
 static void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
-static int plugin_get_image_mode_from_string(const gchar * name);
+static int plugin_get_image_format_from_string(const gchar * plugin_procedure_name);
 
 // Declare our plugin entry points
 GimpPlugInInfo PLUG_IN_INFO = {
@@ -63,7 +65,11 @@ static void query(void)
         { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
         { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
         { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-        { GIMP_PDB_FLOAT,    "export_mode",  "Tilemap export format" }
+//        { GIMP_PDB_FLOAT,    "image_format",  "Tilemap export format" }
+        { GIMP_PDB_INT16,    "gb_mode",              "Export type DMG 4 color or CGB 32 color" },
+        { GIMP_PDB_INT16,    "tile_dedupe_enabled",  "Deduplicate Tiles on Pattern" },
+        { GIMP_PDB_INT16,    "tile_dedupe_flips",    "Deduplicate Tiles on Flipped on X or Y (CGB only)" },
+        { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" }
     };
 
     // Install the load procedure for ".GBR" files
@@ -154,30 +160,44 @@ static void query(void)
 }
 
 
+// This is a shim since gimp_image_get_colormap_size() might not be available
+static int colormap_size_get(int image_id) {
+    guchar     * p_colormap_buf;
+    gint         colormap_numcolors;
+    colormap_numcolors = 0;
+    p_colormap_buf = NULL;
 
-static int plugin_get_image_mode_from_string(const gchar * name) {
+    p_colormap_buf = gimp_image_get_colormap(image_id, &colormap_numcolors);
 
-    int image_mode;
-    image_mode = -1;
+    if (p_colormap_buf == NULL)
+        colormap_numcolors = 0;
 
-    if (!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE))
-        // (!strcmp(name, LOAD_PROCEDURE_TMAP_C_SOURCE))
-        image_mode = EXPORT_FORMAT_GBDK_C_SOURCE;
+    return colormap_numcolors;
+}
 
-    else if ((!strcmp(name, SAVE_PROCEDURE_GBR)) ||
-             (!strcmp(name, LOAD_PROCEDURE_GBR)))
-        image_mode = EXPORT_FORMAT_GBR;
 
-    else if ((!strcmp(name, SAVE_PROCEDURE_GBM)) ||
-             (!strcmp(name, LOAD_PROCEDURE_GBM)) )
-        image_mode = EXPORT_FORMAT_GBM;
+static int plugin_get_image_format_from_string(const gchar * plugin_procedure_name) {
 
-    return image_mode;
+    int image_format;
+    image_format = -1;
+
+    if (!strcmp(plugin_procedure_name, SAVE_PROCEDURE_TMAP_C_SOURCE))
+        image_format = FORMAT_GBDK_C_SOURCE;
+
+    else if ((!strcmp(plugin_procedure_name, SAVE_PROCEDURE_GBR)) ||
+             (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBR)))
+        image_format = FORMAT_GBR;
+
+    else if ((!strcmp(plugin_procedure_name, SAVE_PROCEDURE_GBM)) ||
+             (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBM)) )
+        image_format = FORMAT_GBM;
+
+    return image_format;
 }
 
 
 // The run function
-static void run(const gchar * name,
+static void run(const gchar * plugin_procedure_name,
          gint nparams,
          const GimpParam * param,
          gint * nreturn_vals,
@@ -190,19 +210,21 @@ static void run(const gchar * name,
 
     GimpRunMode   run_mode;
     run_mode      = param[0].data.d_int32;
-    int           image_mode;
+
+    tile_process_options plugin_options;
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
-    image_mode = plugin_get_image_mode_from_string(name);
+    plugin_options.image_format = plugin_get_image_format_from_string(plugin_procedure_name);
+    printf("image_format=%d\n", plugin_options.image_format);
+    printf("plugin_procedure_name=%s\n", plugin_procedure_name);
 
-    printf("image_mode=%d\n", image_mode);
 
 // Check to see if this is the load procedure
-    if( (!strcmp(name, LOAD_PROCEDURE_GBR)) ||
-        (!strcmp(name, LOAD_PROCEDURE_GBM)) )
+    if( (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBR)) ||
+        (!strcmp(plugin_procedure_name, LOAD_PROCEDURE_GBM)) )
     {
         int new_image_id;
 
@@ -217,7 +239,7 @@ static void run(const gchar * name,
         gimp_ui_init(BINARY_NAME, FALSE);
 
         // Now read the image
-        new_image_id = tilemap_read(param[1].data.d_string, image_mode);
+        new_image_id = tilemap_read(param[1].data.d_string, plugin_options.image_format);
 
         // Check for an error
         if(new_image_id == -1)
@@ -232,34 +254,81 @@ static void run(const gchar * name,
         return_values[1].type         = GIMP_PDB_IMAGE;
         return_values[1].data.d_image = new_image_id;
     }
-    else if( (!strcmp(name, SAVE_PROCEDURE_TMAP_C_SOURCE)) ||
-             (!strcmp(name, SAVE_PROCEDURE_GBR)) ||
-             (!strcmp(name, SAVE_PROCEDURE_GBM)))
+    else if( (!strcmp(plugin_procedure_name, SAVE_PROCEDURE_TMAP_C_SOURCE)) ||
+             (!strcmp(plugin_procedure_name, SAVE_PROCEDURE_GBR)) ||
+             (!strcmp(plugin_procedure_name, SAVE_PROCEDURE_GBM)))
 
     {
-        // This is the export procedure
+printf("Saving...\n");
+        // === This is the export procedure ===
 
         gint32 image_id, drawable_id;
         int status = 1;
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
-        if(nparams != 6)
+        if(nparams != 9) // Should match save_arguments[]
         {
             return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+printf("Incorrect param number\n");
             return;
         }
 
         image_id    = param[1].data.d_int32;
         drawable_id = param[2].data.d_int32;
+        // plugin_options.image_format is set above
 
-
-        printf("file-tilemap.c: Export\n");
+printf("file-tilemap.c: Export\n");
 
         // Try to export the image
         gimp_ui_init(BINARY_NAME, FALSE);
 
-        printf("file-tilemap.c: Call Export\n");
+printf("file-tilemap.c: Call Export\n");
+
+
+        // Handle the different run modes
+        switch (run_mode) {
+
+            case GIMP_RUN_INTERACTIVE:
+                // Only pop up the export dialog if it's interactive mode
+                // Set defaults first
+printf("tilemap_options_get()\n");
+                tilemap_options_load_defaults(colormap_size_get(image_id), &plugin_options);
+
+printf("export_dialog()\n");
+
+                // Prompt the user for export options in a dialog
+                // // Allow user to override the defaults
+                if (!export_dialog(&plugin_options, plugin_procedure_name) ) {
+                    // Abort plugin if user canceled in the export dialog
+                    return_values[0].data.d_status = GIMP_PDB_CANCEL;
+                    return;
+                }
+printf("tilemap_options_set()\n");
+                // Re-apply any changes to the defaults
+                tilemap_options_set(&plugin_options);
+                break;
+
+            case GIMP_RUN_NONINTERACTIVE:
+                // Read in non-interactive mode plug settings, then apply them
+                // Load export options
+                plugin_options.gb_mode              = param[6].data.d_int16;
+                plugin_options.tile_dedupe_enabled  = param[7].data.d_int16;
+                plugin_options.tile_dedupe_flips    = param[8].data.d_int16;
+                plugin_options.tile_dedupe_palettes = param[9].data.d_int16;
+
+                tilemap_options_set(&plugin_options);
+                break;
+
+            case GIMP_RUN_WITH_LAST_VALS:
+
+                //  Try to retrieve plugin settings, then apply them
+                gimp_get_data (plugin_procedure_name, &plugin_options);
+                tilemap_options_set(&plugin_options);
+                break;
+        }
+
+
 
 
         // TODO: consolidate different format handling below
@@ -267,8 +336,8 @@ static void run(const gchar * name,
         // Determine image file format by load type
         // Prepare app image for export in the desired format
         // (if it's not indexed this will auto-convert it to that)
-        switch (image_mode) {
-            case EXPORT_FORMAT_GBDK_C_SOURCE:
+        switch (plugin_options.image_format) {
+            case FORMAT_GBDK_C_SOURCE:
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
                                                "TMAP",
@@ -276,7 +345,7 @@ static void run(const gchar * name,
                                                GIMP_EXPORT_CAN_HANDLE_ALPHA);
                 break;
 
-            case EXPORT_FORMAT_GBR:
+            case FORMAT_GBR:
                 // TODO: ALPHA SUPPORT FOR GBR ?
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
@@ -284,7 +353,7 @@ static void run(const gchar * name,
                                                GIMP_EXPORT_CAN_HANDLE_INDEXED);
                 break;
 
-            case EXPORT_FORMAT_GBM:
+            case FORMAT_GBM:
                 // TODO: ALPHA SUPPORT FOR GBM ?
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
@@ -306,8 +375,7 @@ static void run(const gchar * name,
                 status = write_tilemap(param[3].data.d_string,
                                      image_id,
                                      drawable_id,
-                                     image_mode,
-                                     name);
+                                     plugin_procedure_name);
 
                 gimp_image_delete(image_id);
 
@@ -316,11 +384,15 @@ static void run(const gchar * name,
             case GIMP_EXPORT_CANCEL:
                 return_values[0].data.d_status = GIMP_PDB_CANCEL;
                 return;
+                break;
         }
 
         if(!status)
             return_values[0].data.d_status = GIMP_PDB_EXECUTION_ERROR;
-    }
+
+        gimp_set_data (plugin_procedure_name, &plugin_options, sizeof(tile_process_options));
+    } // End === SAVE PROCEDURE ===
     else
         return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+
 }

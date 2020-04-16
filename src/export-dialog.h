@@ -18,4 +18,4 @@
 
 #include "options.h"
 
-int export_dialog(tile_process_options * p_export_options, const char * name);
+int export_dialog(tile_process_options * p_plugin_options, const char * name);

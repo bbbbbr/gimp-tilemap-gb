@@ -18,4 +18,4 @@
 
 #include <glib.h>
 
-int write_tilemap(const gchar *, gint, gint, gint, const gchar *);
+int write_tilemap(const gchar *, gint, gint, const gchar *);

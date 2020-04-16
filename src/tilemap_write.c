@@ -30,7 +30,6 @@
 #include "image_info.h"
 #include "lib_rom_bin.h"
 
-#include "export-dialog.h"
 #include "options.h"
 
 
@@ -79,7 +78,7 @@ static void tilemap_export_parasite_gbm(gint image_id) {
 }
 
 
-int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint image_mode, const gchar * name)
+int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, const gchar * name)
 {
     int32_t status;
 
@@ -94,10 +93,13 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
     FILE * file;
 
-    tile_process_options export_options;
+    tile_process_options plugin_options;
 
 
     status = true; // Default to success
+
+    // Load options
+    tilemap_options_get(&plugin_options);
 
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
@@ -155,29 +157,15 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
 
 
 
-    if (status) {
-        if (image_mode == EXPORT_FORMAT_GBR)
-            export_options.export_type = EXPORT_GBR;
-        else if (image_mode == EXPORT_FORMAT_GBM)
-            export_options.export_type = EXPORT_GBM;
-
-        // Load default export options
-        tilemap_options_set_defaults(&app_colors, &export_options);
-
-        // Prompt the user for export options in a dialog
-        status = export_dialog(&export_options, name);
-    }
-
-
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 //    if (status != 0) { };
 
     if (status) {
 
-        switch (image_mode) {
-            case EXPORT_FORMAT_GBDK_C_SOURCE:
+        switch (plugin_options.image_format) {
+            case FORMAT_GBDK_C_SOURCE:
 
-                status = tilemap_export_process(&app_image, export_options);
+                status = tilemap_export_process(&app_image);
                 printf("tilemap_export_process: status= %d\n", status);
 
 
@@ -185,31 +173,27 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, gint 
                 // gbdk_c_source_save
                 // gbdk_c_source_format.c
                 if (status)
-                    status = tilemap_save(filename, image_mode);
+                    status = tilemap_save(filename, plugin_options.image_format);
                 printf("tilemap_save: status= %d\n", status);
                 break;
 
-            case EXPORT_FORMAT_GBR:
-
-                export_options.export_type = EXPORT_GBR;
+            case FORMAT_GBR:
 
                 // Load cached settings in the image parasite metadata
                 tilemap_export_parasite_gbr(image_id);
 
-                status = gbr_save(filename, &app_image, &app_colors, export_options); // TODO: CGB MODE: send entire export_options struct down?
+                status = gbr_save(filename, &app_image, &app_colors, plugin_options); // TODO: CGB MODE: send entire plugin_options struct down?
                 printf("gbr_save: status= %d\n", status);
                 break;
 
-            case EXPORT_FORMAT_GBM:
-
-                export_options.export_type = EXPORT_GBM;
+            case FORMAT_GBM:
 
                 // Load cached settings in the image parasite metadata
                 tilemap_export_parasite_gbr(image_id);
                 tilemap_export_parasite_gbm(image_id);
 
                 // Set processed Map tile set and map array
-                status = gbm_save(filename, &app_image, &app_colors, export_options);
+                status = gbm_save(filename, &app_image, &app_colors, plugin_options);
                 printf("gbm_save: status= %d\n", status);
                 break;
         }

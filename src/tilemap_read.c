@@ -16,18 +16,18 @@
 #include "lib_gbr.h"
 #include "lib_gbm.h"
 
-static void tilemap_read_free_resources(int image_mode);
+static void tilemap_read_free_resources(uint16_t image_format);
 
-static void tilemap_read_free_resources(int image_mode) {
+static void tilemap_read_free_resources(uint16_t image_format) {
 
     // Free allocated buffers / release resources
-    switch (image_mode) {
-        case IMPORT_FORMAT_GBR:
+    switch (image_format) {
+        case FORMAT_GBR:
             gbr_free_resources();
             break;
 
-        case IMPORT_FORMAT_GBM:
-            gbm_free_resources();
+        case FORMAT_GBM:
+            gbm_free_resources(); // This will also handle freeing gbr resources
 
             break;
     }
@@ -71,7 +71,7 @@ void tilemap_import_parasite_gbm(gint image_id) {
 }
 
 
-int tilemap_read(const gchar * filename, int image_mode)
+int tilemap_read(const gchar * filename, uint16_t image_format)
 {
     int status = 1;
 
@@ -85,22 +85,23 @@ int tilemap_read(const gchar * filename, int image_mode)
     color_data * p_loaded_colors;
 
 
-    switch (image_mode) {
-        case IMPORT_FORMAT_GBR:
+    switch (image_format) {
+
+        case FORMAT_GBR:
             status = gbr_load(filename);
             if (status)
                 p_loaded_image = gbr_get_image();
 
             break;
 
-        case IMPORT_FORMAT_GBM:
+        case FORMAT_GBM:
             // TODO: gbm load
             status = gbm_load(filename);
             if (status)
                 p_loaded_image = gbm_get_image();
 
             break;
-    } // switch (image_mode)
+    } // switch (image_format)
 
 
     // Check to make sure that the load was successful
@@ -108,7 +109,7 @@ int tilemap_read(const gchar * filename, int image_mode)
         printf("Image load failed \n");
 
         // Free allocated buffers / release resources
-        tilemap_read_free_resources(image_mode);
+        tilemap_read_free_resources(image_format);
 
         return -1;
     }
@@ -137,8 +138,9 @@ int tilemap_read(const gchar * filename, int image_mode)
 
     // Set up the indexed color map
     // and cache any export settings
-    switch (image_mode) {
-        case IMPORT_FORMAT_GBR:
+    switch (image_format) {
+
+        case FORMAT_GBR:
             p_loaded_colors = gbr_get_colors();
             gimp_image_set_colormap(new_image_id,
                                     &(p_loaded_colors->pal[0]),
@@ -148,7 +150,7 @@ int tilemap_read(const gchar * filename, int image_mode)
             tilemap_import_parasite_gbr(new_image_id);
             break;
 
-        case IMPORT_FORMAT_GBM:
+        case FORMAT_GBM:
             p_loaded_colors = gbm_get_colors();
             gimp_image_set_colormap(new_image_id,
                                     &(p_loaded_colors->pal[0]),
@@ -183,7 +185,7 @@ int tilemap_read(const gchar * filename, int image_mode)
 
 
     // Release any resources used during processing
-    tilemap_read_free_resources(image_mode);
+    tilemap_read_free_resources(image_format);
 
 
     // Add the layer to the image

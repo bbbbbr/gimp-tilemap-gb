@@ -38,7 +38,7 @@ int32_t gbr_load(const int8_t * filename) {
 // TODO: Import palette color data?
 // TODO: Try to maintain palette color order? Store in Gimp Parasite?
 // TODO: ADD gbr_set_image for SOURCE image?
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options export_options) {
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
 
     int32_t status;
 
@@ -56,7 +56,7 @@ int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data *
     // TODO: check
     // TODO: MIN 16 tiles required in file?
     // Convert the image data to tiles
-    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors, export_options.gb_mode);
+    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors, plugin_options.gb_mode);
 
     // Load and parse the file
     if (status)

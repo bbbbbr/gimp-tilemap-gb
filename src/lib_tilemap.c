@@ -17,45 +17,78 @@ tile_map_data tile_map;
 tile_set_data tile_set;
 
 
-void tilemap_options_set_defaults(color_data * p_colors, tile_process_options * p_export_options) {
+void tilemap_options_set(tile_process_options * p_src_plugin_options) {
+
+    memcpy(&tile_map.options, p_src_plugin_options, sizeof(tile_process_options));
+}
+
+
+void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
+
+    memcpy(p_dest_plugin_options, &tile_map.options, sizeof(tile_process_options));
+
+    printf("==== tilemap_options_get() ====\n");
+    printf("image_format:         %d\n", p_dest_plugin_options->image_format);
+    printf("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
+    printf("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
+    printf("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
+    printf("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    printf("\n");
+
+}
+
+
+void tilemap_options_load_defaults(int color_count, tile_process_options * p_dest_plugin_options) {
 
     // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
-    if (p_colors->color_count <= TILE_DMG_COLORS_MAX) {
+    if (color_count <= TILE_DMG_COLORS_MAX) {
 
-        p_export_options->gb_mode = MODE_DMG_4_COLOR;
+        p_dest_plugin_options->gb_mode = MODE_DMG_4_COLOR;
+        p_dest_plugin_options->dmg_possible = true;
+        p_dest_plugin_options->cgb_possible = true;
 
         // only enable dedupe on GBM export (basic tiled edupe only)
-        p_export_options->tile_dedupe_enabled  = (p_export_options->export_type == EXPORT_GBM);
-        p_export_options->tile_dedupe_flips    = false;
-        p_export_options->tile_dedupe_palettes = false;
+        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
+        p_dest_plugin_options->tile_dedupe_flips    = false;
+        p_dest_plugin_options->tile_dedupe_palettes = false;
     }
-    else if (p_colors->color_count <= TILE_CGB_COLORS_MAX) {
+    else if (color_count <= TILE_CGB_COLORS_MAX) {
 
-        p_export_options->gb_mode = MODE_CGB_32_COLOR;
+        p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
+        p_dest_plugin_options->dmg_possible = false;
+        p_dest_plugin_options->cgb_possible = true;
 
         // only enable dedupe on GBM export (all types)
-        p_export_options->tile_dedupe_enabled  = (p_export_options->export_type == EXPORT_GBM);
-        p_export_options->tile_dedupe_flips    = (p_export_options->export_type == EXPORT_GBM);
-        p_export_options->tile_dedupe_palettes = (p_export_options->export_type == EXPORT_GBM);
+        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
+        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM);
+        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM);
     }
     else {
         // Too many colors
-        p_export_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
+        p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
+        p_dest_plugin_options->dmg_possible = false;
+        p_dest_plugin_options->cgb_possible = false;
+
+        p_dest_plugin_options->tile_dedupe_enabled  = false;
+        p_dest_plugin_options->tile_dedupe_flips    = false;
+        p_dest_plugin_options->tile_dedupe_palettes = false;
+
     }
 
-    printf("==== tilemap_options_set_defaults() ====\n");
-    printf("export_type:          %d\n", p_export_options->export_type);
-    printf("gb_mode:              %d\n", p_export_options->gb_mode);
-    printf("tile_dedupe_enabled:  %d\n", p_export_options->tile_dedupe_enabled);
-    printf("tile_dedupe_flips:    %d\n", p_export_options->tile_dedupe_flips);
-    printf("tile_dedupe_palettes: %d\n", p_export_options->tile_dedupe_palettes);
+    printf("==== tilemap_options_load_defaults() ====\n");
+    printf("color_count:          %d\n", color_count);
+    printf("image_format:         %d\n", p_dest_plugin_options->image_format);
+    printf("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
+    printf("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
+    printf("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
+    printf("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
     printf("\n");
 }
 
 
 
 // TODO: support configurable tile size
-int tilemap_initialize(image_data * p_src_img, tile_process_options export_options) {
+int tilemap_initialize(image_data * p_src_img) {
 
     // Tile Map
     tile_map.map_width   = p_src_img->width;
@@ -92,25 +125,18 @@ int tilemap_initialize(image_data * p_src_img, tile_process_options export_optio
     tile_set.tile_size   = tile_set.tile_width * tile_set.tile_height * tile_set.tile_bytes_per_pixel;
     tile_set.tile_count  = 0;
 
-
     // Processing Options
-    tile_map.options = export_options;
-
-    // Enforce valid processing options (options not allowed in CGB mode)
-    if (tile_map.options.gb_mode == MODE_DMG_4_COLOR) {
-        tile_map.options.tile_dedupe_flips = false;
-        tile_map.options.tile_dedupe_palettes = false;
-    }
+    // tile_map.options = plugin_options; // These get set earlier via the tilemap_options... functions
 
     return (true);
 }
 
 
 
-unsigned char tilemap_export_process(image_data * p_src_img, tile_process_options export_options) {
+unsigned char tilemap_export_process(image_data * p_src_img) {
 
     if ( check_dimensions_valid(p_src_img) ) {
-        if (!tilemap_initialize(p_src_img, export_options)) { // Success, prep for processing
+        if (!tilemap_initialize(p_src_img)) { // Success, prep for processing
             return (false); // Signal failure and exit
         }
     }
@@ -201,6 +227,7 @@ unsigned char process_tiles(image_data * p_src_img) {
                         tile_free(&flip_tiles[1]);
                         tilemap_free_resources();
 
+                        // TODO: propegate errors upward
                         printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
                         return (false); // Ran out of tile space, exit
                     }

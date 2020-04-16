@@ -256,7 +256,7 @@ void gbr_set_image(image_data * p_src_image);
 void gbr_set_colors(color_data * p_src_colors);
 
 int32_t gbr_load(const int8_t * filename);
-int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options export_options);
+int32_t gbr_save(const int8_t * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options);
 
 void gbr_free_resources(void);
 
