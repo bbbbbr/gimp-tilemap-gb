@@ -45,6 +45,8 @@ file_tilemap_export_SOURCES = \
 	tilemap_read.c \
 	tilemap_tiles.c \
 	tilemap_write.c \
+	export-dialog.c \
+	tilemap_error. c \
 	hash.c
 
 
