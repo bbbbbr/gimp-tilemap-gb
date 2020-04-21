@@ -18,7 +18,7 @@ int32_t tilemap_export(const char * filename,
 
     // tilemap_export_raw_binary(filename, tile_map, tile_set);
 
-    if (export_format == EXPORT_FORMAT_GBDK_C_SOURCE)
+    if (export_format == FORMAT_GBDK_C_SOURCE)
         tilemap_format_gbdk_c_source_save(filename, tile_map, tile_set);
 
     return (true);

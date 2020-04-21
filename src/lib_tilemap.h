@@ -77,15 +77,6 @@
         IMG_BITDEPTH_LAST
     };
 
-    // Export formats
-    enum export_formats {
-        EXPORT_FORMAT_GBDK_C_SOURCE = 1, // For : GBDK/ZGB Game Boy Dev Kit
-        EXPORT_FORMAT_GBR,  // For: Game Boy Tile Designer / GBTD
-        EXPORT_FORMAT_GBM,  // For: Game Boy Map Builder / GBMB
-        EXPORT_FORMAT_LAST
-    };
-
-
     // Tile Map Entry records
     typedef struct {
         uint16_t id; // if TILES_MAX_DEFAULT > 255, this must be larger than uint8_t
