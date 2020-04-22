@@ -240,7 +240,7 @@ static void run(const gchar * plugin_procedure_name,
         }
 
 
-        // Try to export the image
+        // Initialize UI for any spawned dialogs
         gimp_ui_init(BINARY_NAME, false);
 
         // Now read the image
@@ -282,7 +282,7 @@ static void run(const gchar * plugin_procedure_name,
         // plugin_options.image_format is set above
 
 
-        // Try to export the image
+        // Initialize UI for any spawned dialogs
         gimp_ui_init(BINARY_NAME, false);
 
 
