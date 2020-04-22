@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
@@ -240,7 +241,7 @@ static void run(const gchar * plugin_procedure_name,
 
 
         // Try to export the image
-        gimp_ui_init(BINARY_NAME, FALSE);
+        gimp_ui_init(BINARY_NAME, false);
 
         // Now read the image
         new_image_id = tilemap_read(param[1].data.d_string, plugin_options.image_format);
@@ -282,7 +283,7 @@ static void run(const gchar * plugin_procedure_name,
 
 
         // Try to export the image
-        gimp_ui_init(BINARY_NAME, FALSE);
+        gimp_ui_init(BINARY_NAME, false);
 
 
         // Handle the different run modes

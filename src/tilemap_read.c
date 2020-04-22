@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <libgimp/gimp.h>
 
 #include "lib_tilemap.h"
@@ -178,7 +179,7 @@ int tilemap_read(const gchar * filename, uint16_t image_format)
                         0, 0,
                         p_loaded_image->width,
                         p_loaded_image->height,
-                        TRUE, FALSE);
+                        true, false);
 
     // Now FINALLY set the pixel data
     gimp_pixel_rgn_set_rect(&rgn,

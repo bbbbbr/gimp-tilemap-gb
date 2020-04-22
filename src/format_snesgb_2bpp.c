@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <libgimp/gimp.h>
 
@@ -122,7 +123,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
 
     // Set the output buffer at the start
     rom_offset = 0;
-    rom_ended = FALSE;
+    rom_ended = false;
     tile_size_in_bytes = ((rom_attrib.TILE_PIXEL_WIDTH * rom_attrib.TILE_PIXEL_HEIGHT) / (8 / rom_attrib.BITS_PER_PIXEL));
 
     for (y=0; y < (p_app_gfx->height / rom_attrib.TILE_PIXEL_HEIGHT); y++) {
@@ -142,7 +143,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
             // to indicate they don't contain data (and later shouldn't
             // be used to encode data)
             if ( (rom_offset + tile_size_in_bytes) > p_rom_gfx->size)
-                rom_ended = TRUE;
+                rom_ended = true;
 
             // Decode the 8x8 tile top to bottom
             for (ty=0; ty < rom_attrib.TILE_PIXEL_HEIGHT; ty++) {
@@ -156,7 +157,7 @@ static int bin_decode_image(rom_gfx_data * p_rom_gfx,
                     pixdata[1] = *(p_rom_gfx->p_data + rom_offset++);
                 }
 
-          
+
                 // Unpack the 8 horizontal pixels
                 for (b=0;b < SNES_PIXELS_PER_WORD_2BPP; b++) {
 

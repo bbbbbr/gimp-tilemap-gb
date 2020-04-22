@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <libgimp/gimp.h>
 
@@ -124,7 +125,7 @@ int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, const
                         0, 0,
                         drawable->width,
                         drawable->height,
-                        FALSE, FALSE);
+                        false, false);
 
 
     // Determine the array size for the app's image then allocate it

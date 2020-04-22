@@ -78,12 +78,12 @@ int32_t gbm_read_object_from_file(gbm_file_object * p_obj, FILE * p_file) {
                             && (p_obj->length_bytes <= GBM_OBJECT_MAX_SIZE) )
                         {
                             if (p_obj->length_bytes == 0) {
-//                                printf("GBM TRUE ZERO OBJ type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+//                                printf("GBM true ZERO OBJ type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
                                 p_obj->offset = 0;
                                 return true;
                             }
                             else if (fread(p_obj->p_data,          p_obj->length_bytes,         1, p_file)) {
-//                                printf("GBM TRUE type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+//                                printf("GBM true type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
                                 p_obj->offset = 0;
                                 return true;
                             }
@@ -95,7 +95,7 @@ int32_t gbm_read_object_from_file(gbm_file_object * p_obj, FILE * p_file) {
     } // All these parenthesis to satisfy "-Wparentheses" during cross compile
     printf("ftell: %ld\n", ftell(p_file));
 
-    printf("GBM FALSE type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+    printf("GBM false type=%x, id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
 
     // If all the above reads didn't complete then signal failure
     return false;
@@ -121,7 +121,7 @@ int32_t gbm_write_object_to_file(gbm_file_object * p_obj, FILE * p_file) {
                                 return true;
                             }
 
-    printf("GBM FALSE id=%x, object_id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
+    printf("GBM false id=%x, object_id=%x, size=%x\n", p_obj->id, p_obj->object_id, p_obj->length_bytes);
 
     // If all the above reads didn't complete then signal failure
     return false;

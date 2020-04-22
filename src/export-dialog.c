@@ -82,13 +82,13 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
         gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
         gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-                           vbox, TRUE, TRUE, 2);
+                           vbox, true, true, 2);
         gtk_widget_show(vbox);
 
 
         // Create the label
         label = gtk_label_new("Game Boy Tile Set / Tile Map Export options.");
-        gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 2);
+        gtk_box_pack_start(GTK_BOX(vbox), label, false, false, 2);
         gtk_widget_show(label);
 
 
@@ -108,35 +108,35 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
 
         // Add it to the box for display and show it
-        gtk_box_pack_start(GTK_BOX(vbox), combo_gb_mode, FALSE, FALSE, 2);
+        gtk_box_pack_start(GTK_BOX(vbox), combo_gb_mode, false, false, 2);
         gtk_widget_show(combo_gb_mode);
 
 
         // == Map export options ==
 
         label_dedupe = gtk_label_new("\nDeduplicate Map Tiles on:\n\n(Note: If Tile Pattern dedupe is turned off, \nexport may create too many tiles and fail. )");
-        gtk_box_pack_start(GTK_BOX(vbox), label_dedupe, FALSE, FALSE, 2);
+        gtk_box_pack_start(GTK_BOX(vbox), label_dedupe, false, false, 2);
         gtk_misc_set_alignment(GTK_MISC(label_dedupe), 0.0f, 0.5f); // Left-align
         gtk_widget_show(label_dedupe);
 
 
         // DMG/CGB Options
         check_dedupe_tiles = gtk_check_button_new_with_label("Tile Pattern");
-            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_tiles, FALSE, FALSE, 2);
+            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_tiles, false, false, 2);
             gtk_widget_show(check_dedupe_tiles);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_tiles),
                                          p_plugin_options->tile_dedupe_enabled);
 
         // CGB Only options
         check_dedupe_on_flip = gtk_check_button_new_with_label("Flipped on X or Y (CGB only)");
-            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_on_flip, FALSE, FALSE, 2);
+            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_on_flip, false, false, 2);
             gtk_widget_show(check_dedupe_on_flip);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_on_flip),
                                          p_plugin_options->tile_dedupe_flips);
 
 
         check_dedupe_on_palette = gtk_check_button_new_with_label("Alternate Palette (CGB only)");
-            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_on_palette, FALSE, FALSE, 2);
+            gtk_box_pack_start(GTK_BOX(vbox), check_dedupe_on_palette, false, false, 2);
             gtk_widget_show(check_dedupe_on_palette);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_on_palette),
                                          p_plugin_options->tile_dedupe_palettes);
@@ -256,13 +256,13 @@ static void update_enabled_ui_controls(void) {
     // Now set available options based on DMG/CGB
     if (p_plugin_options->gb_mode == MODE_DMG_4_COLOR) {
 
-        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, FALSE);
-        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, FALSE);
+        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, false);
+        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, false);
     }
     else if (p_plugin_options->gb_mode == MODE_CGB_32_COLOR) {
 
-        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, p_plugin_options->tile_dedupe_enabled == TRUE);
-        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, p_plugin_options->tile_dedupe_enabled == TRUE);
+        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, p_plugin_options->tile_dedupe_enabled == true);
+        gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, p_plugin_options->tile_dedupe_enabled == true);
     }
 
 }

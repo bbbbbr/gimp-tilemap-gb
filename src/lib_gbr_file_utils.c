@@ -68,12 +68,12 @@ int32_t gbr_read_object_from_file(gbr_file_object * p_obj, FILE * p_file) {
         if (fread(&(p_obj->length_bytes), sizeof(p_obj->length_bytes), 1, p_file)
             && (p_obj->length_bytes <= PASCAL_OBJECT_MAX_SIZE) )
           if (fread(p_obj->p_data,          p_obj->length_bytes,         1, p_file)) {
-//            printf(" TRUE type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+//            printf(" true type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
             p_obj->offset = 0;
             return true;
           }
 
-// printf(" FALSE type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+// printf(" false type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
 
     // If all the above reads didn't complete then signal failure
     return false;
@@ -94,7 +94,7 @@ int32_t gbr_write_object_to_file(gbr_file_object * p_obj, FILE * p_file) {
                     return true;
                 }
 
-// printf(" FALSE type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
+// printf(" false type=%x, id=%x, size=%x\n", p_obj->type, p_obj->id, p_obj->length_bytes);
 
     // If all the above writes didn't complete then signal failure
     return false;

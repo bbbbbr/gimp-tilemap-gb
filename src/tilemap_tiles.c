@@ -4,7 +4,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "win_aligned_alloc.h" // Needed for aligned_alloc cross compile
 
@@ -155,7 +157,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
     // Abort if it's not 1 or 2 bytes per pixel
     // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
     if (app_gfx.bytes_per_pixel >= BIN_BITDEPTH_LAST)
-        return (FALSE);
+        return (false);
 
     // Encode tile data into tile buffer
     rom_bin_encode(&rom_gfx,
@@ -163,10 +165,10 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
 
 
     // Make sure that the write was successful
-    if(rom_gfx.size == FALSE) {
+    if(rom_gfx.size == false) {
 
         free(rom_gfx.p_data);
-        return (FALSE);
+        return (false);
 
     } else {
 
@@ -181,7 +183,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
         free(rom_gfx.p_data);
     }
 
-    return (TRUE);
+    return (true);
 }
 
 
