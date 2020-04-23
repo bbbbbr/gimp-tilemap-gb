@@ -58,6 +58,13 @@ int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p
     // Convert the image data to tiles
     status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors, plugin_options.gb_mode);
 
+    // Apply some final settings updates,
+    // only if there aren't cached settings we don't want to overwrite
+    if (!settings_gbr_tile_export_populated) {
+        gbr_export_update_tile_export_settings(&gbr, filename);
+    }
+
+
     // Load and parse the file
     if (status)
         status = gbr_save_file(filename);

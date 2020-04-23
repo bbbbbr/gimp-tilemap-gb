@@ -119,6 +119,25 @@ enum gbr_tileset_splitorder {
     vertical   = 1
 };
 
+enum gbr_tile_export_tiletype {
+    gbr_export_filetype_rgbds_asm = 0x00,
+    gbr_export_filetype_rgbds_obj,
+    gbr_export_filetype_tasm_asm,
+    gbr_export_filetype_gbdk_c,
+    gbr_export_filetype_binary
+};
+
+enum gbr_tile_export_format {
+    gbr_export_format_gb_4_color = 0x00,
+    gbr_export_format_gb_2_color = 0x01,
+    gbr_export_format_byte_per_color = 0x03
+};
+
+enum gbr_tile_export_compression {
+    gbr_export_compress_none = 0x00,
+    gbr_export_compress_gbcompress
+};
+
 
 typedef struct {
     char name[GBR_PRODUCER_NAME_SIZE_STR];

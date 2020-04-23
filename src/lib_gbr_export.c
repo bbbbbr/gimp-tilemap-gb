@@ -6,6 +6,8 @@
 #include "lib_gbr_file_utils.h"
 #include "lib_gbr_ops.h"
 
+#include "tilemap_path_ops.h"
+
 #include "options.h"
 
 
@@ -675,17 +677,17 @@ int32_t gbr_export_set_defaults(gbr_record * p_gbr) {
 
     p_gbr->tile_export.tile_id        = 1;
     //snprintf(p_gbr->tile_export.file_name,     GBR_TILE_EXPORT_FILE_NAME_SIZE_STR,    "");
-    p_gbr->tile_export.file_type       = 0;
+    p_gbr->tile_export.file_type       = gbr_export_filetype_gbdk_c;
     //snprintf(p_gbr->tile_export.section_name,  GBR_TILE_EXPORT_SECTION_NAME_SIZE_STR, "");
     //snprintf(p_gbr->tile_export.label_name,    GBR_TILE_EXPORT_LABEL_NAME_SIZE_STR,   "");
     p_gbr->tile_export.bank            = 0;
     p_gbr->tile_export.tile_array      = 1;
-    p_gbr->tile_export.format          = 0;
+    p_gbr->tile_export.format          = gbr_export_format_gb_4_color;
     p_gbr->tile_export.counter         = 0;
     p_gbr->tile_export.from            = 0;
     p_gbr->tile_export.upto            = 0;
-    p_gbr->tile_export.compression     = 0;
-    p_gbr->tile_export.include_colors  = 0;
+    p_gbr->tile_export.compression     = gbr_export_compress_none;
+    p_gbr->tile_export.include_colors  = 1; // Yes, include color palette in export
     p_gbr->tile_export.sgb_palettes    = 0;
     p_gbr->tile_export.gbc_palettes    = 0;
     p_gbr->tile_export.make_meta_tiles = 0;
@@ -736,4 +738,28 @@ int32_t gbr_export_set_defaults(gbr_record * p_gbr) {
     memset(p_gbr->tile_pal.sgb_color_set, 0x00, PASCAL_OBJECT_MAX_SIZE);
 
     return true;
+}
+
+
+void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * filename) {
+
+    char filename_trimmed[STR_FILENAME_MAX];
+
+    // Get the filename without any path and extension
+    // snprintf(filename_trimmed, STR_FILENAME_MAX, "%s", filename);
+    copy_filename_without_path_and_extension(&filename_trimmed[0], filename);
+
+    // Append required labels to the trimmed filename
+    snprintf(p_gbr->tile_export.file_name, GBR_TILE_EXPORT_FILE_NAME_SIZE, "%s_tiles.c", filename_trimmed);
+    snprintf(p_gbr->tile_export.label_name, GBR_TILE_EXPORT_LABEL_NAME_SIZE, "%s_tiles", filename_trimmed);
+
+    // printf("gbr_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
+    //         filename,
+    //         filename_trimmed,
+    //         p_gbr->tile_export.file_name,
+    //         p_gbr->tile_export.label_name);
+
+    // Tiles IDs to export
+    p_gbr->tile_export.from            = 0; // Start at first tile
+    p_gbr->tile_export.upto            = p_gbr->tile_data.count - 1; // Go up to last tile
 }

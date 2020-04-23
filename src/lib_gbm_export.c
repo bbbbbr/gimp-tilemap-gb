@@ -8,8 +8,16 @@
 #include "lib_gbm_file_utils.h"
 #include "lib_gbm_ops.h"
 
+#include "tilemap_path_ops.h"
+
 #include "options.h"
 
+
+static uint8_t GBM_EXPORT_PROPS_DEFAULT[] = {
+                    0x01,0x12,0x2E,0x00,  // Prop type = [Tile number]
+                    0x08,0x00,0x00,0x00,  // Prop size = [8 bits]
+                    0x08,0x15,0x2E,0x00,  // Prop type = [GBC BG Attribute]
+                    0x08,0x00,0x00,0x00}; // Prop size = [8 bits]
 
 
 int32_t gbm_object_producer_encode(gbm_record * p_gbm, gbm_file_object * p_obj) {
@@ -370,16 +378,16 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
     memset(p_gbm->map_export.label_name,    0x00, GBM_MAP_EXPORT_LABEL_NAME_SIZE);
 
     snprintf(p_gbm->map_export.file_name,      GBM_MAP_EXPORT_FILE_NAME_SIZE, "map.c");
-    p_gbm->map_export.file_type = 3; // TODO: make a #define for this?
+    p_gbm->map_export.file_type = gbm_export_filetype_gbdk_c;
     // snprintf(p_gbm->map_export.section_name,      GBM_MAP_EXPORT_SECTION_NAME_SIZE, ""); // Section name is blank
     snprintf(p_gbm->map_export.label_name,      GBM_MAP_EXPORT_LABEL_NAME_SIZE, "map%ce1_1", '\0');
     p_gbm->map_export.bank      = 0; // TODO: make a #define for this? Different default bank?
 
-    p_gbm->map_export.plane_count = 1;
-    p_gbm->map_export.plane_order = 0;
-    p_gbm->map_export.map_layout  = 0;
+    p_gbm->map_export.plane_count = 1; // 1 plane (1 for DMG, 2 for CGB with attribs) - see export_props
+    p_gbm->map_export.plane_order = 1; // Planes are continues
+    p_gbm->map_export.map_layout  = 0; // Rows
 
-    p_gbm->map_export.split      = 0; // bool
+    p_gbm->map_export.split      = 0; // (bool) split = no
     p_gbm->map_export.split_size = 0;
     p_gbm->map_export.split_bank = 0; // bool
 
@@ -389,7 +397,9 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
 
 
     // MAP PROP COLORS
+    // First fill memory with zeros, then load in some normal defaults
     memset(p_gbm->map_export_prop.props, 0x00, GBM_MAP_EXPORT_PROPS_SIZE_MAX);
+    memcpy(p_gbm->map_export_prop.props, &GBM_EXPORT_PROPS_DEFAULT[0], sizeof(GBM_EXPORT_PROPS_DEFAULT));
 
     return true;
 }
@@ -401,4 +411,42 @@ void gbm_export_update_color_set(gbm_record * p_gbm, uint16_t gb_mode) {
         p_gbm->map_settings.color_set = gbm_color_set_gbc;
     else
         p_gbm->map_settings.color_set = gbm_color_set_game_boy;
+}
+
+
+void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename, uint16_t gb_mode) {
+
+    char filename_trimmed[STR_FILENAME_MAX];
+
+    // Get the filename without any path and extension
+    // snprintf(filename_trimmed, STR_FILENAME_MAX, "%s", filename);
+    copy_filename_without_path_and_extension(&filename_trimmed[0], filename);
+
+    // Append required labels to the trimmed filename
+    snprintf(p_gbm->map_export.file_name, GBM_MAP_EXPORT_FILE_NAME_SIZE, "%s_map.c", filename_trimmed);
+    snprintf(p_gbm->map_export.label_name, GBM_MAP_EXPORT_LABEL_NAME_SIZE, "%s_map", filename_trimmed);
+
+    // printf("gbm_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
+    //         filename,
+    //         filename_trimmed,
+    //         p_gbm->map_export.file_name,
+    //         p_gbm->map_export.label_name);
+
+    // The export prop settings have been populated with
+    // full 2 bytes of CGB props, but this will set it to
+    // ignore the second property if it's DMG mode
+    if (gb_mode == MODE_CGB_32_COLOR) {
+
+        // 2 planes, 2 export_prop settings
+        p_gbm->map_export.plane_count = 2;
+        p_gbm->map_export.prop_count = 2;
+
+    } else {
+
+        // Otherwise it's DMG mode
+        // 1 plane, 1 export_prop setting
+        p_gbm->map_export.plane_count = 1;
+        p_gbm->map_export.prop_count = 1;
+    }
+
 }

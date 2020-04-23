@@ -152,7 +152,7 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         // * the tile tried to use more than one palette
         if ((tile_pal_setting != tile_pal_setting_last)) {
 
-            printf("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile\n");
+            printf("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", index, tile_pal_setting_last, tile_pal_setting);
             return (false);
         }
         else {

@@ -130,6 +130,7 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
                 // Initialize shared GBM map structure with defaults
                 gbm_export_set_defaults(&gbm);
                 gbm_export_update_color_set(&gbm, plugin_options.gb_mode);
+                gbm_export_update_export_settings(&gbm, filename, plugin_options.gb_mode);
                 gbm_overlay_cached_settings();
 
                 // Set GBR tile file name for the GBM file to use (exported above)

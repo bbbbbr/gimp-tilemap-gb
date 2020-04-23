@@ -84,6 +84,15 @@
 #define GBM_MAP_EXPORT_DELETED_1_SIZE 0x012C
 #define GBM_MAP_EXPORT_DELETED_2_SIZE 0x0
 
+enum gbm_tile_export_tiletype {
+    gbm_export_filetype_rgbds_asm = 0x00,
+    gbm_export_iletype_rgbds_obj,
+    gbm_export_filetype_tasm_asm,
+    gbm_export_filetype_gbdk_c,
+    gbm_export_filetype_binary
+};
+
+
 typedef struct {
     uint32_t  nr;    // Export Row Type Actual. NOTE: In app var is only uint8_t, but gets export padded (with garbage bytes) up to uint32_t. This is export property attribute row in location format table
     uint32_t size;   // Export number of bits
