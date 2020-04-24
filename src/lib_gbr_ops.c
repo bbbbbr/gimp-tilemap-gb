@@ -274,22 +274,22 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
 
     memcpy(&(p_gbr->tile_data.tile_list[offset]), src_buf, tile_size);
 
+    // printf("==gbr_tile_set_buf (%dx%d)\n",p_gbr->tile_data.width,p_gbr->tile_data.height);
+    // int x;
+    // int y;
+    // for (y = 0; y < p_gbr->tile_data.height; y++) {
+    //     for (x = 0; x < p_gbr->tile_data.width; x++) {
+    //         printf("%4x", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
+
+
     // Remap the colors to 2bpp + palette index (and store palette in list)
     if (!gbr_tile_palette_assign_and_strip(&(p_gbr->tile_data.tile_list[offset]), p_gbr, tile_index, tile_size, gb_mode))
         return false;
 
-/*
-
-    printf("==gbr_tile_set_buf\n");
-    int x;
-    int y;
-    for (y = 0; y < p_gbr->tile_data.height; y++) {
-        for (x = 0; x < p_gbr->tile_data.width; x++) {
-            printf("%4x", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
-        }
-        printf("\n");
-    }
-*/
 
     return true;
 }
