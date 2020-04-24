@@ -82,7 +82,7 @@ void tilemap_import_parasite_gbm(gint image_id) {
 }
 
 
-int tilemap_read(const gchar * filename, uint16_t image_format)
+int tilemap_read(const char * filename, uint16_t image_format)
 {
     int status = 1;
 

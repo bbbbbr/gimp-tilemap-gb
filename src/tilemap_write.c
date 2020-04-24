@@ -79,7 +79,7 @@ static void tilemap_export_parasite_gbm(gint image_id) {
 }
 
 
-int write_tilemap(const gchar * filename, gint image_id, gint drawable_id, const gchar * name)
+int write_tilemap(const char * filename, gint image_id, gint drawable_id, const gchar * name)
 {
     int32_t status;
 

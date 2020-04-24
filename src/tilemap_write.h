@@ -16,6 +16,6 @@
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =======================================================================*/
 
-#include <glib.h>
+// #include <glib.h>
 
-int write_tilemap(const gchar *, gint, gint, const gchar *);
+int write_tilemap(const char *, gint, gint, const gchar *);

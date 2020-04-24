@@ -3,6 +3,6 @@
 //
 
 
-#include <glib.h>
+// #include <glib.h>
 
-int tilemap_read(const gchar *, uint16_t);
+int tilemap_read(const char *, uint16_t);
