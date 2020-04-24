@@ -3,3 +3,4 @@
 *.7z
 obj/
 *.o
+/console/bin/png2gbtiles
