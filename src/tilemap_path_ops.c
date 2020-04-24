@@ -84,3 +84,35 @@ void copy_filename_without_path_and_extension(char * path_out, const char * path
 }
 
 
+void copy_filename_without_extension(char * path_out, const char * path_in)
+{
+    char * last_ext;
+    char * last_slash;
+
+    // Copy string to start with
+    strncpy(path_out, path_in, STR_FILENAME_MAX);
+
+    // Find the last path separator if present
+    // Starting from here ensures that no path ".." characters
+    // get mistaken as extension delimiters.
+    last_slash = strrchr (path_out, kExtensionSeparator);
+    if (!last_slash)
+        last_slash = path_out;
+
+    // Then check to see if there is an extension (*FIRST* occurance of '.')
+    // (tries to remove *all* trailing extensions)
+
+    last_ext = strrchr (last_slash, kExtensionSeparator);
+    while (last_ext) {
+
+        if (last_ext != NULL) {
+            // If an extension is found then overwrite it with a string terminator
+            *last_ext = '\0';
+            // printf("Truncating extension: %s\n", last_slash);
+        }
+
+        last_ext = strrchr (last_slash, kExtensionSeparator);
+    }
+}
+
+
