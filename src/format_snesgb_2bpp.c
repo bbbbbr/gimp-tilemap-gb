@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-#include <libgimp/gimp.h>
+// #include <libgimp/gimp.h>
 
 #define SNES_PIXELS_PER_WORD_2BPP           8    // 1 pixel = 2 bits, 8 pixels are spread across 2 consecutive bytes (lo...hi byte)
 

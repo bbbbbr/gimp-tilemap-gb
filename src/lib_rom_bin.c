@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <libgimp/gimp.h>
+// #include <libgimp/gimp.h>
 
 
 
