@@ -397,7 +397,11 @@ int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_im
             }
             else
                 return false; // FAILED: export image must be even multiple of tile size
+    } else {
+        // TODO: Support using a default tile size (8x8) that is a multiple of the image width
+        return false; // Failed to find suitable tile size based on image width
     }
+
 
     return true;
 }
@@ -461,7 +465,8 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
         // SAVE IMAGE
         // Extract tiles from buffer
-        // TODO: FIXME this is linear for now and assumes an 8 x N dest image
+        // TODO: FIXME this is linear for now and assumes an 8/16/32 x N dest image
+        // TODO: Support using a default tile size (8x8) that is a multiple of the image width
 
         for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
             // printf("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
