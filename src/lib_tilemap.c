@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logging.h"
+
 #include "lib_tilemap.h"
 #include "tilemap_tiles.h"
 #include "tilemap_io.h"
@@ -28,13 +30,13 @@ void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
 
     memcpy(p_dest_plugin_options, &tile_map.options, sizeof(tile_process_options));
 
-    printf("==== tilemap_options_get() ====\n");
-    printf("image_format:         %d\n", p_dest_plugin_options->image_format);
-    printf("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
-    printf("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
-    printf("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
-    printf("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
-    printf("\n");
+    log_verbose("==== tilemap_options_get() ====\n");
+    log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
+    log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
+    log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
+    log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
+    log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    log_verbose("\n");
 
 }
 
@@ -76,14 +78,14 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
 
     }
 
-    printf("==== tilemap_options_load_defaults() ====\n");
-    printf("color_count:          %d\n", color_count);
-    printf("image_format:         %d\n", p_dest_plugin_options->image_format);
-    printf("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
-    printf("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
-    printf("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
-    printf("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
-    printf("\n");
+    log_verbose("==== tilemap_options_load_defaults() ====\n");
+    log_verbose("color_count:          %d\n", color_count);
+    log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
+    log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
+    log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
+    log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
+    log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    log_verbose("\n");
 }
 
 
@@ -177,12 +179,12 @@ unsigned char process_tiles(image_data * p_src_img) {
         // Iterate over the map, top -> bottom, left -> right
         img_buf_offset = 0;
 
-        printf("process_tiles(): %d x %d: tiles %d x %d\n", tile_map.map_width, tile_map.map_height, tile_map.tile_width, tile_map.tile_height);
+        log_verbose("process_tiles(): %d x %d: tiles %d x %d\n", tile_map.map_width, tile_map.map_height, tile_map.tile_width, tile_map.tile_height);
 
         for (img_y = 0; img_y < tile_map.map_height; img_y += tile_map.tile_height) {
             for (img_x = 0; img_x < tile_map.map_width; img_x += tile_map.tile_width) {
 
-                // printf(" %4d,%4d :", img_x, img_y);
+                // log_verbose(" %4d,%4d :", img_x, img_y);
 
                 // Set buffer offset to upper left of current tile
                 img_buf_offset = (img_x + (img_y * tile_map.map_width)) * p_src_img->bytes_per_pixel;
@@ -198,7 +200,7 @@ unsigned char process_tiles(image_data * p_src_img) {
                 //       The palette also gets re-applied below
                 map_entry.status = tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode);
                 if (map_entry.status != TILE_ID_OK) {
-                    // printf("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
+                    // log_verbose("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
                     tilemap_error_set(map_entry.status);
                     return (false); // Exit
                 }
@@ -234,13 +236,13 @@ unsigned char process_tiles(image_data * p_src_img) {
                         tilemap_free_resources();
 
                         // TODO: propegate errors upward
-                        printf("Tilemap: Process: FAIL -> Too Many Tiles\n");
+                        log_verbose("Tilemap: Process: FAIL -> Too Many Tiles\n");
                         tilemap_error_set(map_entry.status);
                         return (false); // Ran out of tile space, exit
                     }
-                    // printf(" -> NEW tile %d ", map_entry.id);
+                    // log_verbose(" -> NEW tile %d ", map_entry.id);
                 }
-                // else printf(" -> use tile %d ", map_entry.id);
+                // else log_verbose(" -> use tile %d ", map_entry.id);
 
                 tile_map.tile_id_list[map_slot]     = map_entry.id;
                 tile_map.flip_bits_list[map_slot]   = map_entry.flip_bits;
@@ -248,7 +250,7 @@ unsigned char process_tiles(image_data * p_src_img) {
 
                 map_slot++;
 
-                // printf("\n");
+                // log_verbose("\n");
             } // for (img_x = 0
         } // for (img_y = 0
 
@@ -263,7 +265,7 @@ unsigned char process_tiles(image_data * p_src_img) {
     tile_free(&flip_tiles[0]);
     tile_free(&flip_tiles[1]);
 
-    printf("Total Tiles=%d\n", tile_set.tile_count);
+    log_standard("gbm output: total tiles = %d\n", tile_set.tile_count);
 
     return true;
 }
@@ -361,7 +363,7 @@ int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
     p_img->size   = tile_set.tile_size   * tile_set.tile_count;
     p_img->bytes_per_pixel = tile_set.tile_bytes_per_pixel;
 
-    printf("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
+    log_verbose("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
 
     // Allocate a buffer for the image
     p_img->p_img_data = malloc(p_img->size);
@@ -391,14 +393,14 @@ int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
     else
         return false;
 
-    printf("== TILEMAP -> IMG COPIED BUFF\n");
+    log_verbose("== TILEMAP -> IMG COPIED BUFF\n");
 
     // // Iterate over each tile, top -> bottom, left -> right
     // for (c = 0; c < p_img->size; c++) {
-    //     printf(" %2x", *(p_img->p_img_data + c));
-    //     if ((c % 8) ==0) printf("\n");
+    //     log_verbose(" %2x", *(p_img->p_img_data + c));
+    //     if ((c % 8) ==0) log_verbose("\n");
     // }
-    // printf(" \n");
+    // log_verbose(" \n");
 
     return true;
 }

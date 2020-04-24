@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "logging.h"
+
 #include "tilemap_path_ops.h"
 
 
@@ -61,7 +63,7 @@ void copy_filename_without_path_and_extension(char * path_out, const char * path
    for(i = strlen(path_in) - 1; i; i--) {
         if (path_in[i] == kPathSeparator) {
             path_in = &path_in[i+1];
-            // printf("Found: %s\n", path_in);
+            // log_verbose("Found: %s\n", path_in);
             break;
         }
     }
@@ -76,7 +78,7 @@ void copy_filename_without_path_and_extension(char * path_out, const char * path
         if (last_ext != NULL) {
             // If an extension is found then overwrite it with a string terminator
             *last_ext = '\0';
-            // printf("Truncating extension: %s\n", path_out);
+            // log_verbose("Truncating extension: %s\n", path_out);
         }
 
         last_ext = strrchr (path_out, kExtensionSeparator);
@@ -101,14 +103,13 @@ void copy_filename_without_extension(char * path_out, const char * path_in)
 
     // Then check to see if there is an extension (*FIRST* occurance of '.')
     // (tries to remove *all* trailing extensions)
-
     last_ext = strrchr (last_slash, kExtensionSeparator);
     while (last_ext) {
 
         if (last_ext != NULL) {
             // If an extension is found then overwrite it with a string terminator
             *last_ext = '\0';
-            // printf("Truncating extension: %s\n", last_slash);
+            // log_verbose("Truncating extension: %s\n", last_slash);
         }
 
         last_ext = strrchr (last_slash, kExtensionSeparator);

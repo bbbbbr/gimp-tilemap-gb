@@ -2,6 +2,8 @@
 // lib_gbr_import.c
 //
 
+#include "logging.h"
+
 #include "lib_gbr_import.h"
 #include "lib_gbr_file_utils.h"
 #include "lib_gbr_ops.h"
@@ -16,7 +18,7 @@ int32_t gbr_object_producer_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
     gbr_read_str(p_gbr->producer.version, p_obj, GBR_PRODUCER_VERSION_SIZE);
     gbr_read_str(p_gbr->producer.info,    p_obj, GBR_PRODUCER_INFO_SIZE);
 
-    printf("PRODUCER:\n%s\n%s\n%s\n", p_gbr->producer.name,
+    log_verbose("PRODUCER:\n%s\n%s\n%s\n", p_gbr->producer.name,
                                       p_gbr->producer.version,
                                       p_gbr->producer.info);
 
@@ -53,16 +55,16 @@ int32_t gbr_object_tile_data_decode(gbr_record * p_gbr, gbr_file_object * p_obj)
     int y;
     for (y = 0; y < p_gbr->tile_data.height; y++) {
         for (x = 0; x < p_gbr->tile_data.width; x++) {
-            printf("%4x", p_gbr->tile_data.tile_list[x + (y * p_gbr->tile_data.width)]);
+            log_verbose("%4x", p_gbr->tile_data.tile_list[x + (y * p_gbr->tile_data.width)]);
         }
-        printf("\n");
+        log_verbose("\n");
     }
 */
 
 
 
 
-printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
+log_verbose("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
                                  p_gbr->tile_data.name,
                                  p_gbr->tile_data.width,
                                  p_gbr->tile_data.height,
@@ -116,7 +118,7 @@ int32_t gbr_object_tile_settings_decode(gbr_record * p_gbr, gbr_file_object * p_
     }
 
 
-printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+log_verbose("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
                                  p_gbr->tile_settings.tile_id,
                                  p_gbr->tile_settings.simple,
                                  p_gbr->tile_settings.flags,
@@ -159,7 +161,7 @@ int32_t gbr_object_tile_export_decode(gbr_record * p_gbr, gbr_file_object * p_ob
     gbr_read_uint8 (&p_gbr->tile_export.sel_tab,        p_obj);
 
 
-printf("TILE_EXPORT:\n%d\n%s\n%d\n%s\nTiles: %d - %d\n",
+log_verbose("TILE_EXPORT:\n%d\n%s\n%d\n%s\nTiles: %d - %d\n",
                                  p_gbr->tile_export.tile_id,
                                  p_gbr->tile_export.file_name,
                                  p_gbr->tile_export.file_type,
@@ -188,7 +190,7 @@ int32_t gbr_object_tile_import_decode(gbr_record * p_gbr, gbr_file_object * p_ob
             gbr_read_uint8 (&p_gbr->tile_import.binary_file_type, p_obj);
 
 
-printf("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
+log_verbose("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
                                  p_gbr->tile_import.tile_id,
                                  p_gbr->tile_import.file_name,
                                  p_gbr->tile_import.file_type,
@@ -237,7 +239,7 @@ int32_t gbr_object_palettes_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
             gbr_read_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_SGB_SETS_ACTUAL_SIZE);
 
 
-            printf("Palettes:\nid=%d\ncgb_count=%d\nsgb_count=%d\n",
+            log_verbose("Palettes:\nid=%d\ncgb_count=%d\nsgb_count=%d\n",
                                              p_gbr->palettes.id,
                                              p_gbr->palettes.count,
                                              p_gbr->palettes.sgb_count);
@@ -276,7 +278,7 @@ int32_t gbr_object_tile_pal_decode(gbr_record * p_gbr, gbr_file_object * p_obj) 
             gbr_read_padding_bytes(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
 
 
-            printf("gbr:tile pal:\n%d\n%d\n%d\n",
+            log_verbose("gbr:tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,
                                  p_gbr->tile_pal.count,
                                  p_gbr->tile_pal.sgb_count);
@@ -316,7 +318,7 @@ int32_t gbr_convert_tileset_to_image(gbr_record * p_gbr, image_data * p_image, c
         // LOAD IMAGE
         // Copy each tile into the image buffer
         for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
-//            printf("Tile:%d, offset=%d\n", tile_id, offset);
+//            log_verbose("Tile:%d, offset=%d\n", tile_id, offset);
             gbr_tile_get_buf(&p_image->p_img_data[offset],
                              p_gbr,
                              tile_id);
@@ -324,7 +326,7 @@ int32_t gbr_convert_tileset_to_image(gbr_record * p_gbr, image_data * p_image, c
             offset += p_gbr->tile_data.width * p_gbr->tile_data.height * p_image->bytes_per_pixel;
         }
 
-        printf("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
+        log_verbose("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
                                                   p_gbr->tile_data.width,
                                                   p_gbr->tile_data.height,
                                                   p_gbr->tile_data.count);
@@ -354,7 +356,7 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     if ((p_gbr->tile_data.pal_data_size * COLOR_DATA_BYTES_PER_COLOR) > (COLOR_DATA_PAL_SIZE))
         return false;
 
-    printf("TILE_DATA --> COLOR_SET : %d\n", p_gbr->tile_settings.color_set);
+    log_verbose("TILE_DATA --> COLOR_SET : %d\n", p_gbr->tile_settings.color_set);
 
     // Set the destination color palette size based on tile list color set size
     // This will either be 1 palette x 4 colors (Pocket, DMG), or 8 palettes x 4 colors (CGB, SGB?)
@@ -362,7 +364,7 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     p_colors->size        = p_colors->color_count * COLOR_DATA_BYTES_PER_COLOR;
 
 
-    printf("COLOR: size=%d\n", p_colors->color_count);
+    log_verbose("COLOR: size=%d\n", p_colors->color_count);
 
     buf_offset = 0;
 
@@ -378,7 +380,7 @@ int32_t gbr_load_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
         p_colors->pal[buf_offset++] = p_gbr->palettes.colors[pal_offset + 2]; // B.2
 
 
-        printf(" --COLORS %d: %d) %2x, %2x, %2x, \n", pal_index, pal_offset,
+        log_verbose(" --COLORS %d: %d) %2x, %2x, %2x, \n", pal_index, pal_offset,
                                                 p_colors->pal[buf_offset-3],
                                                 p_colors->pal[buf_offset-2],
                                                 p_colors->pal[buf_offset-1]);

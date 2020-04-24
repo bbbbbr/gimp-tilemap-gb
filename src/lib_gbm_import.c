@@ -2,6 +2,8 @@
 // lib_gbm_import.c
 //
 
+#include "logging.h"
+
 #include "lib_gbm.h"
 #include "lib_gbm_import.h"
 
@@ -35,7 +37,7 @@ int32_t gbm_object_producer_decode(gbm_record * p_gbm, gbm_file_object * p_obj) 
     gbm_read_str(p_gbm->producer.version, p_obj, GBM_PRODUCER_VERSION_SIZE);
     gbm_read_str(p_gbm->producer.info,    p_obj, GBM_PRODUCER_INFO_SIZE);
 
-    printf("gbm_object_producer_decode:\n%s\n%s\n%s\n", p_gbm->producer.name,
+    log_verbose("gbm_object_producer_decode:\n%s\n%s\n%s\n", p_gbm->producer.name,
                                       p_gbm->producer.version,
                                       p_gbm->producer.info);
 
@@ -58,7 +60,7 @@ int32_t gbm_object_map_decode(gbm_record * p_gbm, gbm_file_object * p_obj) {
     gbm_read_uint32(&p_gbm->map.prop_color_count, p_obj);
 
 
-printf("gbm_object_map_decode:\n%s\n%d\n%d\n%d\n%s\n%d\n%d\n",
+log_verbose("gbm_object_map_decode:\n%s\n%d\n%d\n%d\n%s\n%d\n%d\n",
                                  p_gbm->map.name,
                                  p_gbm->map.width,
                                  p_gbm->map.height,
@@ -82,7 +84,7 @@ int32_t gbm_object_map_tile_data_decode(gbm_record * p_gbm, gbm_file_object * p_
     gbm_read_buf( p_gbm->map_tile_data.records, p_obj, p_obj->length_bytes);
     p_gbm->map_tile_data.length_bytes = p_obj->length_bytes;
 
-    printf("----- DECODE MAP TILES -----\n");
+    log_verbose("----- DECODE MAP TILES -----\n");
     gbm_map_tiles_print(p_gbm);
 
     return true;
@@ -138,7 +140,7 @@ int32_t gbm_object_map_settings_decode(gbm_record * p_gbm, gbm_file_object * p_o
 
     gbm_read_bool  (&p_gbm->map_settings.auto_update, p_obj);
 
-printf("gbm_object_map_settings_decode:\n%d\n%d\n%d \n%d\n%d\n%d\n%d\n %d\n%d\n %d\n%d\n%d\n",
+log_verbose("gbm_object_map_settings_decode:\n%d\n%d\n%d \n%d\n%d\n%d\n%d\n %d\n%d\n %d\n%d\n%d\n",
                                  p_gbm->map_settings.form_width,
                                  p_gbm->map_settings.form_height,
                                  p_gbm->map_settings.form_maximized,
@@ -194,7 +196,7 @@ int32_t gbm_object_map_export_decode(gbm_record * p_gbm, gbm_file_object * p_obj
 
 
 
-printf("gbm_object_map_export_decode:\n%s\n%d\n%s\n%s\n %d\n%d\n%d\n",
+log_verbose("gbm_object_map_export_decode:\n%s\n%d\n%s\n%s\n %d\n%d\n%d\n",
                                  p_gbm->map_export.file_name,
                                  p_gbm->map_export.file_type,
                                  p_gbm->map_export.section_name,
@@ -224,7 +226,7 @@ int32_t gbm_object_map_export_prop_decode(gbm_record * p_gbm, gbm_file_object * 
     // Read the whole buffer, even if the length of real data is shorter
     gbm_read_buf(&(p_gbm->map_export_prop.props[0]), p_obj, p_obj->length_bytes);
 
-    printf("gbm_object_map_export_prop_decode: length_bytes=%d\n",p_gbm->map_export_prop.length_bytes);
+    log_verbose("gbm_object_map_export_prop_decode: length_bytes=%d\n",p_gbm->map_export_prop.length_bytes);
 
     return true;
 }

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logging.h"
+
 #include "lib_tilemap.h"
 #include "tilemap_error.h"
 #include "tilemap_console.h"
@@ -43,7 +45,7 @@ int convert_image( int argc, char * argv[] ) {
 
 
     if( argc < 3 ) {
-        printf("ERROR: At least two arguments are required\n\n");
+        log_error("Error: At least two arguments are required\n\n");
         display_help();
         return false;
     }
@@ -51,7 +53,7 @@ int convert_image( int argc, char * argv[] ) {
 
     // Load source image (from first argument)
     if (!tilemap_load_image(&src_image, &src_colors, argv[ ARG_INPUT_FILE ])) {
-        printf("ERROR: Failed to load image\n\n");
+        log_error("Error: Failed to load image\n\n");
         return false;
     }
 
@@ -69,7 +71,7 @@ int convert_image( int argc, char * argv[] ) {
 
     } else {
 
-        printf("ERROR: Output mode missing or incorrect\n\n");
+        log_error("Error: Output mode missing or incorrect\n\n");
         display_help();
         return false;
     }
@@ -95,6 +97,13 @@ int convert_image( int argc, char * argv[] ) {
                 case 'f': options.tile_dedupe_flips = false;
                           break;
                 case 'p': options.tile_dedupe_palettes = false;
+                          break;
+
+                case 'v': log_set_level(OUTPUT_LEVEL_VERBOSE);
+                          break;
+                case 'e': log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
+                          break;
+                case 'q': log_set_level(OUTPUT_LEVEL_QUIET);
                           break;
             }
         } else {
@@ -132,13 +141,11 @@ int convert_image( int argc, char * argv[] ) {
         }
     }
 
-    printf("Output to file: %s\n", filename_out);
-
     // Process and export the image
     if (!tilemap_process_and_save_image(&src_image, &src_colors, &filename_out[0] )) {
 
         if (tilemap_error_get() != TILE_ID_OK) {
-            printf("%s\n", tilemap_error_get_string() );
+            log_error("%s\n", tilemap_error_get_string() );
         }
         return false;
     }
@@ -151,7 +158,7 @@ int convert_image( int argc, char * argv[] ) {
 
 void display_help(void) {
 
-    printf ("Usage\n"
+    log_standard("Usage\n"
             "   png2gbtiles input_file.png -gbr|-gbm|-csource [options] [output_file]\n"
             "\n"
             "Options\n"
@@ -163,7 +170,8 @@ void display_help(void) {
             "  -f          Turn OFF Map tile deduplication of FLIP X/Y (.gbm only)\n"
             "  -p          Turn OFF Map tile deduplication of ALTERNATE PALLETE (.gbm only)\n"
             "\n"
-            "  -q          Quiet, suppress output\n"
+            "  -q          Quiet, suppress all output\n"
+            "  -e          Errors only, suppress all non-error output\n"
             "  -v          Verbose output during conversion\n"
             "\n"
             "Examples\n"

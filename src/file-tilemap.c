@@ -2,6 +2,7 @@
 // file-tilemap.c
 //
 
+#include "logging.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -220,8 +221,8 @@ static void run(const gchar * plugin_procedure_name,
     return_values[0].data.d_status = GIMP_PDB_SUCCESS;
 
     plugin_options.image_format = plugin_get_image_format_from_string(plugin_procedure_name);
-    printf("image_format=%d\n", plugin_options.image_format);
-    printf("plugin_procedure_name=%s\n", plugin_procedure_name);
+    log_verbose("image_format=%d\n", plugin_options.image_format);
+    log_verbose("plugin_procedure_name=%s\n", plugin_procedure_name);
 
 
     tilemap_error_clear();
@@ -362,7 +363,7 @@ static void run(const gchar * plugin_procedure_name,
         }
 
 
-        printf("export_ret=%d\n", export_ret);
+        log_verbose("export_ret=%d\n", export_ret);
 
         switch(export_ret)
         {

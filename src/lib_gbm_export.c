@@ -10,6 +10,7 @@
 
 #include "tilemap_path_ops.h"
 
+#include "logging.h"
 #include "options.h"
 
 
@@ -32,7 +33,7 @@ int32_t gbm_object_producer_encode(gbm_record * p_gbm, gbm_file_object * p_obj) 
     gbm_write_str(p_gbm->producer.version, p_obj, GBM_PRODUCER_VERSION_SIZE);
     gbm_write_str(p_gbm->producer.info,    p_obj, GBM_PRODUCER_INFO_SIZE);
 
-    printf("WROTE gbm_object_producer_encode:\n%s\n%s\n%s\n", p_gbm->producer.name,
+    log_verbose("WROTE gbm_object_producer_encode:\n%s\n%s\n%s\n", p_gbm->producer.name,
                                                         p_gbm->producer.version,
                                                         p_gbm->producer.info);
 
@@ -56,7 +57,7 @@ int32_t gbm_object_map_encode(gbm_record * p_gbm, gbm_file_object * p_obj) {
     gbm_write_uint32(&p_gbm->map.tile_count, p_obj);
     gbm_write_uint32(&p_gbm->map.prop_color_count, p_obj);
 
-    printf("WROTE gbm_object_map_encode:\n%s\n%d\n%d\n%d\n%s\n%d\n%d\n",
+    log_verbose("WROTE gbm_object_map_encode:\n%s\n%d\n%d\n%d\n%s\n%d\n%d\n",
                                  p_gbm->map.name,
                                  p_gbm->map.width,
                                  p_gbm->map.height,
@@ -165,7 +166,7 @@ int32_t gbm_object_map_settings_encode(gbm_record * p_gbm, gbm_file_object * p_o
 
     gbm_write_bool  (&p_gbm->map_settings.auto_update, p_obj);
 
-    printf("WROTE gbm_object_map_settings_encode:\n%d\n%d\n%d \n%d\n%d\n%d\n%d\n %d\n%d\n %d\n%d\n%d\n",
+    log_verbose("WROTE gbm_object_map_settings_encode:\n%d\n%d\n%d \n%d\n%d\n%d\n%d\n %d\n%d\n %d\n%d\n%d\n",
                                  p_gbm->map_settings.form_width,
                                  p_gbm->map_settings.form_height,
                                  p_gbm->map_settings.form_maximized,
@@ -197,7 +198,7 @@ int32_t gbm_object_prop_colors_encode(gbm_record * p_gbm, gbm_file_object * p_ob
     // The tile records take all of the data in the object
     gbm_write_buf(&(p_gbm->map_prop_colors.colors[0]), p_obj, GBM_MAP_PROP_COLORS_COLORS_SIZE);
 
-    printf("WROTE gbm_object_prop_colors_encode:%d\n",GBM_MAP_PROP_COLORS_COLORS_SIZE);
+    log_verbose("WROTE gbm_object_prop_colors_encode:%d\n",GBM_MAP_PROP_COLORS_COLORS_SIZE);
 
     return true;
 }
@@ -226,7 +227,7 @@ int32_t gbm_object_map_export_encode(gbm_record * p_gbm, gbm_file_object * p_obj
     gbm_write_uint16(&p_gbm->map_export.prop_count,  p_obj);
     gbm_write_uint16(&p_gbm->map_export.tile_offset, p_obj);
 
-    printf("WROTE gbm_object_map_export_encode:\n%s\n%d\n%s\n%s\n %d\n%d\n%d\n",
+    log_verbose("WROTE gbm_object_map_export_encode:\n%s\n%d\n%s\n%s\n %d\n%d\n%d\n",
                                  p_gbm->map_export.file_name,
                                  p_gbm->map_export.file_type,
                                  p_gbm->map_export.section_name,
@@ -262,7 +263,7 @@ int32_t gbm_object_map_export_prop_encode(gbm_record * p_gbm, gbm_file_object * 
     // gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, GBM_MAP_EXPORT_PROPS_SIZE_MAX);
     gbm_write_buf(&(p_gbm->map_export_prop.props[0]), p_obj, p_gbm->map_export_prop.length_bytes);
 
-    printf("WROTE gbm_object_map_export_prop_encode: length_bytes=%d\n", p_gbm->map_export_prop.length_bytes);
+    log_verbose("WROTE gbm_object_map_export_prop_encode: length_bytes=%d\n", p_gbm->map_export_prop.length_bytes);
     return true;
 }
 
@@ -283,11 +284,11 @@ int32_t gbm_object_tile_data_encode(gbm_record * p_gbm, gbm_file_object * p_obj)
     // TODO: what is the trailing data from 2160 -> 4800 bytes?
     gbm_write_padding(p_obj, GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
 
-    printf("----- ENCODE MAP TILES %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    log_verbose("----- ENCODE MAP TILES %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
     gbm_map_tiles_print(p_gbm);
-    printf("----- ENCODE MAP TILES : FLIP X/Y %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    log_verbose("----- ENCODE MAP TILES : FLIP X/Y %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
     gbm_map_tiles_flip_print(p_gbm);
-    printf("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    log_verbose("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
     gbm_map_tiles_pal_print(p_gbm);
 
     return true;
@@ -426,7 +427,7 @@ void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename
     snprintf(p_gbm->map_export.file_name, GBM_MAP_EXPORT_FILE_NAME_SIZE, "%s_map.c", filename_trimmed);
     snprintf(p_gbm->map_export.label_name, GBM_MAP_EXPORT_LABEL_NAME_SIZE, "%s_map", filename_trimmed);
 
-    // printf("gbm_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
+    // log_verbose("gbm_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
     //         filename,
     //         filename_trimmed,
     //         p_gbm->map_export.file_name,

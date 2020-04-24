@@ -16,6 +16,7 @@
 #include "lib_rom_bin.h"
 #include "hash.h"
 
+#include "logging.h"
 #include "options.h"
 
 const uint16_t tile_flip_bits[] = {
@@ -68,7 +69,7 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
     // Default status to found
     new_map_entry.status = TILE_ID_OK;
 
-// printf("tile_register_new %d\n",tile_set->tile_count);
+// log_verbose("tile_register_new %d\n",tile_set->tile_count);
 
     if (tile_set->tile_count < TILES_MAX_DEFAULT) {
 
@@ -127,7 +128,7 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
     else
         new_map_entry.status = TILE_ID_EXCEEDED_LIMIT;
 
-// printf("tile_register_new tile_id=%d\n",tile_id);
+// log_verbose("tile_register_new tile_id=%d\n",tile_id);
 
     return (new_map_entry);
 }
@@ -223,13 +224,13 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
                     // If the palettes didn't match
                     // Enable the palette override by setting palette number
                     if (p_tile->palette_num != tile_set->tiles[c].palette_num) {
-                        // printf(" -> Dedupe  Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
+                        // log_verbose(" -> Dedupe  Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
 
                         // Use this map location's identified (tile) palette as an override instead of the source tile's palette
                         tile_match_rec.palette_num = p_tile->palette_num;
                     } else {
                         // Otherwise set the flag to use the default palette from the source tile
-                        // printf(" -> Default Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
+                        // log_verbose(" -> Default Pal on tile.pal %d != tile_set(%d).hash(%d).pal %d ", p_tile->palette_num, c, h, tile_set->tiles[c].palette_num);
                         tile_match_rec.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
                     }
 
@@ -289,21 +290,21 @@ void tile_print_buffer_raw(tile_data tile) {
     int32_t tile_y;
     int32_t tile_x;
 
-    printf("\n");
+    log_verbose("\n");
 
     // Iterate over each tile, top -> bottom, left -> right
     for (tile_y = 0; tile_y < tile.raw_height; tile_y++) {
         for (tile_x = 0; tile_x < tile.raw_width; tile_x++) {
 
-            printf(" %2x", *(tile.p_img_raw));
+            log_verbose(" %2x", *(tile.p_img_raw));
 
             // Move to the next row
             tile.p_img_raw += tile.raw_bytes_per_pixel;
         }
-        printf(" \n");
+        log_verbose(" \n");
     }
 
-    printf(" \n");
+    log_verbose(" \n");
 }
 
 
@@ -311,17 +312,17 @@ void tile_print_buffer_encoded(tile_data tile) {
 
     int32_t c;
 
-    printf("ENCODED:\n");
+    log_verbose("ENCODED:\n");
 
     // Iterate over each tile, top -> bottom, left -> right
     for (c = 0; c < tile.encoded_size_bytes; c++) {
-        printf(" %2x", *(tile.p_img_encoded));
+        log_verbose(" %2x", *(tile.p_img_encoded));
 
             // Move to the next row
             tile.p_img_encoded++;
     }
 
-    printf(" \n");
+    log_verbose(" \n");
 }
 
 
@@ -513,7 +514,7 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
     }
 
 
-// printf("-> pal id as: %d :", palette);
+// log_verbose("-> pal id as: %d :", palette);
     p_tile->palette_num = palette;
 
     return TILE_ID_OK;

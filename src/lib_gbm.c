@@ -2,6 +2,8 @@
 // lib_gbm.c
 //
 
+#include "logging.h"
+
 #include "lib_gbm.h"
 #include "lib_gbm.h"
 #include "lib_gbm_import.h"
@@ -43,7 +45,7 @@ int32_t gbm_load(const char * filename) {
     if (!get_path_without_filename(filename, path_without_filename, STR_FILENAME_MAX))
       return (false);
 
-    printf("**gbm_load\n");
+    log_verbose("**gbm_load\n");
 
     // Load and parse the file
     status = gbm_load_file(filename);
@@ -52,11 +54,11 @@ int32_t gbm_load(const char * filename) {
     // the tile file (.GBR) that it references
     if(status) {
         snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  path_without_filename, gbm.map.tile_file);
-        printf("calling gbr load:%s:\n", gbr_path);
+        log_verbose("calling gbr load:%s:\n", gbr_path);
         status = gbr_load(gbr_path);
     }
     else
-        printf("Load GBM failed\n");
+        log_verbose("Load GBM failed\n");
 
     if (status) {
         p_gbr = gbr_get_ptr();
@@ -95,12 +97,12 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
     tile_set_deduped_image.p_img_data = NULL;
     // gbr_record      gbr;
 
-    printf("gbm_save(): %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
+    log_standard("gbm export: %d x %d with mode = %d, dedupe flip = %d, dedupe pal = %d, \n",
             p_src_image->width, p_src_image->height,
             plugin_options.gb_mode, plugin_options.tile_dedupe_flips, plugin_options.tile_dedupe_palettes);
 
     status = tilemap_export_process(p_src_image);
-    printf("(gbm) tilemap_export_process: status= %d\n", status);
+    log_verbose("(gbm) tilemap_export_process: status= %d\n", status);
 
 
     if (status) {
@@ -111,7 +113,7 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
         p_map      = tilemap_get_map();
         p_tile_set = tilemap_get_tile_set();
         status     = tilemap_get_image_of_deduped_tile_set(&tile_set_deduped_image);
-        printf("(gbm) tilemap_get_image_of_deduped_tile_set: status= %d\n", status);
+        log_verbose("(gbm) tilemap_get_image_of_deduped_tile_set: status= %d\n", status);
 
 
         if (p_map && p_tile_set && status) {
@@ -120,9 +122,9 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
             char gbr_path[STR_FILENAME_MAX];
             snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  filename, ".tiles.gbr");
 
-            printf("calling gbr save:%s:\n", gbr_path);
+            log_verbose("calling gbr save:%s:\n", gbr_path);
             status = gbr_save(gbr_path, &tile_set_deduped_image, p_colors, plugin_options);
-            printf("(gbm) gbr_save_file: status= %d\n", status);
+            log_standard("gbm->gbr tileset export: status= %d, to:%s\n", status, gbr_path);
 
             if (status) {
                 // == EXPORT MAP AS GBM ==
@@ -150,13 +152,13 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
                                                         p_map->flip_bits_list,
                                                         p_map->palette_num_list,
                                                         p_map->size);
-                printf("(gbm) gbm_convert_image_to_map: status= %d\n", status);
+                log_verbose("gbm_convert_image_to_map: status= %d\n", status);
 
-                printf("gbm_save_file\n");
+                log_verbose("gbm_save_file\n");
                 if (status) {
                     status = gbm_save_file(filename);
 
-                    printf("(gbm) gbm_save_file: status= %d\n", status);
+                    log_verbose("(gbm) gbm_save_file: status= %d\n", status);
                 }
             }
 
@@ -164,7 +166,7 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
             status = false;
     }
 
-    printf("(gbm) gbm_save_file END: status= %d\n", status);
+    log_verbose("(gbm) gbm_save_file END: status= %d\n", status);
 
     // Free temp composite image of tiles
     if (tile_set_deduped_image.p_img_data)
@@ -187,7 +189,7 @@ int32_t gbm_load_file(const char * filename) {
 
     status = true;
 
-    printf("gbm_load_file\n");
+    log_verbose("gbm_load_file\n");
 
     // open the file
     p_file = fopen(filename, "rb");
@@ -195,7 +197,7 @@ int32_t gbm_load_file(const char * filename) {
 
         if (gbm_read_header_key(p_file)) {
 
-            printf("Found Header\n");
+            log_verbose("Found Header\n");
 
             if (gbm_read_version(p_file) && status) {
 
@@ -203,52 +205,52 @@ int32_t gbm_load_file(const char * filename) {
                 while (gbm_read_object_from_file(&obj, p_file)) {
 
                     //printf("OBJ: type=%d, id=%d, size=%d\n", obj.id, obj.object_id, obj.length_bytes);
-                    printf("GBM OBJ: type=%02x, object_id=%02x, master_id=%02x, size=%04x\n",
+                    log_verbose("GBM OBJ: type=%02x, object_id=%02x, master_id=%02x, size=%04x\n",
                            obj.id, obj.object_id, obj.master_id, obj.length_bytes);
 
                     switch (obj.id) {
                         // Process Object
-                        case gbm_obj_producer: printf("gbm_producer\n");
+                        case gbm_obj_producer: log_verbose("gbm_producer\n");
                                           status = gbm_object_producer_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map: printf("gbm_obj_map\n");
+                        case gbm_obj_map: log_verbose("gbm_obj_map\n");
                                           status = gbm_object_map_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map_tile_data: printf("gbm_obj_map_tile_data\n");
+                        case gbm_obj_map_tile_data: log_verbose("gbm_obj_map_tile_data\n");
                                           status = gbm_object_map_tile_data_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map_prop: printf("gbm_obj_map_prop\n");
+                        case gbm_obj_map_prop: log_verbose("gbm_obj_map_prop\n");
                                           status = gbm_object_map_prop_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_prop_data: printf("gbm_obj_prop_data\n");
+                        case gbm_obj_prop_data: log_verbose("gbm_obj_prop_data\n");
                                           status = gbm_object_prop_data_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_prop_default: printf("gbm_obj_prop_default\n");
+                        case gbm_obj_prop_default: log_verbose("gbm_obj_prop_default\n");
                                           status = gbm_object_prop_default_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map_settings: printf("gbm_obj_map_settings\n");
+                        case gbm_obj_map_settings: log_verbose("gbm_obj_map_settings\n");
                                           status = gbm_object_map_settings_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_prop_colors: printf("gbm_obj_prop_colors\n");
+                        case gbm_obj_prop_colors: log_verbose("gbm_obj_prop_colors\n");
                                           status = gbm_object_prop_colors_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map_export: printf("gbm_obj_map_export\n");
+                        case gbm_obj_map_export: log_verbose("gbm_obj_map_export\n");
                                           status = gbm_object_map_export_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_map_export_prop: printf("gbm_obj_map_export_prop\n");
+                        case gbm_obj_map_export_prop: log_verbose("gbm_obj_map_export_prop\n");
                                           status = gbm_object_map_export_prop_decode(&gbm, &obj);
                                           break;
 
-                        case gbm_obj_deleted: printf("gbm_deleted\n");
+                        case gbm_obj_deleted: log_verbose("gbm_deleted\n");
                                           break;
                     }
                 } // end: while (gbm_read_object_from_file(&obj, p_file))
@@ -287,7 +289,7 @@ int32_t gbm_save_file(const char * filename) {
 
         if (gbm_write_header_key(p_file)) {
 
-            printf("Wrote Header\n");
+            log_verbose("Wrote Header\n");
 
             if (gbm_write_version(p_file)) {
 
@@ -344,14 +346,14 @@ int32_t gbm_save_file(const char * filename) {
 
 image_data * gbm_get_image(void) {
 
-    printf("gbm_get_image\n");
+    log_verbose("gbm_get_image\n");
     return &image;
 }
 
 
 color_data * gbm_get_colors(void) {
 
-    printf("gbm_get_colors\n");
+    log_verbose("gbm_get_colors\n");
     return &colors;
 }
 
@@ -361,7 +363,7 @@ color_data * gbm_get_colors(void) {
 void gbm_set_image(image_data * p_src_image) {
 
  // TODO: implement
-    printf("gbm_set_image\n");
+    log_verbose("gbm_set_image\n");
 //    memcpy(&image, p_src_image, sizeof(image_data));
 }
 
@@ -369,7 +371,7 @@ void gbm_set_image(image_data * p_src_image) {
 void gbm_set_colors(color_data * p_src_colors) {
 
  // TODO: implement
-    printf("gbm_set_colors\n");
+    log_verbose("gbm_set_colors\n");
 //    memcpy(&colors, p_src_colors, sizeof(color_data));
 }
 
@@ -402,13 +404,13 @@ void gbm_set_map_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
     // Only copy structure if size matches
     if (buffer_size == (uint32_t) sizeof(gbm.map_export)) {
 
-        printf("gbm_set_export_from_buffer(): loading...\n");
+        log_verbose("gbm_set_export_from_buffer(): loading...\n");
 
         settings_gbm_map_export_populated = true;
         memcpy(&settings_gbm_map_export, p_src_buf, buffer_size);
     } else {
 
-        printf("gbm_set_export_from_buffer(): buffer size mismatch. don't load\n");
+        log_verbose("gbm_set_export_from_buffer(): buffer size mismatch. don't load\n");
     }
 
 }
@@ -429,13 +431,13 @@ void gbm_set_map_export_prop_from_buffer(uint32_t buffer_size, uint8_t * p_src_b
     // Only copy structure if size matches
     if (buffer_size == (uint32_t) sizeof(gbm.map_export_prop)) {
 
-        printf("gbm_set_map_export_prop_from_buffer(): loading...\n");
+        log_verbose("gbm_set_map_export_prop_from_buffer(): loading...\n");
 
         settings_gbm_map_export_prop_populated = true;
         memcpy(&settings_gbm_map_export_prop, p_src_buf, buffer_size);
     } else {
 
-        printf("gbm_set_map_export_prop_from_buffer(): buffer size mismatch. don't load\n");
+        log_verbose("gbm_set_map_export_prop_from_buffer(): buffer size mismatch. don't load\n");
     }
 
 }

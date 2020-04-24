@@ -5,6 +5,7 @@
 #include "lib_gbr_ops.h"
 #include "lib_gbm_ops.h"
 
+#include "logging.h"
 #include "options.h"
 
 
@@ -28,7 +29,7 @@ int32_t gbr_pal_get_buf(uint8_t * dest_buf, gbr_record * p_gbr) {
         *(dest_buf++) = p_gbr->palettes.colors[offset + 1]; // G.2
         *(dest_buf++) = p_gbr->palettes.colors[offset + 2]; // B.1
 
-        printf(" --COLORS %d: %d) %2x, %2x, %2x, \n", index, offset,
+        log_verbose(" --COLORS %d: %d) %2x, %2x, %2x, \n", index, offset,
                                                 p_gbr->palettes.colors[offset + 0],
                                                 p_gbr->palettes.colors[offset + 1],
                                                 p_gbr->palettes.colors[offset + 2]);
@@ -62,7 +63,7 @@ int32_t gbr_pal_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t num_colo
         p_gbr->palettes.colors[offset + 1] = *(src_buf++); // G.2
         p_gbr->palettes.colors[offset + 2] = *(src_buf++); // B.1
 
-        printf("EXPORT --COLORS %d: %d) %2x, %2x, %2x, \n", index, offset,
+        log_verbose("EXPORT --COLORS %d: %d) %2x, %2x, %2x, \n", index, offset,
                                                 p_gbr->palettes.colors[offset + 0],
                                                 p_gbr->palettes.colors[offset + 1],
                                                 p_gbr->palettes.colors[offset + 2]);
@@ -113,7 +114,7 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
         tile_pal_offset = (map_tile_pal_id - GBR_MAP_TILE_PAL_OFFSET)  * GBR_TILE_DATA_COLOR_SET_SIZE;
     }
 
-//    printf("gbr: gbr_tile_remap_colors: tile_id=%d tile_pal=%d map_tile_pal=%d (0=use tile default)\n",tile_index, p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ], map_tile_pal_id);
+//    log_verbose("gbr: gbr_tile_remap_colors: tile_id=%d tile_pal=%d map_tile_pal=%d (0=use tile default)\n",tile_index, p_gbr->tile_pal.color_set[ (tile_index * GBR_TILE_PAL_COLOR_SET_REC_SIZE) ], map_tile_pal_id);
 
     // Now remap the palette
     for (index = 0; index < tile_size; index++) {
@@ -152,7 +153,7 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         // * the tile tried to use more than one palette
         if ((tile_pal_setting != tile_pal_setting_last)) {
 
-            printf("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", index, tile_pal_setting_last, tile_pal_setting);
+            log_verbose("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", index, tile_pal_setting_last, tile_pal_setting);
             return (false);
         }
         else {
@@ -172,12 +173,12 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
     // Check for Palette out of range
     if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_DMG) && (gb_mode == MODE_DMG_4_COLOR)) {
 
-        printf("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for DMG 4 color: %d\n", tile_pal_setting);
+        log_verbose("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for DMG 4 color: %d\n", tile_pal_setting);
         return (false);
 
     } else if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_CGB) && (gb_mode == MODE_CGB_32_COLOR)) {
 
-        printf("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for CGB 16 color: %d\n",tile_pal_setting );
+        log_verbose("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for CGB 16 color: %d\n",tile_pal_setting );
         return (false);
     }
 
@@ -274,16 +275,16 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
 
     memcpy(&(p_gbr->tile_data.tile_list[offset]), src_buf, tile_size);
 
-    // printf("==gbr_tile_set_buf (%dx%d)\n",p_gbr->tile_data.width,p_gbr->tile_data.height);
+    // log_verbose("==gbr_tile_set_buf (%dx%d)\n",p_gbr->tile_data.width,p_gbr->tile_data.height);
     // int x;
     // int y;
     // for (y = 0; y < p_gbr->tile_data.height; y++) {
     //     for (x = 0; x < p_gbr->tile_data.width; x++) {
-    //         printf("%4x", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
+    //         log_verbose("%4x", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
     //     }
-    //     printf("\n");
+    //     log_verbose("\n");
     // }
-    // printf("\n");
+    // log_verbose("\n");
 
 
     // Remap the colors to 2bpp + palette index (and store palette in list)
@@ -308,8 +309,10 @@ int32_t gbr_tile_set_buf_padding(gbr_record * p_gbr, uint16_t tile_index) {
 
     // Make sure there is enough data for a complete tile in the source tile buffer
     // TODO: better bounds checking here, matched to actual max tile size
-    if ((tile_size * tile_index) > PASCAL_OBJECT_MAX_SIZE)
+    if ((tile_size * tile_index) > PASCAL_OBJECT_MAX_SIZE) {
+        log_error("Error: gbr_tile_set_buf_padding: exceeded max GBR file record size\n");
         return false;
+    }
 
     // Fill the padding tile with zeros
     memset(&(p_gbr->tile_data.tile_list[offset]), 0x00, tile_size);

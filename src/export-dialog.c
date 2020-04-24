@@ -4,6 +4,8 @@
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
 
+#include "logging.h"
+
 #include "export-dialog.h"
 
 #define ARRAY_LEN(x)  (int)(sizeof(x) / sizeof((x)[0]))
@@ -183,7 +185,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         gimp_message("Error!\n\nImage must have 32 or fewer colors");
     }
 
-    printf("Dialog Exit with %d\n",response);
+    log_verbose("Dialog Exit with %d\n",response);
     return response;
 }
 

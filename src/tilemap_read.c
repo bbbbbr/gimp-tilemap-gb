@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <libgimp/gimp.h>
 
+#include "logging.h"
+
 #include "lib_tilemap.h"
 #include "tilemap_read.h"
 
@@ -39,7 +41,7 @@ static void tilemap_read_free_resources(uint16_t image_format) {
 void tilemap_import_parasite_gbr(gint image_id) {
     GimpParasite * p_parasite;
 
-    printf("GBR import: Parasite %d bytes\n",gbr_get_export_rec_size());
+    log_verbose("GBR import: Parasite %d bytes\n",gbr_get_export_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbr_get_export_rec_size()) {
@@ -49,15 +51,15 @@ void tilemap_import_parasite_gbr(gint image_id) {
                            gbr_get_export_rec_buffer());
         gimp_image_attach_parasite(image_id, p_parasite);
         if (p_parasite) gimp_parasite_free(p_parasite);
-    } else printf("GBR: Failed to store parasite\n");
+    } else log_verbose("GBR: Failed to store parasite\n");
 }
 
 
 void tilemap_import_parasite_gbm(gint image_id) {
     GimpParasite * p_parasite;
 
-    printf("GBM import: map export: Parasite %d bytes\n", gbm_get_map_export_rec_size());
-    printf("GBM import: map export prop: Parasite %d bytes\n", gbm_get_map_export_prop_rec_size());
+    log_verbose("GBM import: map export: Parasite %d bytes\n", gbm_get_map_export_rec_size());
+    log_verbose("GBM import: map export prop: Parasite %d bytes\n", gbm_get_map_export_prop_rec_size());
 
     // Store surplus (non-decodable) bytes from the rom into a gimp metadata parasite
     if (gbm_get_map_export_rec_size()) {
@@ -116,7 +118,7 @@ int tilemap_read(const char * filename, uint16_t image_format)
 
     // Check to make sure that the load was successful
     if (!status) {
-        printf("Image load failed \n");
+        log_verbose("Image load failed \n");
 
         // Free allocated buffers / release resources
         tilemap_read_free_resources(image_format);

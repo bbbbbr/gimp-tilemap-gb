@@ -2,6 +2,8 @@
 // lib_gbr_export.c
 //
 
+#include "logging.h"
+
 #include "lib_gbr_export.h"
 #include "lib_gbr_file_utils.h"
 #include "lib_gbr_ops.h"
@@ -59,7 +61,7 @@ int32_t gbr_object_producer_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
     gbr_write_str(p_gbr->producer.version, p_obj, GBR_PRODUCER_VERSION_SIZE);
     gbr_write_str(p_gbr->producer.info,    p_obj, GBR_PRODUCER_INFO_SIZE);
 
-    printf("PRODUCER:\n%s\n%s\n%s\n", p_gbr->producer.name,
+    log_verbose("PRODUCER:\n%s\n%s\n%s\n", p_gbr->producer.name,
                                       p_gbr->producer.version,
                                       p_gbr->producer.info);
 
@@ -107,7 +109,7 @@ int32_t gbr_object_tile_data_encode(gbr_record * p_gbr, gbr_file_object * p_obj)
 
 
 
-printf("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
+log_verbose("TILE_DATA:\n%s\n %d\n %d\n %d\n %x\n %x\n %x\n %x\n%d\n%d\n",
                                  p_gbr->tile_data.name,
                                  p_gbr->tile_data.width,
                                  p_gbr->tile_data.height,
@@ -149,7 +151,7 @@ int32_t gbr_object_tile_settings_encode(gbr_record * p_gbr, gbr_file_object * p_
     gbr_write_uint8 (&p_gbr->tile_settings.auto_update,  p_obj);
 
 
-printf("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+log_verbose("TILE_SETTINGS:\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
                                  p_gbr->tile_settings.tile_id,
                                  p_gbr->tile_settings.simple,
                                  p_gbr->tile_settings.flags,
@@ -196,7 +198,7 @@ int32_t gbr_object_tile_export_encode(gbr_record * p_gbr, gbr_file_object * p_ob
     gbr_write_uint8 (&p_gbr->tile_export.sel_tab,        p_obj);
 
 
-printf("TILE_EXPORT:\n%d\n%s\n%d\n%s\nTiles: %d - %d\n",
+log_verbose("TILE_EXPORT:\n%d\n%s\n%d\n%s\nTiles: %d - %d\n",
                                  p_gbr->tile_export.tile_id,
                                  p_gbr->tile_export.file_name,
                                  p_gbr->tile_export.file_type,
@@ -230,7 +232,7 @@ int32_t gbr_object_tile_import_encode(gbr_record * p_gbr, gbr_file_object * p_ob
     gbr_write_uint8 (&p_gbr->tile_import.binary_file_type, p_obj);
 
 
-printf("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
+log_verbose("TILE_import:\n%d\n%s\n%d\n%d\n%d\n",
                                  p_gbr->tile_import.tile_id,
                                  p_gbr->tile_import.file_name,
                                  p_gbr->tile_import.file_type,
@@ -261,7 +263,7 @@ int32_t gbr_object_palettes_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
     gbr_write_buf   ( p_gbr->palettes.sgb_colors, p_obj, GBR_PALETTE_SGB_SETS_ACTUAL_SIZE);
 
 
-printf("Palettes:\n%d\n%d\n%d\n",
+log_verbose("Palettes:\n%d\n%d\n%d\n",
                                  p_gbr->palettes.id,
                                  p_gbr->palettes.count,
                                  p_gbr->palettes.sgb_count);
@@ -297,7 +299,7 @@ int32_t gbr_object_tile_pal_encode(gbr_record * p_gbr, gbr_file_object * p_obj) 
     // Not sure where this comes from
     gbr_write_padding(p_obj, GBR_TILE_PAL_UNKNOWN_PADDING);
 
-printf("tile pal:\n%d\n%d\n%d\n",
+log_verbose("tile pal:\n%d\n%d\n%d\n",
                                  p_gbr->tile_pal.id,
                                  p_gbr->tile_pal.count,
                                  p_gbr->tile_pal.sgb_count);
@@ -341,7 +343,7 @@ int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr) {
     }
 
 
-printf("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new=%d\npadding=%d\n",
+log_verbose("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new=%d\npadding=%d\n",
                                          tile_size_bytes,
                                          tile_buf_size_current,
                                          tile_buf_size_new,
@@ -413,7 +415,7 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
     if (gb_mode == MODE_CGB_32_COLOR) {
 
         if (p_colors->color_count > GBR_TILE_DATA_PALETTE_SIZE_CGB) {
-            printf("Too many colors for CGB Mode: %d\n", p_colors->color_count);
+            log_error("Error: Too many colors for CGB Mode: %d\n", p_colors->color_count);
             return false; // FAILED, too many colors
         } else {
 
@@ -426,7 +428,7 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
         // implied: if (gb_mode == MODE_DMG_4_COLOR) {
 
         if (p_colors->color_count > GBR_TILE_DATA_PALETTE_SIZE_DMG) {
-            printf("Too many colors for DMG Mode: %d\n", p_colors->color_count);
+            log_error("Error: too many colors for DMG Mode: %d\n", p_colors->color_count);
             return false; // FAILED, too many colors
         } else {
 
@@ -454,8 +456,10 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
     gbr_export_tileset_color_settings(p_gbr, gb_mode);
 
     // Sets up tile data count/etc (used below)
-    if (!gbr_export_tileset_calc_dimensions(p_gbr, p_image))
+    if (!gbr_export_tileset_calc_dimensions(p_gbr, p_image)) {
+        log_error("Error: invalid image dimensions for GBR. Entire image must be 8, 16 or 32 pixels wide\n");
         return false;
+    }
 
     gbr_export_tileset_calc_tile_count_padding(p_gbr);
 
@@ -469,7 +473,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         // TODO: Support using a default tile size (8x8) that is a multiple of the image width
 
         for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
-            // printf("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
+            // log_verbose("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
 
             if (!gbr_tile_set_buf(&p_image->p_img_data[offset],
                                   p_gbr,
@@ -483,7 +487,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
         // Now add padding tiles to achieve the minimum required size
         for (tile_id=p_gbr->tile_data.count; tile_id < (p_gbr->tile_data.count + p_gbr->tile_data.padding_tile_count); tile_id++) {
-            // printf("PADDING EXPORT Tile:%d\n", tile_id);
+            // log_verbose("PADDING EXPORT Tile:%d\n", tile_id);
             if (!gbr_tile_set_buf_padding(p_gbr,
                                           tile_id))
                 return false;
@@ -496,7 +500,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
                                                                  * p_gbr->tile_data.count;
 
-        printf("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
+        log_verbose("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
                                                   p_gbr->tile_data.width,
                                                   p_gbr->tile_data.height,
                                                   p_gbr->tile_data.count);
@@ -538,7 +542,7 @@ void gbr_export_tileset_color_settings(gbr_record * p_gbr, uint16_t gb_mode) {
     p_gbr->tile_pal.sgb_count = p_gbr->tile_data.count;
     p_gbr->tile_pal.sgb_color_set_size_bytes = p_gbr->tile_pal.count * GBR_TILE_PAL_COLOR_SET_REC_SIZE;
 
-    // printf("gbr_export_tileset_color_settings(): gb_mode = %d, "
+    // log_verbose("gbr_export_tileset_color_settings(): gb_mode = %d, "
     //        "tile_settings.color_set = %d, tile_settings.pal_data_size = %d,"
     //        "tile_pal.count = %d,tile_pal.color_set_size_bytes = %d,"
     //         "tile_pal.sgb_count = %d, tile_pal.sgb_color_set_size_bytes = %d \n",
@@ -568,7 +572,7 @@ int32_t gbr_export_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     // Make sure there is enough space in destination palette buffer
     // This is always 4 colors, regardless of Pocket/DMG/CGB/SGB mode
     if ((p_gbr->tile_data.pal_data_size * COLOR_DATA_BYTES_PER_COLOR) > (COLOR_DATA_PAL_SIZE)) {
-        printf("Not enough space in palette %d x 3 vs %d\n", p_gbr->tile_data.pal_data_size, COLOR_DATA_PAL_SIZE);
+        log_error("Error: Not enough space in palette %d x 3 vs %d\n", p_gbr->tile_data.pal_data_size, COLOR_DATA_PAL_SIZE);
         return false;
     }
 
@@ -576,7 +580,7 @@ int32_t gbr_export_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
     // Ensuring the palette is the expected fixed size is handled in gbr_validate_palette_size()
     p_gbr->tile_settings.pal_data_size = p_colors->color_count;
 
-    printf("COLOR: size=%d\n", p_colors->color_count);
+    log_verbose("COLOR: size=%d\n", p_colors->color_count);
 
     buf_offset = 0;
     pal_offset = 0;
@@ -597,7 +601,7 @@ int32_t gbr_export_tileset_palette(color_data * p_colors, gbr_record * p_gbr) {
         p_gbr->palettes.colors[pal_offset + 1] = clamp(p_colors->pal[buf_offset++], GBR_COL_MAX); // G.1
         p_gbr->palettes.colors[pal_offset + 2] = clamp(p_colors->pal[buf_offset++], GBR_COL_MAX); // B.2
 
-        printf("EXPORT --COLORS %d: %d) %2x, %2x, %2x, <- %2x, %2x, %2x, \n", pal_index, pal_offset,
+        log_verbose("EXPORT --COLORS %d: %d) %2x, %2x, %2x, <- %2x, %2x, %2x, \n", pal_index, pal_offset,
                                                 p_gbr->palettes.colors[pal_offset + 0],
                                                 p_gbr->palettes.colors[pal_offset + 1],
                                                 p_gbr->palettes.colors[pal_offset + 2],
@@ -758,7 +762,7 @@ void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * fil
     snprintf(p_gbr->tile_export.file_name, GBR_TILE_EXPORT_FILE_NAME_SIZE, "%s_tiles.c", filename_trimmed);
     snprintf(p_gbr->tile_export.label_name, GBR_TILE_EXPORT_LABEL_NAME_SIZE, "%s_tiles", filename_trimmed);
 
-    // printf("gbr_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
+    // log_verbose("gbr_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
     //         filename,
     //         filename_trimmed,
     //         p_gbr->tile_export.file_name,

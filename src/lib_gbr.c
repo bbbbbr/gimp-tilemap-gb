@@ -2,6 +2,8 @@
 // lib_gbr.c
 //
 
+#include "logging.h"
+
 #include "lib_gbr.h"
 #include "lib_gbr_import.h"
 #include "lib_gbr_export.h"
@@ -48,7 +50,7 @@ int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p
 
     // Overlay any cached export settings
     if (settings_gbr_tile_export_populated) {
-        printf("gbr_save(): Overlay any cached export settings - found\n");
+        log_verbose("gbr_save(): Overlay any cached export settings - found\n");
         memcpy(&(gbr.tile_export), &settings_gbr_tile_export, sizeof(gbr_tile_export));
     }
 
@@ -82,14 +84,14 @@ gbr_record * gbr_get_ptr(void) {
 
 image_data * gbr_get_image(void) {
 
-    printf("gbr_get_image\n");
+    log_verbose("gbr_get_image\n");
     return &image;
 }
 
 
 color_data * gbr_get_colors(void) {
 
-    printf("gbr_get_colors\n");
+    log_verbose("gbr_get_colors\n");
     return &colors;
 }
 
@@ -98,14 +100,14 @@ color_data * gbr_get_colors(void) {
 // TODO: these are deprecated
 void gbr_set_image(image_data * p_src_image) {
 
-    printf("gbr_set_image\n");
+    log_verbose("gbr_set_image\n");
     memcpy(&image, p_src_image, sizeof(image_data));
 }
 
 
 void gbr_set_colors(color_data * p_src_colors) {
 
-    printf("gbr_set_colors\n");
+    log_verbose("gbr_set_colors\n");
     memcpy(&colors, p_src_colors, sizeof(color_data));
 }
 
@@ -124,13 +126,13 @@ void gbr_set_export_from_buffer(uint32_t buffer_size, uint8_t * p_src_buf) {
     // Only copy structure if size matches
     if (buffer_size == (uint32_t) sizeof(gbr_tile_export)) {
 
-        printf("gbr_set_export_from_buffer(): loading...\n");
+        log_verbose("gbr_set_export_from_buffer(): loading...\n");
 
         settings_gbr_tile_export_populated = true;
         memcpy(&settings_gbr_tile_export, p_src_buf, buffer_size);
     } else {
 
-        printf("gbr_set_export_from_buffer(): buffer size mismatch. don't load\n");
+        log_verbose("gbr_set_export_from_buffer(): buffer size mismatch. don't load\n");
     }
 
 }
@@ -154,47 +156,47 @@ int32_t gbr_load_file(const char * filename) {
 
         if (gbr_read_header_key(p_file)) {
 
-            printf("Found Header\n");
+            log_verbose("Found Header\n");
 
             if (gbr_read_version(p_file) && status) {
 
                 // Read objects from the file until it's finished
                 while (gbr_read_object_from_file(&obj, p_file)) {
 
-                    printf("OBJ: type=%d, id=%d, size=%d\n", obj.type, obj.id, obj.length_bytes);
-                    printf("OBJ: type=%02x, id=%02x, size=%04x\n", obj.type, obj.id, obj.length_bytes);
+                    log_verbose("OBJ: type=%d, id=%d, size=%d\n", obj.type, obj.id, obj.length_bytes);
+                    log_verbose("OBJ: type=%02x, id=%02x, size=%04x\n", obj.type, obj.id, obj.length_bytes);
 
                     switch (obj.type) {
                         // Process Object
-                        case gbr_obj_producer: printf("gbr_producer\n");
+                        case gbr_obj_producer: log_verbose("gbr_producer\n");
                                           status = gbr_object_producer_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_data: printf("gbr_tile_data\n");
+                        case gbr_obj_tile_data: log_verbose("gbr_tile_data\n");
                                           status = gbr_object_tile_data_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_settings: printf("gbr_tile_settings\n");
+                        case gbr_obj_tile_settings: log_verbose("gbr_tile_settings\n");
                                           status = gbr_object_tile_settings_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_export: printf("gbr_tile_export\n");
+                        case gbr_obj_tile_export: log_verbose("gbr_tile_export\n");
                                           status = gbr_object_tile_export_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_import: printf("gbr_tile_import\n");
+                        case gbr_obj_tile_import: log_verbose("gbr_tile_import\n");
                                           status = gbr_object_tile_import_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_palettes: printf("gbr_palettes\n");
+                        case gbr_obj_palettes: log_verbose("gbr_palettes\n");
                                           status = gbr_object_palettes_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_tile_pal: printf("gbr_tile_pal\n");
+                        case gbr_obj_tile_pal: log_verbose("gbr_tile_pal\n");
                                           status = gbr_object_tile_pal_decode(&gbr, &obj);
                                           break;
 
-                        case gbr_obj_deleted: printf("gbr_deleted\n");
+                        case gbr_obj_deleted: log_verbose("gbr_deleted\n");
                                           break;
                     }
                 } // end: while (gbr_read_object_from_file(&obj, p_file))
@@ -232,7 +234,7 @@ int32_t gbr_save_file(const char * filename) {
 
         if (gbr_write_header_key(p_file)) {
 
-            printf("Wrote Header\n");
+            log_verbose("Wrote Header\n");
 
             if (gbr_write_version(p_file)) {
 

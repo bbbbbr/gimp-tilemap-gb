@@ -31,6 +31,7 @@
 #include "image_info.h"
 #include "lib_rom_bin.h"
 
+#include "logging.h"
 #include "options.h"
 
 
@@ -40,12 +41,12 @@ static void tilemap_export_parasite_gbr(gint image_id) {
     img_parasite = gimp_image_get_parasite(image_id, "GBR-EXPORT-SETTINGS");
 
     if (img_parasite) {
-        printf("GBR: Found parasite size %d\n", img_parasite->size);
+        log_verbose("GBR: Found parasite size %d\n", img_parasite->size);
 
         // Load settings cached in the gimp metadata parasite
         gbr_set_export_from_buffer(img_parasite->size, (unsigned char *)img_parasite->data);
 
-    } else printf("GBR: No parasite found\n");
+    } else log_verbose("GBR: No parasite found\n");
 }
 
 
@@ -57,23 +58,23 @@ static void tilemap_export_parasite_gbm(gint image_id) {
     img_parasite_map_export = gimp_image_get_parasite(image_id, "GBM-EXPORT-SETTINGS");
 
     if (img_parasite_map_export) {
-        printf("GBM: map export: Found parasite size %d\n", img_parasite_map_export->size);
+        log_verbose("GBM: map export: Found parasite size %d\n", img_parasite_map_export->size);
 
         // Load settings cached in the gimp metadata parasite
         gbm_set_map_export_from_buffer(img_parasite_map_export->size, (unsigned char *)img_parasite_map_export->data);
 
-    } else printf("GBM: map export: No parasite found\n");
+    } else log_verbose("GBM: map export: No parasite found\n");
 
 
     img_parasite_map_export_prop = gimp_image_get_parasite(image_id, "GBM-EXPORT-PROP-SETTINGS");
 
     if (img_parasite_map_export_prop) {
-        printf("GBM: map export: Found parasite size %d\n", img_parasite_map_export_prop->size);
+        log_verbose("GBM: map export: Found parasite size %d\n", img_parasite_map_export_prop->size);
 
         // Load settings cached in the gimp metadata parasite
         gbm_set_map_export_prop_from_buffer(img_parasite_map_export_prop->size, (unsigned char *)img_parasite_map_export_prop->data);
 
-    } else printf("GBM: map export: No parasite found\n");
+    } else log_verbose("GBM: map export: No parasite found\n");
 
 
 }
@@ -110,7 +111,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
   // TODO: --> Maybe because of gimp_export_image?
     // Is it due to the export functionality?
 
-    printf("write-tilemap.c: bytes per pixel= %d\n", app_image.bytes_per_pixel);
+    log_verbose("write-tilemap.c: bytes per pixel= %d\n", app_image.bytes_per_pixel);
 
     // Abort if it's not 1 or 2 bytes per pixel
     // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
@@ -152,7 +153,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     else
         status = false;
 
-    printf("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
+    log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
 
 
@@ -165,7 +166,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
             case FORMAT_GBDK_C_SOURCE:
 
                 status = tilemap_export_process(&app_image);
-                printf("tilemap_export_process: status= %d\n", status);
+                log_verbose("tilemap_export_process: status= %d\n", status);
 
 
                 // TODO: Separate out GBDK_C_SOURCE file format handling to a seperate library
@@ -173,7 +174,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
                 // gbdk_c_source_format.c
                 if (status)
                     status = tilemap_save(filename, plugin_options.image_format);
-                printf("tilemap_save: status= %d\n", status);
+                log_verbose("tilemap_save: status= %d\n", status);
                 break;
 
             case FORMAT_GBR:
@@ -182,7 +183,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
                 tilemap_export_parasite_gbr(image_id);
 
                 status = gbr_save(filename, &app_image, &app_colors, plugin_options); // TODO: CGB MODE: send entire plugin_options struct down?
-                printf("gbr_save: status= %d\n", status);
+                log_verbose("gbr_save: status= %d\n", status);
                 break;
 
             case FORMAT_GBM:
@@ -193,7 +194,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
                 // Set processed Map tile set and map array
                 status = gbm_save(filename, &app_image, &app_colors, plugin_options);
-                printf("gbm_save: status= %d\n", status);
+                log_verbose("gbm_save: status= %d\n", status);
                 break;
         }
     }

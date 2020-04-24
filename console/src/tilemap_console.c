@@ -1,17 +1,24 @@
+// tilemap_console.c
+
+//
+// Console wrapper for lib_tilemap
+//
+// Allows loading of PNG and export to GBR/GBM/C Sources
+//
+
 #include "lodepng.h"
 
-// #include "tilemap_write.h"
-// #include "tilemap_read.h"
+#include "logging.h"
+#include "image_info.h"
+#include "options.h"
+
 #include "tilemap_error.h"
 
 #include "lib_tilemap.h"
 #include "lib_gbr.h"
 #include "lib_gbm.h"
-
 #include "lib_rom_bin.h"
 
-#include "image_info.h"
-#include "options.h"
 
 int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image, uint8_t bitdepth, long src_size_bytes) {
 
@@ -43,12 +50,12 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
     unsigned char * p_png = NULL;
     unsigned char * p_image = NULL;
     unsigned int width, height;
-    long         src_image_bytes = 0;
+    long         src_image_size_bytes = 0;
     unsigned int color_count = 0;
-    long image_size_bytes = 0;
     size_t pngsize;
     LodePNGState state;
 
+    log_standard("Loading image from file: %s\n", filename);
 
     // Initialize png library
     lodepng_state_init(&state);
@@ -67,22 +74,22 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
     // Fail on errors and Require indexed color
     if (err) {
         status = false;
-        printf("ERROR %u: %s\n", err, lodepng_error_text(err));
+        log_error("Error: PNG load: %u: %s\n", err, lodepng_error_text(err));
     }
     else if (state.info_png.color.colortype != LCT_PALETTE) {
         status = false;
-        printf("ERROR: PNG colortype 3 (indexed, 256 colors max) expected!\n");
+        log_error("Error: PNG colortype 3 (indexed, 256 colors max) expected!\n");
     }
     else if ((state.info_png.color.bitdepth  > 8) ||
              (state.info_png.color.bitdepth  < 1)) {
         status = false;
-        printf("ERROR: Decoded image must be between 1 and 8 bits per pixel\n");
+        log_error("Error: Decoded image must be between 1 and 8 bits per pixel\n");
     }
 
     if (status) {
 
         // Source image could be bit-packed, so reduce byte count accordingly
-        src_image_bytes = (width * height) / (8 / state.info_png.color.bitdepth);
+        src_image_size_bytes = (width * height) / (8 / state.info_png.color.bitdepth);
 
         // == IMAGE PROPERTIES from decoded PNG ==
         // Determine the array size for the app's image then allocate it
@@ -91,32 +98,21 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
         p_src_image->height     = height;
         p_src_image->size       = p_src_image->width * p_src_image->height * p_src_image->bytes_per_pixel;
         p_src_image->p_img_data = malloc(p_src_image->size);  // lodepng_decode() handles allocation
-//        memcpy(p_src_image->p_img_data, p_image, p_src_image->size);
 
-        tilemap_unbitpack_image(p_image, // input
+        // Can't memcpy to destination image directly since the
+        // loaded png image may be bitpacked. So instead, unpack it.
+        tilemap_unbitpack_image(p_image,                 // input
                                 p_src_image->p_img_data, // output
                                 state.info_png.color.bitdepth,
-                                src_image_bytes);
+                                src_image_size_bytes);
 
+        log_verbose("p_src_image->width:%d\n", p_src_image->width);
+        log_verbose("p_src_image->height:%d\n", p_src_image->height);
+        log_verbose("p_src_image->size:%d\n", p_src_image->size);
+        log_verbose("p_src_image->bytes_per_pixel:%d\n", p_src_image->bytes_per_pixel);
 
-printf("p_src_image->width:%d\n", p_src_image->width);
-printf("p_src_image->height:%d\n", p_src_image->height);
-printf("p_src_image->size:%d\n", p_src_image->size);
-printf("p_src_image->bytes_per_pixel:%d\n", p_src_image->bytes_per_pixel);
-
-printf("colortype:%d\n", state.info_png.color.colortype);
-printf("bitdepth:%d\n", state.info_png.color.bitdepth);
-printf("colortype:%d\n", state.info_raw.colortype);
-printf("bitdepth:%d\n", state.info_raw.bitdepth);
-
-
-        // // lodepng seems to decode bit depths of < 8 into the high bits
-        // for (c=0; c < p_src_image->size; c++) {
-        //     printf("%3x", p_image[c]);
-        //     if (((c +1)  % 16) == 0) printf("\n");
-        // }
-
-
+        log_verbose("colortype:%d\n", state.info_raw.colortype);
+        log_verbose("bitdepth:%d\n", state.info_raw.bitdepth);
 
         // == COLOR DATA ==
         // Load color palette info and data
@@ -142,6 +138,8 @@ int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_
     int status = true;
     tile_process_options options;
 
+    log_standard("Writing output to file: %s\n", filename);
+
     // Load options
     tilemap_options_get(&options);
 
@@ -149,22 +147,22 @@ int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_
 
         case FORMAT_GBDK_C_SOURCE:
             status = tilemap_export_process(p_src_image);
-            printf("tilemap_export_process: status= %d\n", status);
+            log_verbose("tilemap_export_process: status= %d\n", status);
 
             if (status)
                 status = tilemap_save(filename, options.image_format);
-            printf("tilemap_save: status= %d\n", status);
+            log_verbose("tilemap_save: status= %d\n", status);
             break;
 
         case FORMAT_GBR:
             status = gbr_save(filename, p_src_image, p_src_colors, options); // TODO: CGB MODE: send entire options struct down?
-            printf("gbr_save: status= %d\n", status);
+            log_verbose("gbr_save: status= %d\n", status);
             break;
 
         case FORMAT_GBM:
             // Set processed Map tile set and map array
             status = gbm_save(filename, p_src_image, p_src_colors, options);
-            printf("gbm_save: status= %d\n", status);
+            log_verbose("gbm_save: status= %d\n", status);
             break;
     }
 
@@ -173,6 +171,11 @@ int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_
         free(p_src_image->p_img_data);
 
     tilemap_free_resources();
+
+    if (tilemap_error_get() != TILE_ID_OK) {
+        log_error(tilemap_error_get_string());
+    }
+
 
     return status;
 }

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logging.h"
+
 #include "lib_tilemap.h"
 #include "tilemap_io.h"
 #include "tilemap_path_ops.h"
@@ -27,7 +29,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     char filename_map_c[STR_FILENAME_MAX];
     char filename_map_h[STR_FILENAME_MAX];
 
-printf("Writing to gbdk C source files...\n");
+log_verbose("Writing to gbdk C source files...\n");
 
     // TODO: resume honoring requested filename for output
 /*
@@ -47,14 +49,14 @@ printf("Writing to gbdk C source files...\n");
     snprintf(filename_map_c,   STR_FILENAME_MAX, "%smap.b3.c", path_without_filename);
     snprintf(filename_map_h,   STR_FILENAME_MAX, "%smap.h",    path_without_filename);
 
-    printf("%s\n", filename_tiles_c);
-    printf("%s\n", filename_tiles_h);
-    printf("%s\n", filename_map_c);
-    printf("%s\n", filename_map_h);
+    log_verbose("%s\n", filename_tiles_c);
+    log_verbose("%s\n", filename_tiles_h);
+    log_verbose("%s\n", filename_map_c);
+    log_verbose("%s\n", filename_map_h);
 
 
 
-printf("// ==== TILE SET C SOURCE FILE ====\n");
+log_verbose("// ==== TILE SET C SOURCE FILE ====\n");
     // ==== TILE SET C SOURCE FILE ====
 
     // Open the file
@@ -114,7 +116,7 @@ printf("// ==== TILE SET C SOURCE FILE ====\n");
     fclose(file);
 
 
-printf("// ==== TILE SET C HEADER FILE ====\n");
+log_verbose("// ==== TILE SET C HEADER FILE ====\n");
     // ==== TILE SET C HEADER FILE ====
 
     // Open the file
@@ -139,7 +141,7 @@ printf("// ==== TILE SET C HEADER FILE ====\n");
 
 
 
-printf("// ==== TILE MAP C SOURCE FILE ====\n");
+log_verbose("// ==== TILE MAP C SOURCE FILE ====\n");
     // ==== TILE MAP C SOURCE FILE ====
 
     // Open the file
@@ -198,7 +200,7 @@ printf("// ==== TILE MAP C SOURCE FILE ====\n");
 
 
 
-printf("// ==== TILE MAP C HEADER FILE ====\n");
+log_verbose("// ==== TILE MAP C HEADER FILE ====\n");
     // ==== TILE MAP C HEADER FILE ====
 
     // Open the file

@@ -2,6 +2,8 @@
 // lib_gbm_ops.c
 //
 
+#include "logging.h"
+
 #include "lib_tilemap.h" // TODO: This is only here for things like : TILE_FLIP_BITS_X, find a better way to handle that
 #include "lib_gbm_ops.h"
 
@@ -22,12 +24,12 @@ void gbm_map_tiles_print(gbm_record * p_gbm) {
             tile = gbm_map_tile_get_xy(p_gbm, x, y);
             index++;
 
-            printf(" %3d", tile.num);
-            if ((index % p_gbm->map.width) == 0) printf("\n");
+            log_verbose(" %3d", tile.num);
+            if ((index % p_gbm->map.width) == 0) log_verbose("\n");
         }
     }
 
-    printf("\n");
+    log_verbose("\n");
 }
 
 
@@ -48,14 +50,14 @@ void gbm_map_tiles_flip_print(gbm_record * p_gbm) {
             index++;
 
             if (tile.flip_h | tile.flip_v)
-                printf(" %3d", tile.flip_h | tile.flip_v); // Flip x/y
+                log_verbose(" %3d", tile.flip_h | tile.flip_v); // Flip x/y
             else
-                printf("   ."); // Default, no flip
-            if ((index % p_gbm->map.width) == 0) printf("\n");
+                log_verbose("   ."); // Default, no flip
+            if ((index % p_gbm->map.width) == 0) log_verbose("\n");
         }
     }
 
-    printf("\n");
+    log_verbose("\n");
 }
 
 
@@ -76,14 +78,14 @@ void gbm_map_tiles_pal_print(gbm_record * p_gbm) {
             index++;
 
             if (tile.pal_cgb_id)
-                printf(" %3d", tile.pal_cgb_id); // Override palette
+                log_verbose(" %3d", tile.pal_cgb_id); // Override palette
             else
-                printf("   ."); // Default, no palette override
-            if ((index % p_gbm->map.width) == 0) printf("\n");
+                log_verbose("   ."); // Default, no palette override
+            if ((index % p_gbm->map.width) == 0) log_verbose("\n");
         }
     }
 
-    printf("\n");
+    log_verbose("\n");
 }
 
 
@@ -111,8 +113,8 @@ gbm_tile_record gbm_map_tile_get_xy(gbm_record * p_gbm, uint16_t x, uint16_t y) 
                ((uint16_t)p_gbm->map_tile_data.records[index+1] >> 8)) & GBM_MAP_TILE_NUM;
 
         //printf("gbm_map_tile_get_xy() at %d , %d: map_tile.num=%d\n", x,y, map_tile.num);
-        // printf(" %3d", map_tile.num);
-        // if (((x + 1) % p_gbm->map.width) == 0) printf("\n");
+        // log_verbose(" %3d", map_tile.num);
+        // if (((x + 1) % p_gbm->map.width) == 0) log_verbose("\n");
 
     return map_tile;
 
@@ -127,8 +129,8 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
     index = (x + (y * p_gbm->map.width)) * GBM_MAP_TILE_RECORD_SIZE;
 
     if ((index + 2) > p_gbm->map_tile_data.length_bytes) {
+        log_error("Error: gbm_map_tile_set_xy: data size bounds check failed: %d, %d \n", x,y);
         return false;  // TODO: use/signal proper failure return code here
-        printf("gbm_map_tile_set_xy: FAILED: %d, %d \n", x,y);
     }
 
     // Set Tile Number
@@ -157,8 +159,8 @@ uint32_t gbm_map_tile_set_xy(gbm_record * p_gbm, uint16_t x, uint16_t y, uint16_
     // TODO: For now, always forced to Palette Zero
     p_gbm->map_tile_data.records[index] |= (GBM_MAP_TILE_PAL_NONCGB_DEFAULT & GBM_MAP_TILE_PAL_NONCGB_BYTE);
 
-    // printf("gbm_map_tile_set_xy() at %4d, %4d: index = %3d, pal = %3d (254=default)\n", x,y, tile_index, palette_num);
-    // if ((x % p_gbm->map.width) == 0) printf("\n");
+    // log_verbose("gbm_map_tile_set_xy() at %4d, %4d: index = %3d, pal = %3d (254=default)\n", x,y, tile_index, palette_num);
+    // if ((x % p_gbm->map.width) == 0) log_verbose("\n");
 
     return true;
 }
@@ -184,7 +186,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
     // tile width and height, and number of tiles
     p_image->size = p_image->width * p_image->height * p_image->bytes_per_pixel;
 
-    printf("gbm_convert_map_to_image(): %d x %d @ size: %d\n", p_image->width,
+    log_verbose("gbm_convert_map_to_image(): %d x %d @ size: %d\n", p_image->width,
                                                              p_image->height,
                                                              p_image->size);
 
@@ -223,7 +225,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
         status = false;
     }
 
-    printf("\n");
+    log_verbose("\n");
 
     // Return success
     return status;
@@ -234,7 +236,7 @@ int32_t gbm_convert_tilemap_buf_to_map(gbm_record * p_gbm, uint16_t * p_map_tile
 
     uint16_t map_x, map_y;
 
-    printf("gbm_convert_image_to_map: %dx%d @ size=%d\n", p_gbm->map.width,
+    log_standard("gbm output to map: %dx%d @ size=%d\n", p_gbm->map.width,
                                                           p_gbm->map.height,
                                                           map_data_count);
 
