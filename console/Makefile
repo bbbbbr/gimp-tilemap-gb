@@ -1,37 +1,4 @@
-# CC = gcc
-# DEL = rm -f
-# SRCDIR = src
-# BUILDDIR = build
-# OUTDIR = bin
-# LODEPNGDIR = lodepng
-# TILEMAPGBDIR = tilemap_gb
-# INCS = -I"$(SRCDIR)" -I"$(LODEPNGDIR)" -I"$(TILEMAPGBDIR)"
-# OBJS = $(BUILDDIR)/lodepng.o $(BUILDDIR)/pngb.o $(BUILDDIR)/main.o
-# EXE = pngb
-# CFLAGS = $(INCS)
-# LFLAGS = -s
 
-# $(EXE):	$(BUILDDIR) $(OBJS)
-# 	$(CC) $(CFLAGS) -Wl,$(LFLAGS) -o $(OUTDIR)/$(EXE) $(OBJS)
-
-# $(BUILDDIR) :
-# 	mkdir $(BUILDDIR)
-
-# $(BUILDDIR)/lodepng.o: $(LODEPNGDIR)/lodepng.c
-# 	$(CC) $(CFLAGS) -c $(LODEPNGDIR)/lodepng.c -o $(BUILDDIR)/lodepng.o
-
-# $(BUILDDIR)/pngb.o: $(SRCDIR)/pngb.c
-# 	$(CC) $(CFLAGS) -c $(SRCDIR)/pngb.c -o $(BUILDDIR)/pngb.o
-
-# $(BUILDDIR)/main.o: $(SRCDIR)/main.c
-# 	$(CC) $(CFLAGS) -c $(SRCDIR)/main.c -o $(BUILDDIR)/main.o
-
-
-# clean:
-# 	$(DEL) $(BUILDDIR)/*.o
-# 	$(DEL) $(OUTDIR)/$(EXE)
-
-CC = gcc
 DEL = rm -f
 SRCDIR = src
 LODEPNGDIR = lodepng
@@ -50,12 +17,25 @@ CFILES = $(filter-out $(CEXCLUDE),$(CALL))
 COBJ = $(CFILES:.c=.o)
 
 
-LDFLAGS = -s
+# Linux MinGW build for Windows
+# (static linking to avoid DLL dependencies)
+png2gbtiles.exe : TARGET=i686-w64-mingw32
+png2gbtiles.exe : CC = $(TARGET)-g++
+png2gbtiles.exe : LDFLAGS = -s -static
+png2gbtiles.exe: $(COBJ)
+	mkdir -p $(OUTDIR)
+	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)
 
+# Linux build
+png2gbtiles : CC = gcc
+png2gbtiles : LDFLAGS = -s
 png2gbtiles: $(COBJ)
 	mkdir -p $(OUTDIR)
 	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)
 
+cleanobj:
+	$(DEL) $(COBJ)
 
 clean:
-	rm -f $(COBJ) $(OUTDIR)/png2gbtiles
+	$(DEL) $(COBJ) $(OUTDIR)/png2gbtiles.exe $(OUTDIR)/png2gbtiles
+
