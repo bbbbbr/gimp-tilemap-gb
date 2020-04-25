@@ -19,30 +19,101 @@ const char * const opt_gbr = "-gbr";
 const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
 
-int convert_image( int, char * []);
+// user overrides for default settings
+tile_process_options user_options;
+char filename_in[STR_FILENAME_MAX] = {'\0'};
+char filename_out[STR_FILENAME_MAX] = {'\0'};
+
+int convert_image(void);
+void apply_user_options(tile_process_options * options);;
+void clear_user_options(void);
+int handle_args(int, char * []);
 void display_help(void);
+
 
 int main( int argc, char *argv[] )  {
 
-    if (convert_image(argc, argv)) {
+    if (handle_args(argc, argv)) {
 
-        return 0; // Exit with Success
-    } else {
-        return 1; // Exit with failure
+        if (convert_image()) {
+            return 0; // Exit with Success
+        }
     }
+
+    return 1; // Exit with failure
 }
 
 
+int convert_image() {
 
-int convert_image( int argc, char * argv[] ) {
-
-    int i;
-    char filename_out[STR_FILENAME_MAX] = {'\0'};
-    char filename_noext[STR_FILENAME_MAX] = {'\0'};
     tile_process_options options;
     image_data src_image;
     color_data src_colors;
 
+    // Load source image (from first argument)
+    if (!tilemap_load_image(&src_image, &src_colors, filename_in)) {
+        log_error("Error: Failed to load image\n\n");
+        return false;
+    }
+
+    // Load default options based on output image format and number of colors in source image
+    options.image_format = user_options.image_format;
+    tilemap_options_load_defaults(src_colors.color_count, &options);
+
+    // Apply any custom user settigns from the command line
+    apply_user_options(&options);
+    // TODO: validate color count vs gb_mode
+
+    // Apply the finalized options
+    tilemap_options_set(&options);
+
+
+    // Process and export the image
+    if (!tilemap_process_and_save_image(&src_image, &src_colors, &filename_out[0] )) {
+
+        if (tilemap_error_get() != TILE_ID_OK) {
+            log_error("%s\n", tilemap_error_get_string() );
+        }
+        return false;
+    }
+
+}
+
+
+void apply_user_options(tile_process_options * p_options) {
+
+    if (user_options.gb_mode != OPTION_UNSET)
+        p_options->gb_mode = user_options.gb_mode;
+
+    if (user_options.tile_dedupe_enabled != OPTION_UNSET)
+        p_options->tile_dedupe_enabled = user_options.tile_dedupe_enabled;
+
+    if (user_options.tile_dedupe_flips != OPTION_UNSET)
+        p_options->tile_dedupe_flips = user_options.tile_dedupe_flips;
+
+    if (user_options.tile_dedupe_palettes != OPTION_UNSET)
+        p_options->tile_dedupe_palettes = user_options.tile_dedupe_palettes;
+}
+
+
+
+void clear_user_options() {
+
+    user_options.image_format         = OPTION_UNSET;
+    user_options.gb_mode              = OPTION_UNSET;
+    user_options.tile_dedupe_enabled  = OPTION_UNSET;
+    user_options.tile_dedupe_flips    = OPTION_UNSET;
+    user_options.tile_dedupe_palettes = OPTION_UNSET;
+}
+
+
+
+int handle_args( int argc, char * argv[] ) {
+
+    int i;
+    char filename_noext[STR_FILENAME_MAX] = {'\0'};
+
+    clear_user_options();
 
     if( argc < 3 ) {
         log_error("Error: At least two arguments are required\n\n");
@@ -50,24 +121,18 @@ int convert_image( int argc, char * argv[] ) {
         return false;
     }
 
+    // Copy input filename
+    strncpy(filename_in, argv[ARG_INPUT_FILE], STR_FILENAME_MAX);
 
-    // Load source image (from first argument)
-    if (!tilemap_load_image(&src_image, &src_colors, argv[ ARG_INPUT_FILE ])) {
-        log_error("Error: Failed to load image\n\n");
-        return false;
-    }
-
-
-// TODO: output_mode_set()
     // Select output mode (from second argument)
     if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbr, sizeof(opt_gbr))) {
-        options.image_format = FORMAT_GBR;
+        user_options.image_format = FORMAT_GBR;
 
     } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbm, sizeof(opt_gbr))) {
-        options.image_format = FORMAT_GBM;
+        user_options.image_format = FORMAT_GBM;
 
     } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_csource, sizeof(opt_csource))) {
-        options.image_format = FORMAT_GBDK_C_SOURCE;
+        user_options.image_format = FORMAT_GBDK_C_SOURCE;
 
     } else {
 
@@ -75,10 +140,7 @@ int convert_image( int argc, char * argv[] ) {
         display_help();
         return false;
     }
-    // Load default options based on output image format
-    tilemap_options_load_defaults(src_colors.color_count, &options);
 
-// TODO: handle_options()
     // Handle any remaining options
     // argc is zero based
     for (i = 3; i <= (argc -1); i++ ) {
@@ -87,16 +149,16 @@ int convert_image( int argc, char * argv[] ) {
         // is an option, so process those first
         if (*argv[i] == '-') {
             switch (*(argv[i]+1)) {
-                case 'g': options.gb_mode = MODE_DMG_4_COLOR;
+                case 'g': user_options.gb_mode = MODE_DMG_4_COLOR;
                           break;
-                case 'c': options.gb_mode = MODE_CGB_32_COLOR;
+                case 'c': user_options.gb_mode = MODE_CGB_32_COLOR;
                           break;
 
-                case 'd': options.tile_dedupe_enabled = false;
+                case 'd': user_options.tile_dedupe_enabled = false;
                           break;
-                case 'f': options.tile_dedupe_flips = false;
+                case 'f': user_options.tile_dedupe_flips = false;
                           break;
-                case 'p': options.tile_dedupe_palettes = false;
+                case 'p': user_options.tile_dedupe_palettes = false;
                           break;
 
                 case 'v': log_set_level(OUTPUT_LEVEL_VERBOSE);
@@ -114,19 +176,13 @@ int convert_image( int argc, char * argv[] ) {
         }
     }
 
-    // Apply the finalized options
-    tilemap_options_set(&options);
-
-// TODO: validate color count vs gb_mode
-// TODO: update_filename()
-
     // If output filename wasn't specified, then
     // try to set it based on the input filename
     if (filename_out[0] == '\0') {
 
         copy_filename_without_extension(filename_noext, argv[ARG_INPUT_FILE]);
 
-        switch (options.image_format) {
+        switch (user_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:
                 snprintf(&filename_out[0], STR_FILENAME_MAX, "%s%s",  &filename_noext[0], ".c");
                 break;
@@ -141,19 +197,8 @@ int convert_image( int argc, char * argv[] ) {
         }
     }
 
-    // Process and export the image
-    if (!tilemap_process_and_save_image(&src_image, &src_colors, &filename_out[0] )) {
-
-        if (tilemap_error_get() != TILE_ID_OK) {
-            log_error("%s\n", tilemap_error_get_string() );
-        }
-        return false;
-    }
-
-
     return true;
 }
-
 
 
 void display_help(void) {

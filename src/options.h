@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+#define OPTION_UNSET 0xFFFF
+
 enum tile_process_modes {
     MODE_DMG_4_COLOR,
     MODE_CGB_32_COLOR,
