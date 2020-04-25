@@ -17,6 +17,10 @@ CFILES = $(filter-out $(CEXCLUDE),$(CALL))
 COBJ = $(CFILES:.c=.o)
 
 
+info:
+	@echo "--> Please specify target, 'make png2gbtiles' (Linux build) or 'make png2gbtiles.exe' (MinGW Windows build)"
+
+
 # Linux MinGW build for Windows
 # (static linking to avoid DLL dependencies)
 png2gbtiles.exe : TARGET=i686-w64-mingw32
