@@ -29,8 +29,8 @@
 
     // TODO: update naming convention
     enum rom_bin_modes {
-        BIN_MODE_NES_1BPP,
-        BIN_MODE_NES_2BPP,
+/*        BIN_MODE_NES_1BPP,
+        BIN_MODE_NES_2BPP,*/
         BIN_MODE_SNESGB_2BPP,
         BIN_MODE_NGPC_2BPP,
 

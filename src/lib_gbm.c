@@ -186,7 +186,7 @@ int32_t gbm_load_file(const char * filename) {
     gbm_file_object      obj;
     int32_t              status;
 
-    obj.p_data = malloc(GBM_OBJECT_MAX_SIZE);
+    obj.p_data = (uint8_t *)malloc(GBM_OBJECT_MAX_SIZE);
 
     status = true;
 
@@ -279,7 +279,7 @@ int32_t gbm_save_file(const char * filename) {
     gbm_file_object   obj;
     int32_t           status;
 
-    obj.p_data = malloc(GBM_OBJECT_MAX_SIZE);
+    obj.p_data = (uint8_t *)malloc(GBM_OBJECT_MAX_SIZE);
 
     status = true;
 

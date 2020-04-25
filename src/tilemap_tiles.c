@@ -53,7 +53,9 @@ void tile_initialize(tile_data * p_tile, tile_map_data * p_tile_map, tile_set_da
 
     // Allocate buffer for temporary working tile raw image, 32 bit aligned
     // Note: requires: #include "win_aligned_alloc.h" // Needed for aligned_alloc cross compile
-    p_tile->p_img_raw = aligned_alloc(sizeof(uint32_t), (tile_size_bytes + tile_size_bytes_hash_padding));
+    // (uintptr_t) is to suppress a warning about type conversion
+    // See: https://stackoverflow.com/questions/42567908/aligned-alloc-return-assignment-warning
+    p_tile->p_img_raw = (uint8_t *)(uintptr_t)aligned_alloc(sizeof(uint32_t), (tile_size_bytes + tile_size_bytes_hash_padding));
 
     // Make sure padding bytes are zeroed
     memset(p_tile->p_img_raw, 0x00, tile_size_bytes + tile_size_bytes_hash_padding);
@@ -99,7 +101,7 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
 
         // Copy raw tile data into tile image buffer
         new_tile->raw_size_bytes = p_src_tile->raw_size_bytes;
-        new_tile->p_img_raw      = malloc(p_src_tile->raw_size_bytes);
+        new_tile->p_img_raw      = (uint8_t *)malloc(p_src_tile->raw_size_bytes);
 
         // Only proceed if the alloc worked
         if (new_tile->p_img_raw) {
@@ -174,7 +176,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
     } else {
 
         // Copy encoded tile
-        p_tile->p_img_encoded = malloc(rom_gfx.size);
+        p_tile->p_img_encoded = (uint8_t *)malloc(rom_gfx.size);
         memcpy(p_tile->p_img_encoded,
                rom_gfx.p_data,
                rom_gfx.size);

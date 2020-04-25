@@ -42,12 +42,12 @@
 // #include <libgimp/gimp.h>
 
 
-
 static int (*function_map_decode[])(rom_gfx_data *,
                                     app_gfx_data *,
                                     app_color_data *) =  {
 /*
         [BIN_MODE_NES_1BPP]      = bin_decode_nes_1bpp,
+
         [BIN_MODE_NES_2BPP]      = bin_decode_nes_2bpp,
 */
         [BIN_MODE_SNESGB_2BPP]   = bin_decode_snesgb_2bpp,

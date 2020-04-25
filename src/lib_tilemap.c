@@ -109,15 +109,15 @@ int tilemap_initialize(image_data * p_src_img) {
 
     // See struct: tile_map_entry
     // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t (it is)
-    tile_map.tile_id_list = malloc(tile_map.size * sizeof(uint16_t));
+    tile_map.tile_id_list = (uint16_t *)malloc(tile_map.size * sizeof(uint16_t));
     if (!tile_map.tile_id_list)
             return(false);
 
-    tile_map.flip_bits_list = malloc(tile_map.size * sizeof(uint8_t));
+    tile_map.flip_bits_list = (uint8_t *)malloc(tile_map.size * sizeof(uint8_t));
     if (!tile_map.flip_bits_list)
             return(false);
 
-    tile_map.palette_num_list = malloc(tile_map.size * sizeof(uint8_t));
+    tile_map.palette_num_list = (uint8_t *)malloc(tile_map.size * sizeof(uint8_t));
     if (!tile_map.palette_num_list)
             return(false);
 
@@ -366,7 +366,7 @@ int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
     log_verbose("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
 
     // Allocate a buffer for the image
-    p_img->p_img_data = malloc(p_img->size);
+    p_img->p_img_data = (uint8_t *)malloc(p_img->size);
 
     if (p_img->p_img_data) {
 

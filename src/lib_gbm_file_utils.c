@@ -7,7 +7,7 @@
 #include "lib_gbm_file_utils.h"
 
 
-char gbm_object_marker[0x6] = {"HPJMTL"};// {0x48, 0x50, 0x4A, 0x4D, 0x54, 0x4C }; /* "HPJMTL" */
+char gbm_object_marker[6] = {0x48, 0x50, 0x4A, 0x4D, 0x54, 0x4C }; /* "HPJMTL" */
 
 
 int32_t gbm_read_header_key(FILE * p_file) {

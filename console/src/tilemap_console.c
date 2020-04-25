@@ -30,7 +30,7 @@ int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image, uint8
 
     for (c=0; c < src_size_bytes; c++) {
 
-        for (int b = 0; b < pixels_per_byte; b++) {
+        for (b = 0; b < pixels_per_byte; b++) {
 
             *p_dest_image = *p_src_image >> (8 - bitdepth); // Extract pixel bits
             p_dest_image++; // Move to next pixel in destination image
@@ -97,7 +97,7 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
         p_src_image->width      = width;
         p_src_image->height     = height;
         p_src_image->size       = p_src_image->width * p_src_image->height * p_src_image->bytes_per_pixel;
-        p_src_image->p_img_data = malloc(p_src_image->size);  // lodepng_decode() handles allocation
+        p_src_image->p_img_data = (uint8_t *)malloc(p_src_image->size);  // lodepng_decode() handles allocation
 
         // Can't memcpy to destination image directly since the
         // loaded png image may be bitpacked. So instead, unpack it.
@@ -133,7 +133,7 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
 }
 
 
-int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_colors, const char * filename) {
+int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_colors, char * filename) {
 
     int status = true;
     tile_process_options options;
