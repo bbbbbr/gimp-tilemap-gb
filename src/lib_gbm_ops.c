@@ -194,7 +194,7 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
     if (p_image->p_img_data)
         free (p_image->p_img_data);
 
-    p_image->p_img_data = malloc(p_image->size);
+    p_image->p_img_data = (uint8_t *)malloc(p_image->size);
 
 
     // Create the image from tiles

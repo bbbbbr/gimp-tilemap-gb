@@ -146,7 +146,7 @@ int32_t gbr_load_file(const char * filename) {
     gbr_file_object   obj;
     int32_t              status;
 
-    obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
+    obj.p_data = (uint8_t *)malloc(PASCAL_OBJECT_MAX_SIZE);
 
     status = true;
 
@@ -223,7 +223,7 @@ int32_t gbr_save_file(const char * filename) {
     gbr_file_object   obj;
     int32_t              status;
 
-    obj.p_data = malloc(PASCAL_OBJECT_MAX_SIZE);
+    obj.p_data = (uint8_t *)malloc(PASCAL_OBJECT_MAX_SIZE);
 
     status = true;
 

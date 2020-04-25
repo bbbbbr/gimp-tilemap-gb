@@ -273,7 +273,7 @@ int bin_decode_snesgb_2bpp(rom_gfx_data * p_rom_gfx,
         return -1;
 
     // Allocate the incoming image buffer, abort if it fails
-    if (NULL == (p_app_gfx->p_data = malloc(p_app_gfx->width * p_app_gfx->height * p_app_gfx->bytes_per_pixel)) )
+    if (NULL == (p_app_gfx->p_data = (unsigned char *)malloc(p_app_gfx->width * p_app_gfx->height * p_app_gfx->bytes_per_pixel)) )
         return -1;
 
 
@@ -288,7 +288,7 @@ int bin_decode_snesgb_2bpp(rom_gfx_data * p_rom_gfx,
     p_colorpal->bytes_per_pixel = rom_attrib.DECODED_BYTES_PER_COLOR;
 
     // Allocate the color map buffer, abort if it fails
-    if (NULL == (p_colorpal->p_data = malloc(p_colorpal->size * p_colorpal->bytes_per_pixel)) )
+    if (NULL == (p_colorpal->p_data = (unsigned char *)malloc(p_colorpal->size * p_colorpal->bytes_per_pixel)) )
         return -1;
 
     // Read the color map data
@@ -311,7 +311,7 @@ int bin_encode_snesgb_2bpp(rom_gfx_data * p_rom_gfx,
     p_rom_gfx->size = romimg_calc_encoded_size(p_app_gfx, rom_attrib);
 
     // Allocate the color map buffer, abort if it fails
-    if (NULL == (p_rom_gfx->p_data = malloc(p_rom_gfx->size)) )
+    if (NULL == (p_rom_gfx->p_data = (unsigned char *)malloc(p_rom_gfx->size)) )
         return -1;
 
 

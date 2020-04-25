@@ -97,7 +97,7 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
         p_src_image->width      = width;
         p_src_image->height     = height;
         p_src_image->size       = p_src_image->width * p_src_image->height * p_src_image->bytes_per_pixel;
-        p_src_image->p_img_data = malloc(p_src_image->size);  // lodepng_decode() handles allocation
+        p_src_image->p_img_data = (uint8_t *)malloc(p_src_image->size);  // lodepng_decode() handles allocation
 
         // Can't memcpy to destination image directly since the
         // loaded png image may be bitpacked. So instead, unpack it.
@@ -133,7 +133,7 @@ int tilemap_load_image(image_data * p_src_image, color_data * p_src_colors, char
 }
 
 
-int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_colors, const char * filename) {
+int tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_colors, char * filename) {
 
     int status = true;
     tile_process_options options;
