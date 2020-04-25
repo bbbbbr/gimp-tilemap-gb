@@ -1,7 +1,7 @@
 png2gbtiles: a standalone, command line tool for converting png tilesets and tilemaps to .gbr and .gbm files
 ===========
 
-
+```
 Usage
    png2gbtiles input_file.png -gbr|-gbm|-csource [options] [output_file]
 
@@ -22,3 +22,4 @@ Examples
    png2gbtiles spritesheet.png -gbr spritesheet.gbr
    png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm
    png2gbtiles worldmap.png -gbm
+```
