@@ -30,7 +30,7 @@ int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image, uint8
 
     for (c=0; c < src_size_bytes; c++) {
 
-        for (int b = 0; b < pixels_per_byte; b++) {
+        for (b = 0; b < pixels_per_byte; b++) {
 
             *p_dest_image = *p_src_image >> (8 - bitdepth); // Extract pixel bits
             p_dest_image++; // Move to next pixel in destination image
