@@ -1,17 +1,23 @@
 Tilemap GB (Gimp Plugin and command line tool): tilemap generator and exporter for Game Boy / Game Boy Color / GBDK & ZGB
 ===========
 
-There are two persions of the tool:
+There are two versions of the tool:
 * GIMP plugin for importing & exporting Game Boy game tilemaps and tilesets.
-* Standalone, command line version: [png2gbtiles](/console) (currently export only)
+* Standalone, command line version: [png2gbtiles](/console) (export only)
 
 You can create a level map in Gimp (or other image editors) then export it to either C Source files for the GBDK, or export as .gbr / .gbm for editing and further work in either GBTD or GBMB. You can also import from .gbr and .gbm files, and re-export to them (tile order may change and not all app prefs may survive the import/re-export trip).
 
 *This plugin is functional, but not polished. Don't be surprised to find some rough edges or annoyances.
 
-Download compiled executables here:
+Download compiled GIMP Plugin executables here:
  * [Linux GIMP 2.8+](/bin/linux)
  * [Windows GIMP 2.10.12+](/bin/windows)
+
+Download compiled Console executables here:
+ * [Linux](/console/bin/linux)
+ * [Windows](/console/bin/windows)
+
+Or check [Releases](https://github.com/bbbbbr/gimp-tilemap-gb/releases)
 
 ![Opening a Game Boy Map Builder map as an image in GIMP](https://raw.githubusercontent.com/bbbbbr/gimp-tilemap/master/info/gimp-tilemap-plugin-screenshot.png)
 
