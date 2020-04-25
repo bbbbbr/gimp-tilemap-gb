@@ -500,7 +500,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
                                                                  * p_gbr->tile_data.count;
 
-        log_verbose("image:%d x %d (%d x %d # %d) \n", p_image->width, p_image->height,
+        log_standard("gbr output: source image: %d x %d, tile size:%d x %d, tile count: %d\n", p_image->width, p_image->height,
                                                   p_gbr->tile_data.width,
                                                   p_gbr->tile_data.height,
                                                   p_gbr->tile_data.count);
