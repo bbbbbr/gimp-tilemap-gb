@@ -3,6 +3,8 @@ png2gbtiles: a standalone, command line tool for converting png tilesets and til
 
 Builds available for Linux and Windows
 
+See notes about Usage & Cautions in the main project's [Readme](https://github.com/bbbbbr/gimp-tilemap-gb/blob/master/README.md)
+
 ```
 Usage
    png2gbtiles input_file.png -gbr|-gbm|-csource [options] [output_file]
