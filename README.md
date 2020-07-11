@@ -45,10 +45,12 @@ Color Gameboy Support (CGB):
  * Import & Export
 
 Supported formats:
- * GB 2bpp (CGB not supported at this time)
+ * GB 2bpp
+ * CGB Color mode
 
 Settings:
  * The plug-in will attempt to preserve Tile & Map Export settings across import and later export (they get attached to the native GIMP XCF image as a Parasite that persists accross save/load).
+ * Option to ignore CGB per-tile palette violation errors
 
 
 ## Usage / Cautions:
