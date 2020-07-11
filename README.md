@@ -50,7 +50,7 @@ Supported formats:
 
 Settings:
  * The plug-in will attempt to preserve Tile & Map Export settings across import and later export (they get attached to the native GIMP XCF image as a Parasite that persists accross save/load).
- * Option to ignore CGB per-tile palette violation errors
+ * Option to ignore CGB per-tile palette violation errors. The tile will still be forced to 4 colors and it will use the first palette found in the tile.
 
 
 ## Usage / Cautions:
@@ -59,7 +59,7 @@ Settings:
  * Exported GBR tilesets should have an image width of 8, 16 or 32 pixels. Tile size width and height will auto set to be the same as the image width. This means 8x16 is not currently supported. (Maybe a dialog selecting export size later).
  * Exported GBR should have no more than 4 colors (DMG) or 32 colors (CGB)
  * In CGB mode the 32 color palette is broken up into 8 separate, consecutive sub-palettes of 4 colors each
- * When exporting in CGB mode, tiles *must not* use colors from more than one sub-palette at a time. Export will fail if they do.
+ * When exporting in CGB mode, tiles *should not* use colors from more than one sub-palette at a time. Export will fail if they do, unless "Ignore CGB Palette Errors" is enabled.
  * The only metadata preserved across import and later re-export for GBR / GBM files are the Tile/Map Export Settings. Other data such as recently used files, etc is not currently preserved when exporting back out. (Maybe later).
  * If you export using this path: GIMP -> GBTD or GBMB -> C source, then you'll need to set up the export options for GBTD (path, tiles to export, etc) and GBMB (path, location format, etc).
 
