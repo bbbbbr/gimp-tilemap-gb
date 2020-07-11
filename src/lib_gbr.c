@@ -58,7 +58,8 @@ int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p
     // TODO: check
     // TODO: MIN 16 tiles required in file?
     // Convert the image data to tiles
-    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors, plugin_options.gb_mode);
+    status = gbr_convert_image_to_tileset(&gbr, p_src_image, p_colors,
+                                          plugin_options.gb_mode, plugin_options.ignore_palette_errors);
 
     // Apply some final settings updates,
     // only if there aren't cached settings we don't want to overwrite

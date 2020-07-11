@@ -36,12 +36,15 @@ void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
     log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
     log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
     log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    log_verbose("ignore_palette_errors: %d\n", p_dest_plugin_options->ignore_palette_errors);
     log_verbose("\n");
 
 }
 
 
 void tilemap_options_load_defaults(int color_count, tile_process_options * p_dest_plugin_options) {
+
+    p_dest_plugin_options->ignore_palette_errors = false;
 
     // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
     if (color_count <= TILE_DMG_COLORS_MAX) {
@@ -198,7 +201,8 @@ unsigned char process_tiles(image_data * p_src_img) {
                 //
                 // NOTE: This needs to happen *BEFORE* any deduplication hashing
                 //       The palette also gets re-applied below
-                map_entry.status = tile_palette_identify_and_strip(&tile, tile_map.options.gb_mode);
+                map_entry.status = tile_palette_identify_and_strip(&tile,
+                                                                   tile_map.options.gb_mode, tile_map.options.ignore_palette_errors);
                 if (map_entry.status != TILE_ID_OK) {
                     // log_verbose("Tilemap: Process: FAIL -> tile_palette_identify_and_strip = Invalid Palette\n");
                     tilemap_error_set(map_entry.status);
@@ -210,7 +214,8 @@ unsigned char process_tiles(image_data * p_src_img) {
                 tile.hash[0] = MurmurHash2( tile.p_img_raw, tile.raw_size_bytes, 0xF0A5); // len is u8count, 0xF0A5 is seed
 
                 if (tile_map.options.tile_dedupe_enabled)
-                    map_entry = tile_find_match(&tile, &tile_set, &tile_map);
+                    map_entry = tile_find_match(&tile, &tile_set,
+                                                tile_map.options.tile_dedupe_flips, tile_map.options.tile_dedupe_palettes);
                 else
                     map_entry.status = TILE_ID_NOT_FOUND;
 

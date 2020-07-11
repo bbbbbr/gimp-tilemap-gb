@@ -60,7 +60,7 @@ static void query(void)
         { GIMP_PDB_IMAGE, "image", "Output image" }
     };
 
-    // Save arguments
+    // Save arguments - should match if (nparams != 10)
     static const GimpParamDef save_arguments[] =
     {
         { GIMP_PDB_INT32,    "run-mode",     "Interactive, non-interactive" },
@@ -72,7 +72,9 @@ static void query(void)
         { GIMP_PDB_INT16,    "gb_mode",              "Export type DMG 4 color or CGB 32 color" },
         { GIMP_PDB_INT16,    "tile_dedupe_enabled",  "Deduplicate Tiles on Pattern" },
         { GIMP_PDB_INT16,    "tile_dedupe_flips",    "Deduplicate Tiles on Flipped on X or Y (CGB only)" },
-        { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" }
+        { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" },
+        { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore CGB Palette Errors" }
+
     };
 
     // Install the load procedure for ".GBR" files
@@ -215,6 +217,7 @@ static void run(const gchar * plugin_procedure_name,
     *return_vals  = return_values;
     run_mode      = param[0].data.d_int32;
 
+log_set_level(OUTPUT_LEVEL_VERBOSE);
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
@@ -272,7 +275,7 @@ static void run(const gchar * plugin_procedure_name,
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
-        if(nparams != 9) // Should match save_arguments[]
+        if (nparams != 10) // Should match save_arguments[]
         {
             return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
             return;
@@ -316,6 +319,7 @@ static void run(const gchar * plugin_procedure_name,
                 plugin_options.tile_dedupe_enabled  = param[7].data.d_int16;
                 plugin_options.tile_dedupe_flips    = param[8].data.d_int16;
                 plugin_options.tile_dedupe_palettes = param[9].data.d_int16;
+                plugin_options.ignore_palette_errors = param[10].data.d_int16;
 
                 tilemap_options_set(&plugin_options);
                 break;

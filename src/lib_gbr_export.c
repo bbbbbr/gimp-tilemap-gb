@@ -443,7 +443,7 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
 
 
 // Convert loaded .GBR data to an image
-int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, color_data * p_colors, uint16_t gb_mode) {
+int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, color_data * p_colors, uint16_t gb_mode, uint16_t ignore_palette_errors) {
 
     int16_t tile_id;
     int32_t offset;
@@ -478,7 +478,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
             if (!gbr_tile_set_buf(&p_image->p_img_data[offset],
                                   p_gbr,
                                   tile_id,
-                                  gb_mode))
+                                  gb_mode, ignore_palette_errors))
                 return false;
 
             offset += p_gbr->tile_data.width * p_gbr->tile_data.height * p_image->bytes_per_pixel;

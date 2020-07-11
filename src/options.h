@@ -28,6 +28,8 @@ typedef struct {
     uint16_t tile_dedupe_flips;    // only if (gb_mode == PROC_MODE_CGB_32_COLOR)
     uint16_t tile_dedupe_palettes; // only if (gb_mode == PROC_MODE_CGB_32_COLOR)
 
+    uint16_t ignore_palette_errors; // only if (gb_mode == PROC_MODE_CGB_32_COLOR)
+
     uint16_t dmg_possible;
     uint16_t cgb_possible;
 

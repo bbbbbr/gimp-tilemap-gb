@@ -93,17 +93,21 @@ void apply_user_options(tile_process_options * p_options) {
 
     if (user_options.tile_dedupe_palettes != OPTION_UNSET)
         p_options->tile_dedupe_palettes = user_options.tile_dedupe_palettes;
+
+    if (user_options.ignore_palette_errors != OPTION_UNSET)
+        p_options->ignore_palette_errors = user_options.ignore_palette_errors;
 }
 
 
 
 void clear_user_options() {
 
-    user_options.image_format         = OPTION_UNSET;
-    user_options.gb_mode              = OPTION_UNSET;
-    user_options.tile_dedupe_enabled  = OPTION_UNSET;
-    user_options.tile_dedupe_flips    = OPTION_UNSET;
-    user_options.tile_dedupe_palettes = OPTION_UNSET;
+    user_options.image_format          = OPTION_UNSET;
+    user_options.gb_mode               = OPTION_UNSET;
+    user_options.tile_dedupe_enabled   = OPTION_UNSET;
+    user_options.tile_dedupe_flips     = OPTION_UNSET;
+    user_options.tile_dedupe_palettes  = OPTION_UNSET;
+    user_options.ignore_palette_errors = OPTION_UNSET;
 }
 
 
@@ -160,6 +164,8 @@ int handle_args( int argc, char * argv[] ) {
                           break;
                 case 'p': user_options.tile_dedupe_palettes = false;
                           break;
+                case 'i': user_options.ignore_palette_errors = true;
+                          break;
 
                 case 'v': log_set_level(OUTPUT_LEVEL_VERBOSE);
                           break;
@@ -213,7 +219,9 @@ void display_help(void) {
             "\n"
             "  -d          Turn OFF Map tile deduplication of tile PATTERN (.gbm only)\n"
             "  -f          Turn OFF Map tile deduplication of FLIP X/Y (.gbm only)\n"
-            "  -p          Turn OFF Map tile deduplication of ALTERNATE PALLETE (.gbm only)\n"
+            "  -p          Turn OFF Map tile deduplication of ALTERNATE PALETTE (.gbm only)\n"
+            "\n"
+            "  -i          Ignore CGB Palette Errors (use highest guessed palette #)\n"
             "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"

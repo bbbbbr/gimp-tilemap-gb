@@ -6,8 +6,10 @@
 #include "lib_gbm_ops.h"
 
 #include "logging.h"
-#include "options.h"
 
+#include "tilemap_error.h"
+
+#include "lib_tilemap.h" // For error code #
 
 // TODO: THIS IS DEPRECATED?
 // TODO: Bounds checking! max_size
@@ -127,7 +129,7 @@ void gbr_tile_remap_colors(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile
 
 
 // WARNING: assumes bytes per pixel = 1 in DEST buffer
-int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, uint16_t tile_index, int32_t tile_size, uint16_t gb_mode) {
+int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, uint16_t tile_index, int32_t tile_size, uint16_t gb_mode, uint16_t ignore_palette_errors) {
 
     int32_t index;
 
@@ -153,13 +155,24 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         // * the tile tried to use more than one palette
         if ((tile_pal_setting != tile_pal_setting_last)) {
 
-            log_verbose("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", index, tile_pal_setting_last, tile_pal_setting);
-            return (false);
+            if (ignore_palette_errors) {
+                log_verbose("Warning: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d\n", tile_index, tile_pal_setting_last, tile_pal_setting);
+
+                if (tile_pal_setting_last > tile_pal_setting) {
+                    // If there is a mis-match but it's allowed
+                    // Always use the highest found palette, revert to last if it's higher
+                    tile_pal_setting = tile_pal_setting_last;
+                }
+
+            } else {
+                log_verbose("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d\n", tile_index, tile_pal_setting_last, tile_pal_setting);
+                tilemap_error_set(TILE_ID_MULTIPLE_PALETTES_IN_TILE);
+                return (false);
+            }
         }
-        else {
-            // Update palette for next pass
-            tile_pal_setting = tile_pal_setting_last;
-        }
+
+        // Update palette for next pass
+        tile_pal_setting_last = tile_pal_setting;
 
         // Remap the palette so it's only colors 0-3, relative to the identified palette
         // Example: Index color 13 = (13 % 4) = Color 1 of Palette 3
@@ -169,7 +182,6 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         p_buf++;
     }
 
-    // TODO: FIX ME CGB /DMG Detection handling
     // Check for Palette out of range
     if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_DMG) && (gb_mode == MODE_DMG_4_COLOR)) {
 
@@ -251,7 +263,7 @@ int32_t gbr_tile_get_buf(uint8_t * dest_buf, gbr_record * p_gbr, uint16_t tile_i
 
 // Copy pixels from an image into a tile sized slice of the tile list buffer
 // TODO: FIXME this is linear for now and assumes an 8 x N image
-int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index, uint16_t gb_mode) {
+int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_index, uint16_t gb_mode, uint16_t ignore_palette_errors) {
 
     int32_t offset;
     int32_t tile_size;
@@ -288,7 +300,8 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
 
 
     // Remap the colors to 2bpp + palette index (and store palette in list)
-    if (!gbr_tile_palette_assign_and_strip(&(p_gbr->tile_data.tile_list[offset]), p_gbr, tile_index, tile_size, gb_mode))
+    if (!gbr_tile_palette_assign_and_strip(&(p_gbr->tile_data.tile_list[offset]), p_gbr, tile_index, tile_size,
+                                           gb_mode, ignore_palette_errors))
         return false;
 
 

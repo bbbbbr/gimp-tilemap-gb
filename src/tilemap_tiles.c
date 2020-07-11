@@ -191,7 +191,7 @@ int32_t tile_encode(tile_data * p_tile, uint32_t image_mode) {
 
 
 
-tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, tile_map_data * p_tile_map) {
+tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, uint16_t tile_dedupe_flips, uint16_t tile_dedupe_palettes) {
 
     int c;
     int h, h_range;
@@ -202,7 +202,7 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
 
     // Earlier checking will enforce CGB mode only for tile_dedupe_flips
     // TODO: for now flip X and flip Y are joined together, so always check each flip permutation
-    if (p_tile_map->options.tile_dedupe_flips)
+    if (tile_dedupe_flips)
         h_range = TILE_FLIP_MAX;
     else
         h_range = TILE_FLIP_MIN;
@@ -218,7 +218,7 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, til
                 // Either palette must match, or dedupe tiles
                 // based on palettes must be enabled (CGB Mode only)
                 if ((p_tile->palette_num == tile_set->tiles[c].palette_num)
-                    || (p_tile_map->options.tile_dedupe_palettes)) {
+                    || (tile_dedupe_palettes)) {
 
                     tile_match_rec.id        = c; // found a matching tile, return it's ID
                     tile_match_rec.flip_bits = tile_flip_bits[h]; // Set flip x/y bits if present
@@ -455,7 +455,7 @@ void tile_palette_reapply_offsets(tile_data * p_tile) {
 // It then needs to get re-applied later since map processing produces
 // a bitmapped image of the tile set (with possibly deduped colors)
 // which will then have it's palette stripped one last time on export
-int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
+int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode, uint16_t ignore_palette_errors) {
 
     int32_t tile_y;
     int32_t tile_x;
@@ -490,12 +490,24 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode) {
 
             } else if (palette != last_palette) {
 
-                return (TILE_ID_MULTIPLE_PALETTES_IN_TILE);
+                if (ignore_palette_errors) {
 
-            } else {
-                // Update palette for next pass
-                palette = last_palette;
+                    log_verbose("Warning: tile_palette_identify_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", last_palette, palette);
+                    if (last_palette > palette) {
+                        // If there is a mis-match but it's allowed
+                        // Always use the highest found palette, revert to last if it's higher
+                        palette = last_palette;
+                    }
+                } else {
+                    log_verbose("Error: tile_palette_identify_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", last_palette, palette);
+                    return (TILE_ID_MULTIPLE_PALETTES_IN_TILE);
+                }
+
             }
+
+            // Update palette for next pass
+            last_palette = palette;
+
 
             // Remap the palette so it's only colors 0-3, relative to the identified palette
             // Example: Index color 13 = (13 % 4) = Color 1 of Palette 3
