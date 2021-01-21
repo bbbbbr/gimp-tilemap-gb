@@ -7,6 +7,8 @@ There are two versions of the tool:
 
 You can create a level map in Gimp (or other image editors) then export it to either C Source files for the GBDK, or export as .gbr / .gbm for editing and further work in either GBTD or GBMB. You can also import from .gbr and .gbm files, and re-export to them (tile order may change and not all app prefs may survive the import/re-export trip).
 
+(Also see Zal0's command line [converters from GBR/GBM -> .c/.h.](https://github.com/Zal0/ZGB/tree/master/tools)) 
+
 *This plugin is functional, but not polished. Don't be surprised to find some rough edges or annoyances.
 
 Download compiled GIMP Plugin executables here:
