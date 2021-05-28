@@ -156,7 +156,8 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
         if ((tile_pal_setting != tile_pal_setting_last)) {
 
             if (ignore_palette_errors) {
-                log_verbose("Warning: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d\n", tile_index, tile_pal_setting_last, tile_pal_setting);
+                log_verbose("Warning: gbr_tile_palette_assign_and_strip(): "
+                            "multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d (index:%d)\n", tile_index, tile_pal_setting_last, tile_pal_setting, (*p_buf));
 
                 if (tile_pal_setting_last > tile_pal_setting) {
                     // If there is a mis-match but it's allowed
@@ -165,7 +166,8 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
                 }
 
             } else {
-                log_verbose("Error: gbr_tile_palette_assign_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d\n", tile_index, tile_pal_setting_last, tile_pal_setting);
+                log_verbose("Error: gbr_tile_palette_assign_and_strip(): "
+                            "multiple palettes in single tile. tile# = %d\n, last pal = %d, pal = %d (index:%d)\n", tile_index, tile_pal_setting_last, tile_pal_setting, (*p_buf));
                 tilemap_error_set(TILE_ID_MULTIPLE_PALETTES_IN_TILE);
                 return (false);
             }

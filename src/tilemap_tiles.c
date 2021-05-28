@@ -492,14 +492,16 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode, ui
 
                 if (ignore_palette_errors) {
 
-                    log_verbose("Warning: tile_palette_identify_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", last_palette, palette);
+                    log_verbose("Warning: tile_palette_identify_and_strip(): "
+                                "multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d (index:%d)\n", last_palette, palette, (*indexed_pixel_data));
                     if (last_palette > palette) {
                         // If there is a mis-match but it's allowed
                         // Always use the highest found palette, revert to last if it's higher
                         palette = last_palette;
                     }
                 } else {
-                    log_verbose("Error: tile_palette_identify_and_strip(): Error, multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d\n", last_palette, palette);
+                    log_verbose("Error: tile_palette_identify_and_strip(): "
+                                "multiple palettes in single tile. tile# = %d\n, pal#1 = %d, pal#2 = %d (index:%d)\n", last_palette, palette, (*indexed_pixel_data));
                     return (TILE_ID_MULTIPLE_PALETTES_IN_TILE);
                 }
 
