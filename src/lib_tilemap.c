@@ -62,7 +62,7 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
     else  {
 
         p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
-        p_dest_plugin_options->dmg_possible = false;
+        p_dest_plugin_options->dmg_possible = true; //false;
         p_dest_plugin_options->cgb_possible = true;
 
         // only enable dedupe on GBM export (all types)
