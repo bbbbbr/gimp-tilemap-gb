@@ -188,12 +188,18 @@ int32_t gbr_tile_palette_assign_and_strip(uint8_t * p_buf, gbr_record * p_gbr, u
     if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_DMG) && (gb_mode == MODE_DMG_4_COLOR)) {
 
         log_verbose("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for DMG 4 color: %d\n", tile_pal_setting);
-        return (false);
+
+        // Fix palette (for 4-color there can be only one)
+        tile_pal_setting = GBR_TILE_DATA_PALETTE_SIZE_DMG;
+
+        if (!ignore_palette_errors)
+            return (false);
 
     } else if ((tile_pal_setting > GBR_TILE_DATA_PALETTE_SIZE_CGB) && (gb_mode == MODE_CGB_32_COLOR)) {
 
         log_verbose("Error: gbr_tile_palette_assign_and_strip(): Palette # too large for CGB 16 color: %d\n",tile_pal_setting );
-        return (false);
+        if (!ignore_palette_errors)
+            return (false);
     }
 
     // Set palette number for tile

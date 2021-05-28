@@ -118,7 +118,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         // == Map export options ==
 
 
-        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore CGB Palette Errors");
+        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore Palette Errors");
             gtk_box_pack_start(GTK_BOX(vbox), check_ignore_palette_errors, false, false, 2);
             gtk_widget_show(check_ignore_palette_errors);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_ignore_palette_errors),
@@ -261,7 +261,7 @@ static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gp
 static void update_enabled_ui_controls(void) {
 
     //         Dedupe-Tile  Dedupe-Flip  Dedupe-Palette   Ignore-Palette-Errors
-    // DMG     Enabled         NO            NO                   NO
+    // DMG     Enabled         NO            NO               xx NO xx -> Enabled (changed to allow)
     // CGB     Enabled       Enabled      Enabled              Enabled
 
     // First disable any dedupe options except for GBM mode
@@ -272,7 +272,7 @@ static void update_enabled_ui_controls(void) {
     // Now set available options based on DMG/CGB
     if (p_plugin_options->gb_mode == MODE_DMG_4_COLOR) {
 
-        gtk_widget_set_sensitive((GtkWidget *) check_ignore_palette_errors, false);
+        gtk_widget_set_sensitive((GtkWidget *) check_ignore_palette_errors, true); //false);
 
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, false);
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, false);

@@ -221,7 +221,7 @@ void display_help(void) {
             "  -f          Turn OFF Map tile deduplication of FLIP X/Y (.gbm only)\n"
             "  -p          Turn OFF Map tile deduplication of ALTERNATE PALETTE (.gbm only)\n"
             "\n"
-            "  -i          Ignore CGB Palette Errors (use highest guessed palette #)\n"
+            "  -i          Ignore Palette Errors (CGB will use highest guessed palette #)\n"
             "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"

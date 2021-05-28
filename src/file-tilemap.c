@@ -73,7 +73,7 @@ static void query(void)
         { GIMP_PDB_INT16,    "tile_dedupe_enabled",  "Deduplicate Tiles on Pattern" },
         { GIMP_PDB_INT16,    "tile_dedupe_flips",    "Deduplicate Tiles on Flipped on X or Y (CGB only)" },
         { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" },
-        { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore CGB Palette Errors" }
+        { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" }
 
     };
 
