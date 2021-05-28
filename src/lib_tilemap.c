@@ -58,7 +58,8 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
         p_dest_plugin_options->tile_dedupe_flips    = false;
         p_dest_plugin_options->tile_dedupe_palettes = false;
     }
-    else if (color_count <= TILE_CGB_COLORS_MAX) {
+    // else if (color_count <= TILE_CGB_COLORS_MAX) {
+    else  {
 
         p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
         p_dest_plugin_options->dmg_possible = false;
@@ -69,17 +70,17 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
         p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM);
         p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM);
     }
-    else {
-        // Too many colors
-        p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
-        p_dest_plugin_options->dmg_possible = false;
-        p_dest_plugin_options->cgb_possible = false;
-
-        p_dest_plugin_options->tile_dedupe_enabled  = false;
-        p_dest_plugin_options->tile_dedupe_flips    = false;
-        p_dest_plugin_options->tile_dedupe_palettes = false;
-
-    }
+    // else {
+    //     // Too many colors
+    //     p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
+    //     p_dest_plugin_options->dmg_possible = false;
+    //     p_dest_plugin_options->cgb_possible = false;
+    //
+    //     p_dest_plugin_options->tile_dedupe_enabled  = false;
+    //     p_dest_plugin_options->tile_dedupe_flips    = false;
+    //     p_dest_plugin_options->tile_dedupe_palettes = false;
+    //
+    // }
 
     log_verbose("==== tilemap_options_load_defaults() ====\n");
     log_verbose("color_count:          %d\n", color_count);

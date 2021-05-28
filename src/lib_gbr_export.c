@@ -450,7 +450,8 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
     // p_image->bytes_per_pixel = 1; // TODO: IS THIS T
 
-    if (!gbr_validate_palette_size(p_colors, gb_mode))
+    if ((!gbr_validate_palette_size(p_colors, gb_mode)) &&
+        (!ignore_palette_errors))
         return false;
 
     gbr_export_tileset_color_settings(p_gbr, gb_mode);
