@@ -22,17 +22,19 @@ info:
 
 
 # Linux MinGW build for Windows
+# -lb for math.h
 # (static linking to avoid DLL dependencies)
 png2gbtiles.exe : TARGET=i686-w64-mingw32
 png2gbtiles.exe : CC = $(TARGET)-g++
-png2gbtiles.exe : LDFLAGS = -s -static
+png2gbtiles.exe : LDFLAGS = -s -static -lm
 png2gbtiles.exe: $(COBJ)
 	mkdir -p $(OUTDIR)
 	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)
 
 # Linux build
+# -lb for math.h
 png2gbtiles : CC = gcc
-png2gbtiles : LDFLAGS = -s
+png2gbtiles : LDFLAGS = -s -lm
 png2gbtiles: $(COBJ)
 	mkdir -p $(OUTDIR)
 	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)

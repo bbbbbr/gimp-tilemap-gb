@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "logging.h"
 
@@ -9,6 +10,8 @@
 #include "tilemap_error.h"
 #include "tilemap_console.h"
 #include "tilemap_path_ops.h"
+
+#include "image_process.h"
 
 
 #define ARG_INPUT_FILE    1
@@ -18,6 +21,8 @@
 const char * const opt_gbr = "-gbr";
 const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
+
+const char * const opt_remap_pal   = "-pal=";
 
 // user overrides for default settings
 tile_process_options user_options;
@@ -55,6 +60,23 @@ int convert_image() {
         log_error("Error: Failed to load image\n\n");
         return false;
     }
+
+
+    // Remap the image to a user specified palette if requested
+    if (user_options.remap_pal) {
+        if ( !image_remap_to_user_palette(&src_image, &src_colors, user_options.remap_pal_file) ) {
+            log_error("Error: remapping png to user palette failed!\n");
+            return false;
+        }            
+    } 
+    else if (src_image.bytes_per_pixel != MODE_8_BIT_INDEXED) { 
+        log_error("Error: non-indexed color images are only supported when remapping to a user palette (-pal=)!\n");
+        return false;
+    }
+
+// TODO
+// user_options.repair_tile_palettes
+// image_repair_tile_pals()
 
     // Load default options based on output image format and number of colors in source image
     options.image_format = user_options.image_format;
@@ -152,27 +174,38 @@ int handle_args( int argc, char * argv[] ) {
         // Any argument that starts with a dash ('-') character
         // is an option, so process those first
         if (*argv[i] == '-') {
-            switch (*(argv[i]+1)) {
-                case 'g': user_options.gb_mode = MODE_DMG_4_COLOR;
-                          break;
-                case 'c': user_options.gb_mode = MODE_CGB_32_COLOR;
-                          break;
 
-                case 'd': user_options.tile_dedupe_enabled = false;
-                          break;
-                case 'f': user_options.tile_dedupe_flips = false;
-                          break;
-                case 'p': user_options.tile_dedupe_palettes = false;
-                          break;
-                case 'i': user_options.ignore_palette_errors = true;
-                          break;
+            // Multi char arguments
+            if (strstr(argv[i], opt_remap_pal) == argv[i]) {
+                // Extract filename for user supplier palette
+                snprintf(user_options.remap_pal_file, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_remap_pal));
+                user_options.remap_pal = true;
+            }
+            else {   
 
-                case 'v': log_set_level(OUTPUT_LEVEL_VERBOSE);
-                          break;
-                case 'e': log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
-                          break;
-                case 'q': log_set_level(OUTPUT_LEVEL_QUIET);
-                          break;
+                // Single char arguments
+                switch (*(argv[i]+1)) {
+                    case 'g': user_options.gb_mode = MODE_DMG_4_COLOR;
+                              break;
+                    case 'c': user_options.gb_mode = MODE_CGB_32_COLOR;
+                              break;
+
+                    case 'd': user_options.tile_dedupe_enabled = false;
+                              break;
+                    case 'f': user_options.tile_dedupe_flips = false;
+                              break;
+                    case 'p': user_options.tile_dedupe_palettes = false;
+                              break;
+                    case 'i': user_options.ignore_palette_errors = true;
+                              break;
+
+                    case 'v': log_set_level(OUTPUT_LEVEL_VERBOSE);
+                              break;
+                    case 'e': log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
+                              break;
+                    case 'q': log_set_level(OUTPUT_LEVEL_QUIET);
+                              break;
+                }
             }
         } else {
 
@@ -222,6 +255,7 @@ void display_help(void) {
             "  -p          Turn OFF Map tile deduplication of ALTERNATE PALETTE (.gbm only)\n"
             "\n"
             "  -i          Ignore Palette Errors (CGB will use highest guessed palette #)\n"
+            "  -pal=[file] Remap png to palette (pngs allowed: index and 24/32 bit RGB)\n"
             "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"
@@ -231,4 +265,5 @@ void display_help(void) {
             "   png2gbtiles spritesheet.png -gbr spritesheet.gbr\n"
             "   png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm\n"
             "   png2gbtiles worldmap.png -gbm \n");
+            "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n";
 }

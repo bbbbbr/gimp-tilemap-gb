@@ -5,3 +5,10 @@ obj/
 *.o
 /console/bin/png2gbtiles
 /console/bin/png2gbtiles.exe
+*.png
+*.gif
+*.jpg
+*.jpeg
+*.gbm
+*.gbr
+*.pal

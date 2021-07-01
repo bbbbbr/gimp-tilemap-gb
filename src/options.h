@@ -4,6 +4,7 @@
 #define OPTIONS_H
 
 #include <stdint.h>
+#include "tilemap_path_ops.h"
 
 #define OPTION_UNSET 0xFFFF
 
@@ -32,6 +33,9 @@ typedef struct {
 
     uint16_t dmg_possible;
     uint16_t cgb_possible;
+
+    bool     remap_pal;
+    char     remap_pal_file[STR_FILENAME_MAX];
 
 } tile_process_options;
 
