@@ -5,7 +5,7 @@ LODEPNGDIR = lodepng
 TILEMAPGBDIR = ../src
 OUTDIR = bin
 INCS = -I"$(SRCDIR)" -I"$(LODEPNGDIR)" -I"$(TILEMAPGBDIR)"
-CFLAGS = $(INCS)
+CFLAGS = $(INCS) -Wno-format-truncation
 
 # Add all c source files
 CALL = $(wildcard src/*.c) \
