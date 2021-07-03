@@ -34,6 +34,10 @@ typedef struct {
     uint16_t dmg_possible;
     uint16_t cgb_possible;
 
+    // TODO: Move these to a separate struct,
+    //       since they need to get set *before* image load, 
+    //       which then determines number of colors in input image
+    //       which is then used to load rest of options with tilemap_options_load_defaults
     bool     remap_pal;
     char     remap_pal_file[STR_FILENAME_MAX];
 

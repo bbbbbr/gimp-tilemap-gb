@@ -40,7 +40,6 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
         return false;
     }
 
-
     // Remap the image to a user specified palette if requested
     if (options.remap_pal) {
         if ( !image_remap_to_user_palette(p_src_image, p_src_colors, options.remap_pal_file) ) {
@@ -56,6 +55,7 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
     // TODO
     // options.repair_tile_palettes
     // image_repair_tile_pals()
+    return true;
 }
 
 

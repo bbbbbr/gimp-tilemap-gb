@@ -15,22 +15,22 @@
 #include "lodepng.h"
 
 
-static bool validate_image_type(unsigned int, unsigned int, uint8_t *);
-static int tilemap_unbitpack_image(uint8_t *, uint8_t *, uint8_t, long);
+static void image_unbitpack(uint8_t *, uint8_t *, uint8_t, long);
+static void image_greyscale_to_rgb(uint8_t *, uint8_t *, long, bool );
+static void image_copy_out(uint8_t *, image_data *, unsigned int, uint8_t, long);
+static bool image_validate_type(unsigned int, uint8_t, uint8_t *);
 
-// Can't memcpy to destination image directly since the
-// loaded png image may be bitpacked. So instead, unpack it.
-static int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image, uint8_t bitdepth, long src_size_bytes) {
 
-    long c;
-    int b;
+// Un-bitpacks a source image into an 8-bit-per-pixel destination buffer
+static void image_unbitpack(uint8_t * p_src_image, uint8_t * p_dest_image, uint8_t bitdepth, long src_size_bytes) {
+
     int pixels_per_byte;
 
     pixels_per_byte = (8 / bitdepth);
 
-    for (c=0; c < src_size_bytes; c++) {
+    for (int c=0; c < src_size_bytes; c++) {
 
-        for (b = 0; b < pixels_per_byte; b++) {
+        for (int b = 0; b < pixels_per_byte; b++) {
 
             *p_dest_image = *p_src_image >> (8 - bitdepth); // Extract pixel bits
             p_dest_image++; // Move to next pixel in destination image
@@ -43,6 +43,47 @@ static int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image
 }
 
 
+// Converts a source greyscale image into a RGB image, strips alpha if present
+// loaded png image may be bitpacked. So instead, unpack it.
+static void image_greyscale_to_rgb(uint8_t * p_src_image, uint8_t * p_dest_image, long src_size_bytes, bool is_alpha) {
+
+    for (int c=0; c < src_size_bytes; c++) {
+        *p_dest_image++ = *p_src_image; // -> R
+        *p_dest_image++ = *p_src_image; // -> G
+        *p_dest_image++ = *p_src_image; // -> B
+
+        p_src_image++; // Next source pixel
+
+        // Skip alpha byte if present
+        if (is_alpha)
+            p_src_image++;
+    }
+}
+
+
+// Converts a source image from various formats into a usable output image
+static void image_copy_out(uint8_t * p_src_image, image_data * p_dest_image, unsigned int png_colortype, uint8_t png_bitdepth, long src_size_bytes) {
+
+        // If image is bitpacked (or just indexed) then extract it
+        if (png_colortype == LCT_PALETTE) {
+            image_unbitpack(p_src_image,
+                            p_dest_image->p_img_data,
+                            png_bitdepth,
+                            src_size_bytes);
+        }
+        else if ((png_colortype == LCT_GREY) || (png_colortype == LCT_GREY_ALPHA)) {
+
+            image_greyscale_to_rgb(p_src_image, p_dest_image->p_img_data, 
+                                   (p_dest_image->width * p_dest_image->height),
+                                   (png_colortype == LCT_GREY_ALPHA));
+        }
+        else {
+            // Copy png image data to decoded image as-is
+            memcpy(p_dest_image->p_img_data, p_src_image, src_size_bytes);
+        }
+}
+
+
 // TODO: move into other file
 // Check if image mode is supported
 // Lodepng image Types
@@ -51,7 +92,7 @@ static int tilemap_unbitpack_image(uint8_t * p_src_image, uint8_t * p_dest_image
 //    LCT_PALETTE = 3,     // palette: 1,2,4,8 bit
 //    LCT_GREY_ALPHA = 4,  // greyscale with alpha: 8,16 bit
 //    LCT_RGBA = 6         // RGB with alpha: 8,16 bit
-static bool validate_image_type(unsigned int png_colortype, unsigned int png_bitdepth, uint8_t * p_bytes_per_pixel) {
+static bool image_validate_type(unsigned int png_colortype, uint8_t png_bitdepth, uint8_t * p_output_bytes_per_pixel) {
 
     bool status = true;
 
@@ -63,22 +104,21 @@ static bool validate_image_type(unsigned int png_colortype, unsigned int png_bit
             log_error("Error: Decoded image must be between 1 and 8 bits per pixel (pngtype: %d, bits:%d)\n", png_colortype, png_bitdepth);
         }
 
-        *p_bytes_per_pixel = MODE_8_BIT_INDEXED;
-
-    // TODO: support GREY_*        
-    } else if ((png_colortype == LCT_GREY) || (png_colortype == LCT_GREY_ALPHA)) {
-            status = false;
-            log_error("Error: Greyscale mode images are not supported (pngtype: %d, bits:%d)\n", png_colortype, png_bitdepth);
-
+        *p_output_bytes_per_pixel = MODE_8_BIT_INDEXED;
     } else {
 
 
         if ((png_colortype == LCT_GREY_ALPHA) || (png_colortype == LCT_RGBA)) {
             log_standard("Warning: PNG has alpha mask, discarding. Formerly (semi-)transparent pixels may have unexpected values.\n");
-            *p_bytes_per_pixel = MODE_32_BIT_RGBA;
         } 
+
+        if ((png_colortype == LCT_RGBA)) {
+            *p_output_bytes_per_pixel = MODE_32_BIT_RGBA;
+        } 
+        else if ((png_colortype == LCT_GREY) || (png_colortype == LCT_GREY_ALPHA))
+            *p_output_bytes_per_pixel = MODE_24_BIT_RGB; // greyscale/alpha will get converted to 24 bit RGB
         else
-            *p_bytes_per_pixel = MODE_24_BIT_RGB;
+            *p_output_bytes_per_pixel = MODE_24_BIT_RGB;
 
         if (png_bitdepth != 8) {
                 status = false;
@@ -124,10 +164,13 @@ int image_load(image_data * p_decoded_image, color_data * p_src_colors, char * f
         log_error("Error: PNG load: %u: %s\n", err, lodepng_error_text(err));
     }
 
-    // Check color depth and indexed / rgb mode types
-    // Retrieves: bytes per pixel
-    status = validate_image_type(state.info_png.color.colortype, state.info_png.color.bitdepth, 
-                                 &(p_decoded_image->bytes_per_pixel));
+    if (status) {
+        // Check color depth and indexed / rgb mode types
+        // Retrieves: bytes per pixel
+        status = image_validate_type(state.info_png.color.colortype,
+                                     state.info_png.color.bitdepth,
+                                     &(p_decoded_image->bytes_per_pixel));
+    }
 
     if (status) {       
 
@@ -145,16 +188,16 @@ int image_load(image_data * p_decoded_image, color_data * p_src_colors, char * f
         p_decoded_image->size       = p_decoded_image->width * p_decoded_image->height * p_decoded_image->bytes_per_pixel;
         p_decoded_image->p_img_data = (uint8_t *)malloc(p_decoded_image->size);  // lodepng_decode() handles allocation
 
-        // If image is bitpacked (or just indexed) then extract it
-        if (state.info_png.color.bitdepth <= 8) {
-            tilemap_unbitpack_image(p_png_image,                 // input  image (png)
-                                    p_decoded_image->p_img_data, // output image (for processing)
-                                    state.info_png.color.bitdepth,
-                                    png_image_size_bytes);
-        } else {
-            // Copy png image data to decoded image
-            memcpy(p_decoded_image->p_img_data, p_png_image, png_image_size_bytes);
+        if (!p_decoded_image->p_img_data) {
+            status = false;
+            log_error("Failed to allocate decoded image buffer\n");
         }
+
+        // Copy image to output buffer
+        // Reformat (such as un-bitpack) if needed
+        image_copy_out(p_png_image, p_decoded_image,
+                       state.info_png.color.colortype, state.info_png.color.bitdepth,
+                       png_image_size_bytes);
 
         log_verbose("p_decoded_image->width:%d\n", p_decoded_image->width);
         log_verbose("p_decoded_image->height:%d\n", p_decoded_image->height);

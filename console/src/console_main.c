@@ -35,7 +35,7 @@ char filename_in[STR_FILENAME_MAX] = {'\0'};
 char filename_out[STR_FILENAME_MAX] = {'\0'};
 
 int convert_image(void);
-void apply_user_options(tile_process_options * options);;
+void apply_user_options(tile_process_options *);;
 void clear_user_options(void);
 int handle_args(int, char * []);
 void display_help(void);
@@ -62,7 +62,11 @@ int convert_image() {
     src_image.p_img_data = NULL;
 
     // Process and export the image
-    if (!tilemap_load_and_prep_image(&src_image, &src_colors, &filename_out[0] ))
+    // Has to happen before tilemap_options_load_defaults()
+    options.remap_pal      = user_options.remap_pal_file;
+    strncpy(options.remap_pal_file, user_options.remap_pal_file, STR_FILENAME_MAX);
+    tilemap_options_set(&options); // This is a workaround for now, should be split to separate options group
+    if (!tilemap_load_and_prep_image(&src_image, &src_colors, filename_in ))
         return false;
 
     // Load default options based on output image format and number of colors in source image
@@ -78,7 +82,7 @@ int convert_image() {
 
 
     // Process and export the image
-    if (!tilemap_process_and_save_image(&src_image, &src_colors, &filename_out[0] )) {
+    if (!tilemap_process_and_save_image(&src_image, &src_colors, filename_out )) {
 
         if (tilemap_error_get() != TILE_ID_OK) {
             log_error("%s\n", tilemap_error_get_string() );
