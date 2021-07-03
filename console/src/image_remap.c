@@ -1,3 +1,9 @@
+// image_remap.c
+
+//
+// Support for remapping an image (8 bit/full color) to 
+// 8-bit indexed with a user specified palette
+//
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,9 +11,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <math.h>
+
 #include "logging.h"
 
-#include "image_process.h"
+#include "image_remap.h"
 #include "color_space.h"
 
 #define PAL_MAX_STR_LEN 102

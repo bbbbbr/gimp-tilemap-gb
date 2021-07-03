@@ -1,4 +1,9 @@
+// color_space.c
 
+//
+// Color conversion support functions 
+// rgb -> LAB, and finding best color matches
+//
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>

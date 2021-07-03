@@ -1,5 +1,10 @@
 // console_main.c
 
+//
+// Console front end which collects settings, then
+// loads images and initiates tilemap conversion
+//
+
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -11,7 +16,7 @@
 #include "tilemap_console.h"
 #include "tilemap_path_ops.h"
 
-#include "image_process.h"
+#include "image_remap.h"
 
 
 #define ARG_INPUT_FILE    1
@@ -52,37 +57,19 @@ int main( int argc, char *argv[] )  {
 int convert_image() {
 
     tile_process_options options;
-    image_data src_image;
     color_data src_colors;
+    image_data src_image;
+    src_image.p_img_data = NULL;
 
-    // Load source image (from first argument)
-    if (!tilemap_load_image(&src_image, &src_colors, filename_in)) {
-        log_error("Error: Failed to load image\n\n");
+    // Process and export the image
+    if (!tilemap_load_and_prep_image(&src_image, &src_colors, &filename_out[0] ))
         return false;
-    }
-
-
-    // Remap the image to a user specified palette if requested
-    if (user_options.remap_pal) {
-        if ( !image_remap_to_user_palette(&src_image, &src_colors, user_options.remap_pal_file) ) {
-            log_error("Error: remapping png to user palette failed!\n");
-            return false;
-        }            
-    } 
-    else if (src_image.bytes_per_pixel != MODE_8_BIT_INDEXED) { 
-        log_error("Error: non-indexed color images are only supported when remapping to a user palette (-pal=)!\n");
-        return false;
-    }
-
-// TODO
-// user_options.repair_tile_palettes
-// image_repair_tile_pals()
 
     // Load default options based on output image format and number of colors in source image
     options.image_format = user_options.image_format;
     tilemap_options_load_defaults(src_colors.color_count, &options);
 
-    // Apply any custom user settigns from the command line
+    // Apply any custom user settings from the command line
     apply_user_options(&options);
     // TODO: validate color count vs gb_mode
 
