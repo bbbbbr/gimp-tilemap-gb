@@ -74,6 +74,12 @@ bool tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src
     switch (options.image_format) {
 
         case FORMAT_GBDK_C_SOURCE:
+            log_standard("csource export: %d x %d with mode = %d, dedupe tile pattern = %d, dedupe flip = %d, dedupe pal = %d, ignore pal error = %d\n",
+                    p_src_image->width, p_src_image->height,
+                    options.gb_mode,
+                    options.tile_dedupe_enabled, options.tile_dedupe_flips, options.tile_dedupe_palettes,
+                    options.tile_dedupe_palettes);
+
             status = tilemap_export_process(p_src_image);
             log_verbose("tilemap_export_process: status= %d\n", status);
 

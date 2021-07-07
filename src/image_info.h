@@ -22,15 +22,18 @@
         uint8_t    bytes_per_pixel;
         uint16_t   width;
         uint16_t   height;
-        uint32_t   size;  // size in bytes
+        uint32_t   size;        // size in bytes
         uint8_t  * p_img_data;
+        uint16_t   tile_width;  // should be even multiple of width 
+        uint16_t   tile_height; // should be even multiple of height
     } image_data;
 
 
     typedef struct {
         uint16_t color_count;
         uint16_t size;
-        uint8_t  pal[COLOR_DATA_PAL_SIZE]; // TODO: make this a union for better access: .r / .g / .b
+        uint8_t  pal[COLOR_DATA_PAL_SIZE]; // TODO: make this a union for better access: .r / .g / .b, merge in <-- palette_rgb_LAB
+        uint8_t  subpal_size;              // should be even multiple of color_count
     } color_data;
 
     typedef struct {
@@ -39,8 +42,11 @@
     } color_rgb_LAB;
 
     typedef struct {
-        int color_count;
+        int           color_count;
         color_rgb_LAB colors[USER_PAL_MAX_COLORS];
+        uint8_t       subpal_size; // should be even multiple of color_count
+        uint8_t       compare_start; // zero based
+        uint8_t       compare_last;  // zero based
     } palette_rgb_LAB;
 
 

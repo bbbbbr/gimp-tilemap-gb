@@ -4,6 +4,7 @@
 // Color conversion support functions 
 // rgb -> LAB, and finding best color matches
 //
+
 #include <stdio.h>
 #include <math.h>
 #include <stdint.h>
@@ -16,29 +17,34 @@
 
 
 // Test a list of colors for a best possible LAB match
-// Returns true if successful, index of match color will be in: p_match_id
 // Expects LAB data to be populated for list of colors
-bool color_find_closest_LAB(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_color, uint8_t * p_match_id) {
+//
+// Returns true if successful
+// - index of match color will be in: p_match_id
+// - color distance will be in: p_color_distance
+bool color_find_closest_LAB(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_color, uint8_t * p_match_id, double * p_color_distance) {
 
-    int color_distance;
     int color_distance_min;
 
-    if (color_list->color_count <= 0)
+    if (color_list->color_count <= 0) {
+        log_error("color_find_closest_LAB: empty color list: count=%d\n",color_list->color_count);
         return false;
+    }
 
     // Prime loop with first value
-    color_distance_min = color_distance = color_distance_LAB_CIE76(&(color_list->colors[0]), p_match_color);
-    *p_match_id = 0;
+    *p_color_distance = color_distance_LAB_CIE76(&(color_list->colors[ color_list->compare_start ]), p_match_color);
+    color_distance_min = *p_color_distance;
+    *p_match_id = color_list->compare_start;
 
     int c;
-    for (c = 1; c < color_list->color_count; c++) {
+    for (c = color_list->compare_start + 1; c <= color_list->compare_last; c++) {
 
-        color_distance = color_distance_LAB_CIE76(&(color_list->colors[c]), p_match_color);
+        *p_color_distance = color_distance_LAB_CIE76(&(color_list->colors[c]), p_match_color);
 
         // Update if match is closest yet
-        if (color_distance < color_distance_min) {
+        if (*p_color_distance < color_distance_min) {
             *p_match_id = c;
-            color_distance_min = color_distance;
+            color_distance_min = *p_color_distance;
         }
     }
 
@@ -51,7 +57,7 @@ bool color_find_closest_LAB(palette_rgb_LAB * color_list, color_rgb_LAB * p_matc
 bool color_find_exact_RGB(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_color, uint8_t * p_match_id) {
 
     int c;
-    for (c = 0; c < color_list->color_count; c++) {
+    for (c = color_list->compare_start; c <= color_list->compare_last; c++) {
 
 //printf(" %d: exactrgb: rgb(%02x,%02x,%02x) vs rgb(%02x,%02x,%02x)\n", c,
             // color_list->colors[c].r, color_list->colors[c].g, color_list->colors[c].b,
@@ -69,6 +75,32 @@ bool color_find_exact_RGB(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_
     return false;
 }
 
+
+bool color_find_closest(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_color, uint8_t * p_match_id, double * p_color_distance) {
+
+    // try for an exact (and more efficient) RGB match first
+    if (color_find_exact_RGB(color_list, p_match_color, p_match_id)) {
+        *p_color_distance = 0;
+    } else {
+        // Otherwise find a closest match using LAB color space
+        color_rgb2LAB(p_match_color);
+
+        if (!color_find_closest_LAB(color_list, p_match_color, p_match_id, p_color_distance)) {
+            log_error("Error: Failed to remap image to user palette: failed when searching for closest L A B color\n");
+            return false;
+        }
+    } 
+
+    if ((*p_match_id < color_list->compare_start) || (*p_match_id > color_list->compare_last)) {
+        log_error("Matched pixel outside range: %d : %d - %d\n", *p_match_id, color_list->compare_start, color_list->compare_last);
+        return false;
+    }
+
+    return true;
+}
+
+// TODO: optimize: make a rgb 5:5:5 look up table to optimize this. it'll only be ~32K doubles
+// void color_rgb2LAB_LUT_initialize()
 
 // Based on www.easyrgb.com
 // Convert uint8_t RGB (0 - 255) to double LAB (0 - 100, -128 - 128, -128 - 128)

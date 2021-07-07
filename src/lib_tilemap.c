@@ -66,9 +66,9 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
         p_dest_plugin_options->cgb_possible = true;
 
         // only enable dedupe on GBM export (all types)
-        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
-        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM);
-        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM);
+        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
+        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
+        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
     }
     // else {
     //     // Too many colors

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <float.h>
 
 #include <math.h>
 
@@ -17,20 +18,53 @@
 
 #include "image_remap.h"
 #include "color_space.h"
+#include "palette.h"
 
-#define PAL_MAX_STR_LEN 102
+static bool pixel_get_rgb(color_rgb_LAB *, color_data *, uint8_t *, uint8_t);
+static bool image_validate_settings(image_data *);
+static bool palette_validate_settings(palette_rgb_LAB *);
 
-static color_data *  palette_convert_to_lab(palette_rgb_LAB *);
+static void image_replace_with_indexed_buffer(image_data *, uint8_t *, uint8_t);
+
 static bool image_remap_to_palette(image_data *, color_data *, palette_rgb_LAB *);
-static void image_repair_tile_pals (void);
-static bool palette_load_from_file(palette_rgb_LAB *, char *);
+static bool image_tiles_remap_to_subpalettes(image_data *, color_data *, palette_rgb_LAB *);
+
+static bool tilexy_remap_to_subpal(image_data *, color_data *, palette_rgb_LAB *, uint8_t *, uint32_t, uint32_t, int);
+static double tilexy_calc_subpal_distance(image_data *, color_data *, palette_rgb_LAB *, uint32_t, uint32_t, int);
 
 
-// Convert a palette to LAB format
-static color_data *  palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
-    // TODO N COL
-    for (int c=0; c < p_user_pal->color_count; c++)
-        color_rgb2LAB( &(p_user_pal->colors[c]) );
+#define INT_RND_UP(A, B) ((A + (B - 1)) / B)
+#define INT_RND_CLOSEST(A, B) ((A + (B / 2)) / B)
+
+
+// TODO: move this error checking farther up the stack              
+static bool image_validate_settings(image_data * p_image) {
+
+    if (!p_image->p_img_data) {
+        log_error("Error: Failed to remap image to user palette: source image data empty\n");
+        return false;
+    }
+    else if (p_image->size != (p_image->width * p_image->height * p_image->bytes_per_pixel)) {
+        log_error("Error: Failed to remap image to user palette: data size error\n");
+        return false;
+    }                
+    else if (((p_image->width % p_image->tile_width) != 0) ||
+             ((p_image->height % p_image->tile_height) != 0)) {
+        log_error("Error: Tile width and height (%d x %d) must be even multiple of image width and height (%d x %d)\n", p_image->width, p_image->tile_height, p_image->width, p_image->height);
+        return false;
+    }        
+    return true;
+}
+
+
+// TODO: move this error checking farther up the stack        
+static bool palette_validate_settings(palette_rgb_LAB * p_pal) {
+
+    if ((p_pal->color_count % p_pal->subpal_size) != 0) {
+        log_error("Error: sub-pallet size (%d) must be even multiple of whole pallet size (%d)\n", p_pal->color_count, p_pal->subpal_size);
+        return false;
+    }        
+
 }
 
 
@@ -42,10 +76,6 @@ static bool pixel_get_rgb(color_rgb_LAB * pixel_col, color_data * p_src_pal, uin
             return false;
         }
 
-// printf("  c: pixel_get_rgb: rgb(%02x,%02x,%02x) vs rgb(%02x,%02x,%02x)\n",
-//     p_src_pal->pal[c].r, color_list->colors[c].g, color_list->colors[c].b,
-//     pixel_col->r, pixel_col->g, pixel_col->b);
-
         // Look up RGB data from palette
         pixel_col->r = p_src_pal->pal[ (*p_src_pixel * 3)    ]; // R
         pixel_col->g = p_src_pal->pal[ (*p_src_pixel * 3) + 1]; // G
@@ -54,18 +84,28 @@ static bool pixel_get_rgb(color_rgb_LAB * pixel_col, color_data * p_src_pal, uin
     else if ((bytes_per_pixel == MODE_24_BIT_RGB) ||
              (bytes_per_pixel == MODE_32_BIT_RGBA)) {
 
+        // Straight copy of rgb data with no lookup
+        // Skips alpha channel in 32 bit mode
         pixel_col->r = *(p_src_pixel);
         pixel_col->g = *(p_src_pixel + 1);
         pixel_col->b = *(p_src_pixel + 2);
-
-//printf(" pixel_get_rgb=rgb(%02x,%02x,%02x)\n", pixel_col->r, pixel_col->g, pixel_col->b);
-        // Skips alpha channel in 32 bit mode
     } else {
         log_error("Error: Failed to remap image to user palette: unsupported color depth: %d\n", bytes_per_pixel);
         return false;
     }
 
     return true;
+}
+
+
+static void image_replace_with_indexed_buffer(image_data * p_image, uint8_t * p_remapped_image, uint8_t bytes_per_pixel) {
+
+    if (p_image->p_img_data) 
+        free(p_image->p_img_data);
+
+    p_image->p_img_data      = p_remapped_image;
+    p_image->bytes_per_pixel = bytes_per_pixel;
+    p_image->size            = p_image->width * p_image->height;
 }
 
 
@@ -76,59 +116,28 @@ static bool image_remap_to_palette(image_data * p_src_image, color_data * p_src_
     uint8_t      * p_src_pixel = p_src_image->p_img_data;
     uint8_t      * p_dst_pixel;
     color_rgb_LAB  pixel_col;
-
-    if (!p_src_image->p_img_data) {
-        log_error("Error: Failed to remap image to user palette: source image data empty\n");
-        return false;
-    }
-    else if (p_src_image->size != (p_src_image->width * p_src_image->height * p_src_image->bytes_per_pixel)) {
-        log_error("Error: Failed to remap image to user palette: data size error\n");
-        return false;
-    }        
-
-    // log_verbose("p_src_image->width:%d\n", p_src_image->width);
-    // log_verbose("p_src_image->height:%d\n", p_src_image->height);
-    // log_verbose("p_src_image->size:%d\n", p_src_image->size);
-    // log_verbose("p_src_image->bytes_per_pixel:%d\n", p_src_image->bytes_per_pixel);
+    double         color_distance; // unused, but required for shared call
 
 
-// printf("image_remap_to_palette -> after checks\n");
+// TODO: fixme, handle this better
+    // Compare full range of palette
+    p_user_pal->compare_start = 0;
+    p_user_pal->compare_last =  p_user_pal->color_count - 1;
 
     // Allocate a 1 byte per pixel indexed color image as output
     uint8_t * p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
     p_dst_pixel = p_remapped_image; // dst pixels are 8 bit indexed pal values
                         
     // Convert all pixels in the image
-    for (int x = 0; x < p_src_image->width; x++) {
-        for (int y = 0; y < p_src_image->height; y++) {
-
-//log_verbose("image_remap_to_palette -> pixel %3d, %3d *psrc=(%d)", x, y, *p_src_pixel);
+    for (uint32_t y = 0; y < p_src_image->height; y++) {
+        for (uint32_t x = 0; x < p_src_image->width; x++) {
 
             // extract color data for current source pixel
-            // if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
-            //     return false;        
-pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel);
+            if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
+                return false;
             
-
-
-//log_verbose(" in.rgb(%02x,%02x,%02x)", pixel_col.r, pixel_col.g, pixel_col.b);
-
-            // try for an exact (and more efficient) RGB match first
-            if (!color_find_exact_RGB(p_user_pal, &pixel_col, p_dst_pixel)) {
-
-                // Otherwise find a closest match using LAB color space
-                color_rgb2LAB(&pixel_col);
-                if (!color_find_closest_LAB(p_user_pal, &pixel_col, p_dst_pixel)) {
-
-                     log_error("Error: Failed to remap image to user palette: failed when searching for closest L A B color\n");
-                    return false;                    
-                } 
-//else log_verbose(" closestLAB= %d", *p_dst_pixel);
-
-            } 
-//else log_verbose(" exactrgb= %d", *p_dst_pixel);
-
-// log_verbose("\n");
+            if (!color_find_closest(p_user_pal, &pixel_col, p_dst_pixel, &color_distance))
+                return false;
 
             // Move to next pixel in source and remapped image
             p_src_pixel += p_src_image->bytes_per_pixel;
@@ -137,93 +146,163 @@ pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel);
     }
 
     // Now that processing is complete, free the old image and swap in the new one
-    free(p_src_image->p_img_data);
-
-    p_src_image->p_img_data      = p_remapped_image;
-    p_src_image->bytes_per_pixel = MODE_8_BIT_INDEXED;
-    p_src_image->size            = p_src_image->width * p_src_image->height;
-
-    // Copy palette
-    p_src_pal->color_count = p_user_pal->color_count;
-    p_src_pal->size        = p_user_pal->color_count * COLOR_DATA_BYTES_PER_COLOR;
-    for (int c=0; c < p_user_pal->color_count; c++) {
-        p_src_pal->pal[(c * 3)    ]  = p_user_pal->colors[c].r;
-        p_src_pal->pal[(c * 3) + 1]  = p_user_pal->colors[c].g;
-        p_src_pal->pal[(c * 3) + 2]  = p_user_pal->colors[c].b;
-    }
-    printf("image_remap_to_palette -> end\n");
+    // And copy user palette into image palette
+    image_replace_with_indexed_buffer(p_src_image, p_remapped_image, MODE_8_BIT_INDEXED);
+    palette_copy(p_src_pal, p_user_pal);
 
     return true;
 }
 
 
-// Try to fix CGB one sub-palette (4 colors each) per-tile errors
-// Fix DMG too??
-// TODO: make the palette size adjustable
-static void image_repair_tile_pals (void) {
-    // find colors which have duplicates in the palette and might cause palette errors
-    // -> ignore those
-    //   AKA only evaluate colors which are unique in a palette, avoid dupes which exist in multiple sub-palettes
 
-    // find all sub-palettes used in a tile
-    // choose intended sub-palette based on:
-    //  * the most used color?
-    //  * the sub-palette with the most colors preset <--
-    //  try to repair colors that
+// Given a sub-palette Id, remap a tile to that palette as closely as  possible
+// TODO: lot of duplicated code with tilexy_calc_subpal_distance()
+static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_pal, palette_rgb_LAB * p_user_pal,
+                              uint8_t * p_remapped_image,  
+                              uint32_t tile_id_x, uint32_t tile_id_y, int subpal_id) {
+
+    double         color_distance;
+    color_rgb_LAB  pixel_col;
+
+    // Get pixel in first row and column of tile
+    uint32_t  tile_start_offset = (tile_id_x * p_src_image->tile_width) + ((tile_id_y * p_src_image->tile_height) * p_src_image->width);
+    uint8_t * p_src_pixel = p_src_image->p_img_data + (tile_start_offset * p_src_image->bytes_per_pixel);
+    uint8_t * p_dst_pixel = p_remapped_image + tile_start_offset; // Always 8 BPP indexed
+
+
+    // Set up subpal test range
+    p_user_pal->compare_start = subpal_id * p_user_pal->subpal_size;
+    p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
+
+    // Loop through all pixels in a given tile
+    for (uint32_t tile_y = 0; tile_y < p_src_image->tile_height; tile_y++) {
+        for (uint32_t tile_x = 0; tile_x < p_src_image->tile_width; tile_x++) {
+        
+            // extract color data for current source pixel
+            if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
+                return false;
+           
+            if (!color_find_closest(p_user_pal, &pixel_col, p_dst_pixel, &color_distance))
+                return false;
+
+            // Move to next pixel in tile (in source and remapped image)
+            p_src_pixel += p_src_image->bytes_per_pixel; // Always 8 BPP indexed
+            p_dst_pixel++;
+
+        } // End Tile Y loop
+
+        // Move to start of next tile row (in source and remapped image)
+        p_src_pixel += (p_src_image->width - p_src_image->tile_width) * p_src_image->bytes_per_pixel;
+        p_dst_pixel += (p_src_image->width - p_src_image->tile_width); // Always 8 BPP indexed
+
+    } // End Tile X loop
+
+    return true;
 }
 
 
-// Palette format: RGB Hex triplets, "#" sign is optional
-// Example
-//   #e0dfaf
-//   #afb680
-//   #707a55
-//   #414425
-static bool palette_load_from_file(palette_rgb_LAB * pal, char * filename) {
+// Find a sub-palette that maps as closely as possible for a given tile
+//
+// Currently uses a tile-global minimization, but doesn't weight small highlight as much as it should
+// 
+// TODO: better ranking and weighting options
+// TODO: cache color conversion output so that one can be selected and applied instantly without recalculating
+static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data * p_src_pal, palette_rgb_LAB * p_user_pal,
+                                          uint32_t tile_id_x, uint32_t tile_id_y, int subpal_id) {
+    uint8_t        matched_color_id;
+    double         color_distance;
+    double         color_distance_total = 0;
+    color_rgb_LAB  pixel_col;
 
-    uint32_t r,g,b; // Would prefer this be a uint8_t, but mingw sscanf("%2hhx") has a buffer overflow that corrupts adjacent data
-    int      pal_index = 0;;
-    char     strline_in[PAL_MAX_STR_LEN] = "";
+    // Get pixel in first row and column of tile
+    uint32_t  tile_start_offset = (tile_id_x * p_src_image->tile_width) + ((tile_id_y * p_src_image->tile_height) * p_src_image->width);
+    uint8_t * p_src_pixel = p_src_image->p_img_data + (tile_start_offset * p_src_image->bytes_per_pixel);
 
-    log_standard("Loading palette from file: %s\n", filename);
 
-    FILE * pal_file = fopen(filename, "r");
+    // Set up subpal test range
+    p_user_pal->compare_start = subpal_id * p_user_pal->subpal_size;
+    p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
+
+    // Loop through all pixels in a given tile
+    for (uint32_t tile_y = 0; tile_y < p_src_image->tile_height; tile_y++) {
+        for (uint32_t tile_x = 0; tile_x < p_src_image->tile_width; tile_x++) {
+        
+            // extract color data for current source pixel
+            if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
+                return false;        
+            
+            if (!color_find_closest(p_user_pal, &pixel_col, &matched_color_id, &color_distance))
+                return false;
+
+            color_distance_total += color_distance;
+
+            // Move to next pixel in tile
+            p_src_pixel += p_src_image->bytes_per_pixel;
+
+        } // End Tile Y loop
+
+        // Move to start of next tile row
+        p_src_pixel += (p_src_image->width - p_src_image->tile_width) * p_src_image->bytes_per_pixel;
+
+    } // End Tile X loop
+
+    return color_distance_total;
+}
+
+
+// Remap an input image composed of tiles to a palette composed of multiple sub-palettes
+//
+// Expects :
+// - subpal size to be set
+// - tile width, height to be set
+//
+// Input image (indexed, 24bit rgb, etc)
+// Output remapped image (indexed only)
+//
+// input image , tile sizes
+// input palette , sub-palette sizes
+static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_data * p_src_pal, palette_rgb_LAB * p_user_pal) {
     
-    if (pal_file) {
-                // Read one line at a time into \0 terminated string
-        while ( (fgets(strline_in, sizeof(strline_in), pal_file) != NULL) &&
-                (pal_index <= USER_PAL_MAX_COLORS) ) {
+    uint8_t        subpal_best_match;
+    double         color_distance_total;
+    double         min_distance;
 
-// TODO: improve empty line detection
-            if (strlen(strline_in) >= 6) {
-                // Read a RGB hex triplet in text format
-                // If first try fails, try again and ignore unrelated characters
-                if (3 != sscanf(strline_in, "%2x%2x%2x", &r, &g, &b)) {
-                    if (3 != sscanf(strline_in, "%*[^A-Za-z0-9]%2x%2x%2x", &r, &g, &b)) {
-                        log_error("Error: User Palette formatting error.\n"
-                                  "Format must be: RGB in hex text, 1 color per line (ex: FF0080)\n"
-                                  "Read: %s", strline_in);
-                        return false;
-                    }
+    int            subpal_count = INT_RND_UP(p_user_pal->color_count, p_user_pal->subpal_size);
+
+    // Allocate a 1 byte per pixel indexed color image as output
+    uint8_t * p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
+                    
+    // Loop through all tiles of the image
+    for (uint32_t tile_id_y = 0; tile_id_y < (p_src_image->height / p_src_image->tile_height); tile_id_y++) {
+        for (uint32_t tile_id_x = 0; tile_id_x < (p_src_image->width / p_src_image->tile_width); tile_id_x++) {
+
+            // Loop through all palettes
+            // Test each one to calculate total distance for that pixel
+            min_distance = DBL_MAX;
+            subpal_best_match = 0;
+            for (int subpal_id = 0; subpal_id < subpal_count; subpal_id++) {
+
+                color_distance_total = tilexy_calc_subpal_distance(p_src_image, p_src_pal, p_user_pal,
+                                                                   tile_id_x, tile_id_y, subpal_id);
+                if (color_distance_total < min_distance) {
+                    min_distance = color_distance_total;
+                    subpal_best_match = subpal_id;
                 }
-
-                // Read succeeded
-                log_verbose("Pal from file: (%3d) = %02x, %02x, %02x\n", pal_index, r, g, b);
-                pal->colors[pal_index].r = (uint8_t)r;
-                pal->colors[pal_index].g = (uint8_t)g;
-                pal->colors[pal_index].b = (uint8_t)b;
-                pal_index++;
             }
-        }
-        fclose(pal_file);
-    } 
-    else {
-        log_error("Error: User Palette not found, unable to open: %s\n", filename);
-        return false;
-    }
 
-    pal->color_count = pal_index;
-    log_verbose("User Palette: Loaded %d colors\n", pal->color_count);
+            // Remap tile to best matched sub-palette
+            if (!tilexy_remap_to_subpal(p_src_image, p_src_pal, p_user_pal, p_remapped_image,
+                                        tile_id_x, tile_id_y, subpal_best_match)) {
+                return false;
+            }
+
+        } // End Image Y loop
+    } // End Image X loop
+
+    // Now that processing is complete, free the old image and swap in the new one
+    // And copy user palette into image palette
+    image_replace_with_indexed_buffer(p_src_image, p_remapped_image, MODE_8_BIT_INDEXED);
+    palette_copy(p_src_pal, p_user_pal);
 
     return true;
 }
@@ -234,15 +313,29 @@ bool image_remap_to_user_palette (image_data * p_src_image, color_data * p_src_c
 
     palette_rgb_LAB user_palette[USER_PAL_MAX_COLORS];
 
+// TODO: connect these to arguments/etc        
+        p_src_image->tile_width = 8;
+        p_src_image->tile_height = 8;
+        user_palette->subpal_size = 4;
+
+    image_validate_settings(p_src_image); // TODO: move further up stack
+    palette_validate_settings(user_palette); // TODO: move further up stack
+
     if (palette_load_from_file(user_palette, user_colors_filename)) {
 
         // Pre-convert user palette to LAB for better distance calc performance later
         palette_convert_to_lab(user_palette);
 
+// TODO: implement switch here between full and sub-palette remapping
+        // // rewrites p_src_image and p_src_colors if successful
+        // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
+        //     return true; // Success
+        // }
+
         // rewrites p_src_image and p_src_colors if successful
-        if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
+        if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, user_palette)) {
             return true; // Success
-        }
+        }        
     }
 
     return false;
