@@ -374,32 +374,41 @@ int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr,
     image_offset = (((map_y * p_gbr->tile_data.width) * p_image->width) +
                     (map_x * p_gbr->tile_data.width)) * p_image->bytes_per_pixel;
 
+
+    // Needs to be calculated before flip_v offset is applied
+    image_copy_end = image_offset
+                 + ((p_gbr->tile_data.height -1) * p_image->width * p_image->bytes_per_pixel)
+                 + (p_gbr->tile_data.width * p_image->bytes_per_pixel);
+
     // If vertical mirroring is enabled then begin at
     // the start of the last (bottom) row instead of the start of the first (top) row
     if (flip_v) {
         image_offset += (p_gbr->tile_data.height - 1) * (p_image->width * p_image->bytes_per_pixel);
     }
 
-    image_copy_end = image_offset
-                     + ((p_gbr->tile_data.height -1) * p_image->width * p_image->bytes_per_pixel)
-                     + (p_gbr->tile_data.width * p_image->bytes_per_pixel);
-
-
     // Make sure the destination buffer is ok
-    if (!p_image->p_img_data)
+    if (!p_image->p_img_data) {
+        log_verbose("gbr_tile_copy_to_image(): dest buffer is NULL\n");
         return false;
+    }
 
     // Make sure there is enough data for a complete tile in the source tile buffer
-    if ((tile_size * tile_index) > p_gbr->tile_data.tile_data_size)
+    if ((tile_size * tile_index) > p_gbr->tile_data.tile_data_size) {
+        log_verbose("gbr_tile_copy_to_image(): source buffer too small %d x %d > %d\n", tile_size, tile_index, p_gbr->tile_data.tile_data_size);
         return false;
+    }
 
     // Make sure there is enough room in the destination image for the tile
-    if (image_copy_end > p_image->size)
+    if (image_copy_end > p_image->size) {
+        log_verbose("gbr_tile_copy_to_image(): Not enough room for tile in dest image: %d > %d\n", image_copy_end, p_image->size);
         return false;
+    }
 
     // TODO: support more than 1 BPP in destination images?
-    if (p_image->bytes_per_pixel != 1)
+    if (p_image->bytes_per_pixel != 1) {
+        log_verbose("gbr_tile_copy_to_image(): BPP is != 1 (%d)\n", p_image->bytes_per_pixel);
         return false;
+    }
 
 
     // Copy each row of the tile to the desired row location in the image
