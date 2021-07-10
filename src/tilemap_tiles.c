@@ -83,7 +83,6 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
         new_map_entry.flip_bits   = TILE_FLIP_BITS_NONE;
         new_map_entry.palette_num = TILE_PAL_MAP_USE_DEFAULT_FROM_TILE;
 
-
         // == THEN COPY THE TILE DATA INTO THE NEW TILE ==
         // Use an easier to read name for the new tile entry
         new_tile = &tile_set->tiles[new_map_entry.id];
@@ -129,6 +128,11 @@ tile_map_entry tile_register_new(tile_data * p_src_tile, tile_set_data * tile_se
     }
     else
         new_map_entry.status = TILE_ID_EXCEEDED_LIMIT;
+
+    // Store palette in cgb bits map even if not overriding 
+    // (for C Source export, since in GBMB the app will perform this same action on export of the map)
+    new_map_entry.cgb_attrib = new_tile->palette_num | (new_map_entry.flip_bits << 5);
+
 
 // log_verbose("tile_register_new tile_id=%d\n",tile_id);
 
@@ -199,6 +203,7 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, uin
 
     // Default status to found
     tile_match_rec.status = TILE_ID_OK;
+    tile_match_rec.cgb_attrib = 0x00;
 
     // Earlier checking will enforce CGB mode only for tile_dedupe_flips
     // TODO: for now flip X and flip Y are joined together, so always check each flip permutation
@@ -219,6 +224,10 @@ tile_map_entry tile_find_match(tile_data * p_tile, tile_set_data * tile_set, uin
                 // based on palettes must be enabled (CGB Mode only)
                 if ((p_tile->palette_num == tile_set->tiles[c].palette_num)
                     || (tile_dedupe_palettes)) {
+
+                    // Store palette in cgb bits map even if not overriding 
+                    // (for C Source export, since in GBMB the app will perform this same action on export of the map)
+                    tile_match_rec.cgb_attrib = p_tile->palette_num | (tile_flip_bits[h] << 5);
 
                     tile_match_rec.id        = c; // found a matching tile, return it's ID
                     tile_match_rec.flip_bits = tile_flip_bits[h]; // Set flip x/y bits if present
@@ -530,7 +539,7 @@ int32_t tile_palette_identify_and_strip(tile_data * p_tile, uint16_t gb_mode, ui
     }
 
 
-// log_verbose("-> pal id as: %d :", palette);
+    // log_verbose("-> pal id as: %d :", palette);
     p_tile->palette_num = palette;
 
     return TILE_ID_OK;

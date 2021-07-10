@@ -101,6 +101,9 @@ int tilemap_read(const char * filename, uint16_t image_format)
 
         case FORMAT_GBR:
             status = gbr_load(filename);
+            if (!status)
+                log_verbose("gbr_load load failed \n");
+
             if (status)
                 p_loaded_image = gbr_get_image();
 
@@ -109,6 +112,9 @@ int tilemap_read(const char * filename, uint16_t image_format)
         case FORMAT_GBM:
             // TODO: gbm load
             status = gbm_load(filename);
+            if (!status)
+                log_verbose("gbm_load load failed \n");
+
             if (status)
                 p_loaded_image = gbm_get_image();
 

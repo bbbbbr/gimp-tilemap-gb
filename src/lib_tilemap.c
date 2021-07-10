@@ -18,6 +18,7 @@
 // Globals
 tile_map_data tile_map;
 tile_set_data tile_set;
+color_data  * p_colors = NULL;
 
 
 void tilemap_options_set(tile_process_options * p_src_plugin_options) {
@@ -46,9 +47,18 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
 
     p_dest_plugin_options->ignore_palette_errors = false;
 
-    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
-    if (color_count <= TILE_DMG_COLORS_MAX) {
+    if ((p_dest_plugin_options->gb_mode == MODE_CGB_32_COLOR) || (color_count > TILE_DMG_COLORS_MAX)) {
 
+        p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
+        p_dest_plugin_options->dmg_possible = true; //false;
+        p_dest_plugin_options->cgb_possible = true;
+
+        // only enable dedupe on GBM export (all types)
+        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
+        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
+        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
+    }
+    else if ((p_dest_plugin_options->gb_mode == MODE_DMG_4_COLOR) || (color_count <= TILE_DMG_COLORS_MAX)) {
         p_dest_plugin_options->gb_mode = MODE_DMG_4_COLOR;
         p_dest_plugin_options->dmg_possible = true;
         p_dest_plugin_options->cgb_possible = true;
@@ -57,19 +67,44 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
         p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
         p_dest_plugin_options->tile_dedupe_flips    = false;
         p_dest_plugin_options->tile_dedupe_palettes = false;
+    }  
+    else {
+        // Too many colors
+        p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
+        p_dest_plugin_options->dmg_possible = false;
+        p_dest_plugin_options->cgb_possible = false;
+    
+        p_dest_plugin_options->tile_dedupe_enabled  = false;
+        p_dest_plugin_options->tile_dedupe_flips    = false;
+        p_dest_plugin_options->tile_dedupe_palettes = false;
+    
     }
-    // else if (color_count <= TILE_CGB_COLORS_MAX) {
-    else  {
 
-        p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
-        p_dest_plugin_options->dmg_possible = true; //false;
-        p_dest_plugin_options->cgb_possible = true;
 
-        // only enable dedupe on GBM export (all types)
-        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-    }
+    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
+    // if (color_count <= TILE_DMG_COLORS_MAX) {
+
+    //     p_dest_plugin_options->gb_mode = MODE_DMG_4_COLOR;
+    //     p_dest_plugin_options->dmg_possible = true;
+    //     p_dest_plugin_options->cgb_possible = true;
+
+    //     // only enable dedupe on GBM export (basic tiled edupe only)
+    //     p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
+    //     p_dest_plugin_options->tile_dedupe_flips    = false;
+    //     p_dest_plugin_options->tile_dedupe_palettes = false;
+    // }
+    // // else if (color_count <= TILE_CGB_COLORS_MAX) {
+    // else  {
+
+    //     p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
+    //     p_dest_plugin_options->dmg_possible = true; //false;
+    //     p_dest_plugin_options->cgb_possible = true;
+
+    //     // only enable dedupe on GBM export (all types)
+    //     p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
+    //     p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
+    //     p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
+    // }
     // else {
     //     // Too many colors
     //     p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
@@ -125,6 +160,11 @@ int tilemap_initialize(image_data * p_src_img) {
     if (!tile_map.palette_num_list)
             return(false);
 
+    tile_map.cgb_attrib_list = (uint8_t *)malloc(tile_map.size * sizeof(uint8_t));
+    if (!tile_map.cgb_attrib_list)
+            return(false);
+
+
     // Tile Set
     tile_set.tile_bytes_per_pixel = p_src_img->bytes_per_pixel;
     tile_set.tile_width  = TILE_WIDTH_DEFAULT;
@@ -140,7 +180,7 @@ int tilemap_initialize(image_data * p_src_img) {
 
 
 
-unsigned char tilemap_export_process(image_data * p_src_img) {
+unsigned char tilemap_export_process(image_data * p_src_img, color_data * p_src_colors) {
 
     if ( check_dimensions_valid(p_src_img) ) {
         if (!tilemap_initialize(p_src_img)) { // Success, prep for processing
@@ -156,6 +196,9 @@ unsigned char tilemap_export_process(image_data * p_src_img) {
 
     if ( ! process_tiles(p_src_img) )
         return (false); // Signal failure and exit
+
+    // Save color palette
+    p_colors = p_src_colors;
 
     return (true);
 }
@@ -253,6 +296,7 @@ unsigned char process_tiles(image_data * p_src_img) {
                 tile_map.tile_id_list[map_slot]     = map_entry.id;
                 tile_map.flip_bits_list[map_slot]   = map_entry.flip_bits;
                 tile_map.palette_num_list[map_slot] = map_entry.palette_num;
+                tile_map.cgb_attrib_list[map_slot]  = map_entry.cgb_attrib;
 
                 map_slot++;
 
@@ -328,6 +372,10 @@ void tilemap_free_resources(void) {
         tile_map.palette_num_list = NULL;
     }
 
+    if (tile_map.cgb_attrib_list) {
+        free(tile_map.cgb_attrib_list);
+        tile_map.cgb_attrib_list = NULL;
+    }
 }
 
 
@@ -337,7 +385,8 @@ int32_t tilemap_save(const char * filename, uint32_t export_format) {
     return( tilemap_export(filename,
                            export_format,
                            &tile_map,
-                           &tile_set) );
+                           &tile_set,
+                           p_colors) );
 }
 
 

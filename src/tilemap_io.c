@@ -15,12 +15,13 @@
 int32_t tilemap_export(const char * filename,
                        uint32_t   export_format,
                        tile_map_data * tile_map,
-                       tile_set_data * tile_set) {
+                       tile_set_data * tile_set,
+                       color_data    * p_colors) {
 
     // tilemap_export_raw_binary(filename, tile_map, tile_set);
 
     if (export_format == FORMAT_GBDK_C_SOURCE)
-        tilemap_format_gbdk_c_source_save(filename, tile_map, tile_set);
+        tilemap_format_gbdk_c_source_save(filename, tile_map, tile_set, p_colors);
 
     return (true);
 }

@@ -68,14 +68,19 @@ int32_t gbm_load(const char * filename) {
         // copy colors if possible, otherwise signal failure
         if (p_tile_colors)
             memcpy(&colors, p_tile_colors, sizeof(color_data));
-        else
+        else {
             status = false;
+            log_verbose("gbm_load: gbr_get_colors() failed\n");
+        }
 
         // Render the image from the loaded data
         // TODO: The use of p_gbr here is crossing some boundaries that maybe shouldn't be
         // Consider just passing the tiles converted into an image
         if (status)
             status = gbm_convert_map_to_image(&gbm, p_gbr, &image);
+
+        if (!status)
+            log_verbose("gbm_load: gbm_convert_map_to_image() failed\n");
    }
 
     // TODO: Open the loaded tiles as a separate image?
@@ -103,7 +108,7 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
             plugin_options.tile_dedupe_enabled, plugin_options.tile_dedupe_flips, plugin_options.tile_dedupe_palettes,
             plugin_options.tile_dedupe_palettes);
 
-    status = tilemap_export_process(p_src_image);
+    status = tilemap_export_process(p_src_image, p_colors);
     log_verbose("(gbm) tilemap_export_process: status= %d\n", status);
 
 

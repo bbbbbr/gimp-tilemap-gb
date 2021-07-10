@@ -218,6 +218,8 @@ int32_t gbm_convert_map_to_image(gbm_record * p_gbm, gbr_record * p_gbr, image_d
                                                     map_x, map_y,
                                                     tile.flip_h, tile.flip_v,
                                                     map_tile_pal_id);
+                if (!status)
+                    log_verbose("gbm_convert_map_to_image(): gbr_tile_copy_to_image() failed.\n");
             } // for .. map_x
         } // for.. map_y
     } else {

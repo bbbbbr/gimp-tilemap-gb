@@ -44,7 +44,7 @@ void palette_copy(color_data * p_dest_pal, palette_rgb_LAB * p_src_pal) {
 
 
 // Convert a palette to LAB format
-color_data *  palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
+void palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
     // TODO N COL
     for (int c=0; c < p_user_pal->color_count; c++)
         color_rgb2LAB( &(p_user_pal->colors[c]) );

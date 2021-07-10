@@ -80,7 +80,7 @@ bool tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src
                     options.tile_dedupe_enabled, options.tile_dedupe_flips, options.tile_dedupe_palettes,
                     options.tile_dedupe_palettes);
 
-            status = tilemap_export_process(p_src_image);
+            status = tilemap_export_process(p_src_image, p_src_colors);
             log_verbose("tilemap_export_process: status= %d\n", status);
 
             if (status)

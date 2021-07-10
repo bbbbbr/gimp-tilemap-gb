@@ -88,7 +88,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     GimpPixelRgn rgn;
 
     image_data app_image;
-    color_data app_colors;
+    color_data app_colors = { .pal = {0} }; // initialize all palette colors to zero
 
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
@@ -165,7 +165,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
         switch (plugin_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:
 
-                status = tilemap_export_process(&app_image);
+                status = tilemap_export_process(&app_image, &app_colors);
                 log_verbose("tilemap_export_process: status= %d\n", status);
 
 

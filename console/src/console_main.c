@@ -57,13 +57,13 @@ int main( int argc, char *argv[] )  {
 int convert_image() {
 
     tile_process_options options;
-    color_data src_colors;
+    color_data src_colors = { .pal = {0} }; // initialize all palette colors to zero
     image_data src_image;
     src_image.p_img_data = NULL;
 
     // Process and export the image
     // Has to happen before tilemap_options_load_defaults()
-    options.remap_pal      = user_options.remap_pal_file;
+    options.remap_pal      = user_options.remap_pal;
     strncpy(options.remap_pal_file, user_options.remap_pal_file, STR_FILENAME_MAX);
     tilemap_options_set(&options); // This is a workaround for now, should be split to separate options group
     if (!tilemap_load_and_prep_image(&src_image, &src_colors, filename_in ))
@@ -71,6 +71,7 @@ int convert_image() {
 
     // Load default options based on output image format and number of colors in source image
     options.image_format = user_options.image_format;
+    options.gb_mode      = user_options.gb_mode;
     tilemap_options_load_defaults(src_colors.color_count, &options);
 
     // Apply any custom user settings from the command line
@@ -89,7 +90,8 @@ int convert_image() {
         }
         return false;
     }
-
+    
+    return true;
 }
 
 
@@ -115,6 +117,7 @@ void apply_user_options(tile_process_options * p_options) {
 
 void clear_user_options() {
 
+    user_options.remap_pal             = false;
     user_options.image_format          = OPTION_UNSET;
     user_options.gb_mode               = OPTION_UNSET;
     user_options.tile_dedupe_enabled   = OPTION_UNSET;

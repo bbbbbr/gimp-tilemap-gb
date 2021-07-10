@@ -64,7 +64,7 @@ static bool palette_validate_settings(palette_rgb_LAB * p_pal) {
         log_error("Error: sub-pallet size (%d) must be even multiple of whole pallet size (%d)\n", p_pal->color_count, p_pal->subpal_size);
         return false;
     }        
-
+    return true;
 }
 
 

@@ -83,6 +83,7 @@
         uint8_t  flip_bits;
         uint8_t  palette_num;
         uint8_t  status;
+        uint8_t  cgb_attrib;
     } tile_map_entry;
 
 
@@ -98,6 +99,7 @@
         uint16_t * tile_id_list; // if TILES_MAX_DEFAULT > 255, this must be larger than uint8_t
         uint8_t * flip_bits_list;
         uint8_t * palette_num_list;
+        uint8_t * cgb_attrib_list;
 
         // Options
         tile_process_options options;
@@ -136,7 +138,7 @@
     void           tilemap_free_resources(void);
     int32_t        check_dimensions_valid(image_data * p_src_img);
     unsigned char  process_tiles(image_data * p_src_img);
-    unsigned char  tilemap_export_process(image_data * p_src_img);
+    unsigned char  tilemap_export_process(image_data * p_src_img, color_data * p_src_colors);
     int32_t        tilemap_initialize(image_data * p_src_img);
     int32_t        tilemap_save(const char * filename, uint32_t export_format);
 
