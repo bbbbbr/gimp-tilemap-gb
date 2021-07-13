@@ -415,7 +415,7 @@ void gbm_export_update_color_set(gbm_record * p_gbm, uint16_t gb_mode) {
 }
 
 
-void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename, uint16_t gb_mode, uint16_t bank, uint16_t tile_offset) {
+void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename, const char * varname, uint16_t gb_mode, uint16_t bank, uint16_t tile_offset) {
 
     char filename_trimmed[STR_FILENAME_MAX];
 
@@ -425,7 +425,7 @@ void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename
 
     // Append required labels to the trimmed filename
     snprintf(p_gbm->map_export.file_name, GBM_MAP_EXPORT_FILE_NAME_SIZE, "%s_map.c", filename_trimmed);
-    snprintf(p_gbm->map_export.label_name, GBM_MAP_EXPORT_LABEL_NAME_SIZE, "%s_map", filename_trimmed);
+    snprintf(p_gbm->map_export.label_name, GBM_MAP_EXPORT_LABEL_NAME_SIZE, "%s_map", varname);
 
     // log_verbose("gbm_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
     //         filename,

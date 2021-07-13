@@ -21,4 +21,4 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 int32_t gbr_export_tileset_palette(color_data * p_colors, gbr_record * p_gbr);
 
 int32_t gbr_export_set_defaults(gbr_record * p_gbr);
-void gbr_export_update_tile_export_settings(gbr_record *, const char *, uint16_t);
+void gbr_export_update_tile_export_settings(gbr_record *, const char *, const char *, uint16_t);

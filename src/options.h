@@ -45,6 +45,8 @@ typedef struct {
     uint16_t map_tileid_offset;
     uint16_t bank_num;
 
+    char     varname[STR_FILENAME_MAX]; // output variable name for all formats
+
     //
 
 } tile_process_options;

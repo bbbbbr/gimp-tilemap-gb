@@ -751,7 +751,7 @@ int32_t gbr_export_set_defaults(gbr_record * p_gbr) {
 }
 
 
-void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * filename, uint16_t bank) {
+void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * filename, const char * varname, uint16_t bank) {
 
     char filename_trimmed[STR_FILENAME_MAX];
 
@@ -761,7 +761,7 @@ void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * fil
 
     // Append required labels to the trimmed filename
     snprintf(p_gbr->tile_export.file_name, GBR_TILE_EXPORT_FILE_NAME_SIZE, "%s_tiles.c", filename_trimmed);
-    snprintf(p_gbr->tile_export.label_name, GBR_TILE_EXPORT_LABEL_NAME_SIZE, "%s_tiles", filename_trimmed);
+    snprintf(p_gbr->tile_export.label_name, GBR_TILE_EXPORT_LABEL_NAME_SIZE, "%s_tiles", varname);
 
     // log_verbose("gbr_export_update_tile_export_settings:\nexport filename:%s\ntrimmed:%s\nexport setting filename:%s\nexport label:%s\n",
     //         filename,

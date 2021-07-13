@@ -156,6 +156,8 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
 
+    // For plugin, set output variable name as filename
+    copy_filename_without_path_and_extension(plugin_options.varname, filename);
 
     // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
 //    if (status != 0) { };
@@ -168,10 +170,6 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
                 status = tilemap_export_process(&app_image, &app_colors);
                 log_verbose("tilemap_export_process: status= %d\n", status);
 
-
-                // TODO: Separate out GBDK_C_SOURCE file format handling to a seperate library
-                // gbdk_c_source_save
-                // gbdk_c_source_format.c
                 if (status)
                     status = tilemap_save(filename, plugin_options.image_format);
                 log_verbose("tilemap_save: status= %d\n", status);

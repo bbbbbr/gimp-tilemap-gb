@@ -32,14 +32,15 @@ void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
     memcpy(p_dest_plugin_options, &tile_map.options, sizeof(tile_process_options));
 
     log_verbose("==== tilemap_options_get() ====\n");
-    log_verbose("map_tileid_offset:    %d\n", p_dest_plugin_options->map_tileid_offset);
-    log_verbose("bank_num:             %d\n", p_dest_plugin_options->bank_num);
-    log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
-    log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
-    log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
-    log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
-    log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    log_verbose("map_tileid_offset:     %d\n", p_dest_plugin_options->map_tileid_offset);
+    log_verbose("bank_num:              %d\n", p_dest_plugin_options->bank_num);
+    log_verbose("image_format:          %d\n", p_dest_plugin_options->image_format);
+    log_verbose("gb_mode:               %d\n", p_dest_plugin_options->gb_mode);
+    log_verbose("tile_dedupe_enabled:   %d\n", p_dest_plugin_options->tile_dedupe_enabled);
+    log_verbose("tile_dedupe_flips:     %d\n", p_dest_plugin_options->tile_dedupe_flips);
+    log_verbose("tile_dedupe_palettes:  %d\n", p_dest_plugin_options->tile_dedupe_palettes);
     log_verbose("ignore_palette_errors: %d\n", p_dest_plugin_options->ignore_palette_errors);
+    log_verbose("varname: %s\n", p_dest_plugin_options->varname);
     log_verbose("\n");
 
 }
@@ -84,6 +85,7 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
 
     p_dest_plugin_options->map_tileid_offset = OPTION_UNSET;
     p_dest_plugin_options->bank_num = OPTION_UNSET;
+    p_dest_plugin_options->varname[0] = '\0';
 
 
     log_verbose("==== tilemap_options_load_defaults() ====\n");
@@ -95,6 +97,7 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
     log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
     log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
     log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
+    log_verbose("varname: %s\n", p_dest_plugin_options->varname);
     log_verbose("\n");
 }
 

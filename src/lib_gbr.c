@@ -38,7 +38,7 @@ int32_t gbr_load(const char * filename) {
 
 
 // TODO: Import palette color data?
-// TODO: Try to maintain palette color order? Store in Gimp Parasite?
+// TODO: Try to maintain palette color order? Store in Gimp Parasite? <-- Could use remap palette features, with checkbox for enable
 // TODO: ADD gbr_set_image for SOURCE image?
 int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p_colors, tile_process_options plugin_options) {
 
@@ -64,7 +64,7 @@ int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p
     // Apply some final settings updates,
     // only if there aren't cached settings we don't want to overwrite
     if (!settings_gbr_tile_export_populated) {
-        gbr_export_update_tile_export_settings(&gbr, filename, plugin_options.bank_num);
+        gbr_export_update_tile_export_settings(&gbr, filename, plugin_options.varname, plugin_options.bank_num);
     }
 
 

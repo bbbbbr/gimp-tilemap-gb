@@ -30,7 +30,6 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
     char path_without_filename[STR_FILENAME_MAX];
     char filename_noext[STR_FILENAME_MAX];
-    char filename_nopath_noext[STR_FILENAME_MAX];
 
     char filename_tiles_c[STR_FILENAME_MAX];
     char filename_tiles_h[STR_FILENAME_MAX];
@@ -54,21 +53,8 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     snprintf(filename_map_c,   STR_FILENAME_MAX, "%s_map.c", filename_noext);
     snprintf(filename_map_h,   STR_FILENAME_MAX, "%s_map.h", filename_noext);
 
-    // Strip path and extension from filename to 
-    copy_filename_without_path_and_extension(filename_nopath_noext, filename);
-    snprintf(varname,          STR_FILENAME_MAX, "%s", filename_nopath_noext);    
-
-/*    // Override - strip filename from path [old version]
-    if (!get_path_without_filename(filename, path_without_filename, STR_FILENAME_MAX)) {
-      return (false);
-    }
-
-    snprintf(filename_tiles_c, STR_FILENAME_MAX, "%stiles.c", path_without_filename);
-    snprintf(filename_tiles_h, STR_FILENAME_MAX, "%stiles.h", path_without_filename);
-
-    snprintf(filename_map_c,   STR_FILENAME_MAX, "%smap.c",   path_without_filename);
-    snprintf(filename_map_h,   STR_FILENAME_MAX, "%smap.h",   path_without_filename);
-*/
+    // Strip path and extension from filename to
+    snprintf(varname,          STR_FILENAME_MAX, "%s", tile_map->options.varname);
 
     log_verbose("%s\n", filename_tiles_c);
     log_verbose("%s\n", filename_tiles_h);
@@ -77,7 +63,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
 
 
-log_verbose("// ==== TILE SET C SOURCE FILE ====\n");
+    log_verbose("// ==== TILE SET C SOURCE FILE ====\n");
     // ==== TILE SET C SOURCE FILE ====
 
     // Open the file
@@ -180,7 +166,7 @@ log_verbose("// ==== TILE SET C SOURCE FILE ====\n");
     fclose(file);
 
 
-log_verbose("// ==== TILE SET C HEADER FILE ====\n");
+    log_verbose("// ==== TILE SET C HEADER FILE ====\n");
     // ==== TILE SET C HEADER FILE ====
 
     // Open the file
@@ -230,7 +216,7 @@ log_verbose("// ==== TILE SET C HEADER FILE ====\n");
 
 
 
-log_verbose("// ==== TILE MAP C SOURCE FILE ====\n");
+    log_verbose("// ==== TILE MAP C SOURCE FILE ====\n");
     // ==== TILE MAP C SOURCE FILE ====
 
     // Open the file
@@ -327,7 +313,7 @@ log_verbose("// ==== TILE MAP C SOURCE FILE ====\n");
 
 
 
-log_verbose("// ==== TILE MAP C HEADER FILE ====\n");
+    log_verbose("// ==== TILE MAP C HEADER FILE ====\n");
     // ==== TILE MAP C HEADER FILE ====
 
     // Open the file

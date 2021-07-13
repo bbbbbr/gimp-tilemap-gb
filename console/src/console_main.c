@@ -27,6 +27,7 @@ const char * const opt_gbr = "-gbr";
 const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
 
+const char * const opt_varname     = "-var=";
 const char * const opt_remap_pal   = "-pal=";
 const char * const opt_bank        = "-bank=";
 const char * const opt_tileid_offset   = "-tileorg=";
@@ -58,14 +59,14 @@ int main( int argc, char *argv[] )  {
 
 int convert_image() {
 
-    tile_process_options options;
+    tile_process_options options = { .varname = {'\0'} };
     color_data src_colors = { .pal = {0} }; // initialize all palette colors to zero
     image_data src_image;
     src_image.p_img_data = NULL;
 
     // Process and export the image
     // Has to happen before tilemap_options_load_defaults()
-    options.remap_pal      = user_options.remap_pal;
+    options.remap_pal = user_options.remap_pal;
     strncpy(options.remap_pal_file, user_options.remap_pal_file, STR_FILENAME_MAX);
     tilemap_options_set(&options); // This is a workaround for now, should be split to separate options group
     if (!tilemap_load_and_prep_image(&src_image, &src_colors, filename_in ))
@@ -120,6 +121,9 @@ void apply_user_options(tile_process_options * p_options) {
 
     if (user_options.ignore_palette_errors != OPTION_UNSET)
         p_options->ignore_palette_errors = user_options.ignore_palette_errors;
+
+    if (user_options.varname[0] != '\0')
+        snprintf(p_options->varname, STR_FILENAME_MAX, "%s", user_options.varname);
 }
 
 
@@ -128,19 +132,21 @@ void clear_user_options() {
 
     user_options.map_tileid_offset     = OPTION_UNSET;
     user_options.bank_num              = OPTION_UNSET;
-
+    
     user_options.remap_pal             = false;
     user_options.remap_pal_file[0]     = '\0';
     user_options.subpal_size           = OPTION_UNSET;
 
     user_options.image_format          = OPTION_UNSET;
     user_options.gb_mode               = OPTION_UNSET;
-
+    
     user_options.tile_dedupe_enabled   = OPTION_UNSET;
     user_options.tile_dedupe_flips     = OPTION_UNSET;
     user_options.tile_dedupe_palettes  = OPTION_UNSET;
-
+    
     user_options.ignore_palette_errors = OPTION_UNSET;
+
+    user_options.varname[0] = '\0';
 }
 
 
@@ -149,7 +155,7 @@ int handle_args( int argc, char * argv[] ) {
 
     int i;
     char filename_noext[STR_FILENAME_MAX] = {'\0'};
-
+    
     clear_user_options();
 
     if( argc < 3 ) {
@@ -188,8 +194,12 @@ int handle_args( int argc, char * argv[] ) {
 
             // Multi char arguments
             if (0 == strncmp(argv[i], opt_remap_pal, strlen(opt_remap_pal))) {
-                // Extract filename for user supplier palette
+                // Extract filename for user supplied palette
                 snprintf(user_options.remap_pal_file, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_remap_pal));
+                user_options.remap_pal = true;
+            }
+            else if (0 == strncmp(argv[i], opt_varname, strlen(opt_varname))) {
+                snprintf(user_options.varname, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_varname));
                 user_options.remap_pal = true;
             }
             else if (0 == strncmp(argv[i], opt_bank, strlen(opt_bank))) {
@@ -253,6 +263,10 @@ int handle_args( int argc, char * argv[] ) {
         }
     }
 
+    // If user variable name wasn't specified then use file name with no path and extension isntead
+    if (user_options.varname[0] == '\0')
+        copy_filename_without_path_and_extension(user_options.varname, filename_out);
+
     return true;
 }
 
@@ -274,7 +288,8 @@ void display_help(void) {
             "  -i          Ignore Palette Errors (CGB will use highest guessed palette #)\n"
             "  -pal=[file] Remap png to palette (pngs allowed: index and 24/32 bit RGB)\n"
             "\n"
-            "  -bank=[num] Set bank number for all output modes\n"
+            "  -var=[name]    Base name to use for export variables (otherwise filename)\n"
+            "  -bank=[num]    Set bank number for all output modes\n"
             "  -tileorg=[num] Tile ID origin offset for maps (instead of zero)\n"
             "\n"
             "  -q          Quiet, suppress all output\n"
@@ -285,6 +300,6 @@ void display_help(void) {
             "   png2gbtiles spritesheet.png -gbr spritesheet.gbr\n"
             "   png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm\n"
             "   png2gbtiles worldmap.png -gbm \n");
-            "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"
+            "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"    
             "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n";
 }
