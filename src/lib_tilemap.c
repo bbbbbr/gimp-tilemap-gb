@@ -32,6 +32,8 @@ void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
     memcpy(p_dest_plugin_options, &tile_map.options, sizeof(tile_process_options));
 
     log_verbose("==== tilemap_options_get() ====\n");
+    log_verbose("map_tileid_offset:    %d\n", p_dest_plugin_options->map_tileid_offset);
+    log_verbose("bank_num:             %d\n", p_dest_plugin_options->bank_num);
     log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
     log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
     log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
@@ -80,44 +82,13 @@ void tilemap_options_load_defaults(int color_count, tile_process_options * p_des
     
     }
 
+    p_dest_plugin_options->map_tileid_offset = OPTION_UNSET;
+    p_dest_plugin_options->bank_num = OPTION_UNSET;
 
-    // TODO: SELECT OPTIONS FOR EXPORT : DMG/CGB, Dedupe on Flip, Dedupe on alt pal color
-    // if (color_count <= TILE_DMG_COLORS_MAX) {
-
-    //     p_dest_plugin_options->gb_mode = MODE_DMG_4_COLOR;
-    //     p_dest_plugin_options->dmg_possible = true;
-    //     p_dest_plugin_options->cgb_possible = true;
-
-    //     // only enable dedupe on GBM export (basic tiled edupe only)
-    //     p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
-    //     p_dest_plugin_options->tile_dedupe_flips    = false;
-    //     p_dest_plugin_options->tile_dedupe_palettes = false;
-    // }
-    // // else if (color_count <= TILE_CGB_COLORS_MAX) {
-    // else  {
-
-    //     p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
-    //     p_dest_plugin_options->dmg_possible = true; //false;
-    //     p_dest_plugin_options->cgb_possible = true;
-
-    //     // only enable dedupe on GBM export (all types)
-    //     p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-    //     p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-    //     p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);;
-    // }
-    // else {
-    //     // Too many colors
-    //     p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
-    //     p_dest_plugin_options->dmg_possible = false;
-    //     p_dest_plugin_options->cgb_possible = false;
-    //
-    //     p_dest_plugin_options->tile_dedupe_enabled  = false;
-    //     p_dest_plugin_options->tile_dedupe_flips    = false;
-    //     p_dest_plugin_options->tile_dedupe_palettes = false;
-    //
-    // }
 
     log_verbose("==== tilemap_options_load_defaults() ====\n");
+    log_verbose("map_tileid_offset:    %d\n", p_dest_plugin_options->map_tileid_offset);
+    log_verbose("bank_num:             %d\n", p_dest_plugin_options->bank_num);
     log_verbose("color_count:          %d\n", color_count);
     log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
     log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);

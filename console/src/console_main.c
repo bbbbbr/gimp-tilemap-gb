@@ -28,6 +28,8 @@ const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
 
 const char * const opt_remap_pal   = "-pal=";
+const char * const opt_bank        = "-bank=";
+const char * const opt_tileid_offset   = "-tileorg=";
 
 // user overrides for default settings
 tile_process_options user_options;
@@ -97,6 +99,13 @@ int convert_image() {
 
 void apply_user_options(tile_process_options * p_options) {
 
+    if (user_options.map_tileid_offset != OPTION_UNSET)
+        p_options->map_tileid_offset = user_options.map_tileid_offset;
+
+    if (user_options.bank_num != OPTION_UNSET)
+        p_options->bank_num = user_options.bank_num;
+
+
     if (user_options.gb_mode != OPTION_UNSET)
         p_options->gb_mode = user_options.gb_mode;
 
@@ -117,12 +126,20 @@ void apply_user_options(tile_process_options * p_options) {
 
 void clear_user_options() {
 
+    user_options.map_tileid_offset     = OPTION_UNSET;
+    user_options.bank_num              = OPTION_UNSET;
+
     user_options.remap_pal             = false;
+    user_options.remap_pal_file[0]     = '\0';
+    user_options.subpal_size           = OPTION_UNSET;
+
     user_options.image_format          = OPTION_UNSET;
     user_options.gb_mode               = OPTION_UNSET;
+
     user_options.tile_dedupe_enabled   = OPTION_UNSET;
     user_options.tile_dedupe_flips     = OPTION_UNSET;
     user_options.tile_dedupe_palettes  = OPTION_UNSET;
+
     user_options.ignore_palette_errors = OPTION_UNSET;
 }
 
@@ -170,10 +187,16 @@ int handle_args( int argc, char * argv[] ) {
         if (*argv[i] == '-') {
 
             // Multi char arguments
-            if (strstr(argv[i], opt_remap_pal) == argv[i]) {
+            if (0 == strncmp(argv[i], opt_remap_pal, strlen(opt_remap_pal))) {
                 // Extract filename for user supplier palette
                 snprintf(user_options.remap_pal_file, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_remap_pal));
                 user_options.remap_pal = true;
+            }
+            else if (0 == strncmp(argv[i], opt_bank, strlen(opt_bank))) {
+                user_options.bank_num = strtol(argv[i] + strlen(opt_bank), NULL, 0);
+            }
+            else if (0 == strncmp(argv[i], opt_tileid_offset, strlen(opt_tileid_offset))) {
+                user_options.map_tileid_offset = strtol(argv[i] + strlen(opt_tileid_offset), NULL, 0);
             }
             else {   
 
@@ -251,6 +274,9 @@ void display_help(void) {
             "  -i          Ignore Palette Errors (CGB will use highest guessed palette #)\n"
             "  -pal=[file] Remap png to palette (pngs allowed: index and 24/32 bit RGB)\n"
             "\n"
+            "  -bank=[num] Set bank number for all output modes\n"
+            "  -tileorg=[num] Tile ID origin offset for maps (instead of zero)\n"
+            "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"
             "  -v          Verbose output during conversion\n"
@@ -259,5 +285,6 @@ void display_help(void) {
             "   png2gbtiles spritesheet.png -gbr spritesheet.gbr\n"
             "   png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm\n"
             "   png2gbtiles worldmap.png -gbm \n");
+            "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"
             "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n";
 }

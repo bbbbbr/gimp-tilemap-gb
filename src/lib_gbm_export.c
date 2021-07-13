@@ -382,7 +382,7 @@ int32_t gbm_export_set_defaults(gbm_record * p_gbm) {
     p_gbm->map_export.file_type = gbm_export_filetype_gbdk_c;
     // snprintf(p_gbm->map_export.section_name,      GBM_MAP_EXPORT_SECTION_NAME_SIZE, ""); // Section name is blank
     snprintf(p_gbm->map_export.label_name,      GBM_MAP_EXPORT_LABEL_NAME_SIZE, "map%ce1_1", '\0');
-    p_gbm->map_export.bank      = 0; // TODO: make a #define for this? Different default bank?
+    p_gbm->map_export.bank        = 0; // Default bank is zero (non-banked)
 
     p_gbm->map_export.plane_count = 1; // 1 plane (1 for DMG, 2 for CGB with attribs) - see export_props
     p_gbm->map_export.plane_order = 1; // Planes are continues
@@ -415,7 +415,7 @@ void gbm_export_update_color_set(gbm_record * p_gbm, uint16_t gb_mode) {
 }
 
 
-void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename, uint16_t gb_mode) {
+void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename, uint16_t gb_mode, uint16_t bank, uint16_t tile_offset) {
 
     char filename_trimmed[STR_FILENAME_MAX];
 
@@ -450,4 +450,9 @@ void gbm_export_update_export_settings(gbm_record * p_gbm, const char * filename
         p_gbm->map_export.prop_count = 1;
     }
 
+    if (bank != OPTION_UNSET)
+        p_gbm->map_export.bank = bank;
+
+    if (tile_offset != OPTION_UNSET)
+        p_gbm->map_export.tile_offset = tile_offset;
 }

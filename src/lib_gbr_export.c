@@ -751,7 +751,7 @@ int32_t gbr_export_set_defaults(gbr_record * p_gbr) {
 }
 
 
-void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * filename) {
+void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * filename, uint16_t bank) {
 
     char filename_trimmed[STR_FILENAME_MAX];
 
@@ -772,4 +772,7 @@ void gbr_export_update_tile_export_settings(gbr_record * p_gbr, const char * fil
     // Tiles IDs to export
     p_gbr->tile_export.from            = 0; // Start at first tile
     p_gbr->tile_export.upto            = p_gbr->tile_data.count - 1; // Go up to last tile
+
+    if (bank != OPTION_UNSET)
+        p_gbr->tile_export.bank = bank;
 }

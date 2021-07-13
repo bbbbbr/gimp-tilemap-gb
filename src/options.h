@@ -40,7 +40,10 @@ typedef struct {
     //       which is then used to load rest of options with tilemap_options_load_defaults
     bool     remap_pal;
     char     remap_pal_file[STR_FILENAME_MAX];
-    uint8_t  subpal_size; // should be even multiple of 
+    uint16_t subpal_size; // should be even multiple of 
+
+    uint16_t map_tileid_offset;
+    uint16_t bank_num;
 
     //
 

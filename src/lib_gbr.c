@@ -64,7 +64,7 @@ int32_t gbr_save(const char * filename, image_data * p_src_image, color_data * p
     // Apply some final settings updates,
     // only if there aren't cached settings we don't want to overwrite
     if (!settings_gbr_tile_export_populated) {
-        gbr_export_update_tile_export_settings(&gbr, filename);
+        gbr_export_update_tile_export_settings(&gbr, filename, plugin_options.bank_num);
     }
 
 

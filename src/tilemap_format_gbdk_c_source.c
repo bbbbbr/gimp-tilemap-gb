@@ -23,9 +23,6 @@ static unsigned char cgb_limit(uint8_t color_val) {
 }
 
 
-// TODO: allow control of which bank they are written to
-// TOOD: bank in filename is hardwired right now ("map.b3.c")
-//
 int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data * tile_map, tile_set_data * tile_set, color_data * p_colors) {
 
     int t,c;
@@ -43,6 +40,8 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
     uint32_t total_bytes_tiles = 0;
     uint32_t total_bytes_map = 0;
+
+    uint16_t tileid_offset = (tile_map->options.map_tileid_offset != OPTION_UNSET) ? tile_map->options.map_tileid_offset : 0;
 
     log_verbose("Writing to gbdk C source files...\n");
 
@@ -109,6 +108,17 @@ log_verbose("// ==== TILE SET C SOURCE FILE ====\n");
     tile_set->tile_width,
     tile_set->tile_height,
     tile_set->tile_count);
+
+
+    // Optional bank number
+    if (tile_map->options.bank_num != OPTION_UNSET)
+        fprintf(file,
+            "/* Bank of tiles */\n"
+            "#pragma bank %d\n"
+            "const void __at(%d) __bank_%s_tiles;\n"
+            "\n",
+            tile_map->options.bank_num,
+            tile_map->options.bank_num, varname);
 
 
     // ==== Add palette as array, but commented out ====
@@ -183,9 +193,6 @@ log_verbose("// ==== TILE SET C HEADER FILE ====\n");
     "Tile Header File\n"
     "*/\n"
     "\n"
-    "/* Bank of tiles */\n"
-    "#define tilesBank 0\n"
-    "\n"
     "#define %s_tiles_count %d\n"
     "#define %s_tiles_bytes %d\n"
     "/* Start of tile array */\n"
@@ -197,6 +204,14 @@ log_verbose("// ==== TILE SET C HEADER FILE ====\n");
     varname,
     total_bytes_tiles, 
     varname);
+
+
+    // Optional bank number
+    if (tile_map->options.bank_num != OPTION_UNSET)
+        fprintf(file,
+            "/* Bank of tiles */\n"
+            "extern const void __bank_%s_tiles;\n"
+            "\n", varname);
 
 
     // ==== Optional palette, but commented out ====
@@ -240,24 +255,38 @@ log_verbose("// ==== TILE MAP C SOURCE FILE ====\n");
     "#define %s_map_height %d\n"
     "#define %s_map_tiles %d\n"
     "#define %s_map_bytes %d\n"
-    "#define mapBank 0\n"
-    "\n"
-    "const unsigned char %s_map[%d] = \n"
-    "{\n",
+    "\n",
         get_filename_from_path(filename_map_c),
         tile_map->width_in_tiles,
         tile_map->height_in_tiles,
         varname, tile_map->width_in_tiles,
         varname, tile_map->height_in_tiles,
         varname, tile_map->size,
-        varname, tile_map->size,
-        varname,
-        tile_map->size);
+        varname, tile_map->size);
+
+
+    // Optional bank number
+    if (tile_map->options.bank_num != OPTION_UNSET)
+        fprintf(file,
+            "/* Bank of map */\n"
+            "#pragma bank %d\n"
+            "const void __at(%d) __bank_%s_map;\n"
+            "\n",
+            tile_map->options.bank_num,
+            tile_map->options.bank_num, varname);
+
+
+    fprintf(file, "\n"
+      "const unsigned char %s_map[%d] = \n"
+      "{\n",varname,
+          tile_map->size);
 
     // Write all the Tile Map data to a file
     for (t = 0; t < tile_map->size; t++) {
 
-        fprintf(file, " %3d,", tile_map->tile_id_list[t]);
+        // Write tile id #
+        //Add in tile origin offset if requested via options (otherwise origin is zero)
+        fprintf(file, " %3d,", tile_map->tile_id_list[t] + tileid_offset);
 
         if (t && (((t+1) % 16) == 0))
             fprintf(file, "\n"); // Line break every 8 tiles
@@ -323,7 +352,6 @@ log_verbose("// ==== TILE MAP C HEADER FILE ====\n");
     "#define %s_map_height %d\n"
     "#define %s_map_tiles %d\n"
     "#define %s_map_bytes %d\n"
-    "#define mapBank 0\n"
     "\n"
     "extern unsigned char %s_map[];\n"
     "extern unsigned char %s_map_attr[];\n"
@@ -337,6 +365,15 @@ log_verbose("// ==== TILE MAP C HEADER FILE ====\n");
         varname, tile_map->size,
         varname,
         varname);
+
+    // Optional bank number
+    if (tile_map->options.bank_num != OPTION_UNSET)
+        fprintf(file,
+            "/* Bank of map */\n"
+            "extern const void __bank_%s_map;\n"
+            "\n", varname);
+
+
 
     // Close the file
     fclose(file);
