@@ -13,3 +13,6 @@ obj/
 *.gbr
 *.pal
 *.txt
+/console/test_out/*
+/console/test_in/*
+/console/pal/*
