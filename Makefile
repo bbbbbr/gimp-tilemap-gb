@@ -4,7 +4,8 @@ TARGET  = file-tilemap
 SRC_DIR = src
 OBJ_DIR = obj
 CFLAGS  = $(shell pkg-config --cflags gtk+-2.0) \
-          $(shell pkg-config --cflags gimp-2.0)
+          $(shell pkg-config --cflags gimp-2.0) \
+          -Wno-format-truncation
 LFLAGS  = $(shell pkg-config --libs glib-2.0) \
           $(shell pkg-config --libs gtk+-2.0) \
           $(shell pkg-config --libs gimp-2.0) \
@@ -28,10 +29,11 @@ clean:
 	rm $(TARGET)
 
 install:
-	mkdir -p $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins
-	cp $(TARGET) $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins
+#	mkdir -p $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins
+#	cp $(TARGET) $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins
+	cp  $(TARGET) ~/.config/GIMP/2.10/plug-ins/
 
 uninstall:
-	rm $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins/$(TARGET)
+#	rm $(DESTDIR)$(exec_prefix)/lib/gimp/2.0/plug-ins/$(TARGET)
 
 .PHONY: clean install uninstall
