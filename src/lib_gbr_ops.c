@@ -295,12 +295,12 @@ int32_t gbr_tile_set_buf(uint8_t * src_buf, gbr_record * p_gbr, uint16_t tile_in
 
     memcpy(&(p_gbr->tile_data.tile_list[offset]), src_buf, tile_size);
 
-    // log_verbose("==gbr_tile_set_buf (%dx%d)\n",p_gbr->tile_data.width,p_gbr->tile_data.height);
+    // log_verbose("==gbr_tile_set_buf (%dx%d) #%d\n",p_gbr->tile_data.width,p_gbr->tile_data.height, tile_index);
     // int x;
     // int y;
     // for (y = 0; y < p_gbr->tile_data.height; y++) {
     //     for (x = 0; x < p_gbr->tile_data.width; x++) {
-    //         log_verbose("%4x", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
+    //         log_verbose("%d ", p_gbr->tile_data.tile_list[offset + x + (y * p_gbr->tile_data.width)]);
     //     }
     //     log_verbose("\n");
     // }
@@ -371,7 +371,7 @@ int32_t gbr_tile_copy_to_image(image_data * p_image, gbr_record * p_gbr,
 
     tile_offset = (tile_size * tile_index);
 
-    image_offset = (((map_y * p_gbr->tile_data.width) * p_image->width) +
+    image_offset = (((map_y * p_gbr->tile_data.height) * p_image->width) +
                     (map_x * p_gbr->tile_data.width)) * p_image->bytes_per_pixel;
 
 
