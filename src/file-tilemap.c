@@ -297,7 +297,11 @@ log_set_level(OUTPUT_LEVEL_VERBOSE);
                 // Only pop up the export dialog if it's interactive mode
                 // Set defaults first
 
-                tilemap_options_load_defaults(colormap_size_get(image_id), &plugin_options);
+                options_reset(&plugin_options);
+// TODO: verify that this works as expected                
+                options_color_defaults_if_unset(colormap_size_get(image_id), &plugin_options);
+// TODO: delete ME                
+                // tilemap_options_load_defaults(colormap_size_get(image_id), &plugin_options);
 
 
                 // Prompt the user for export options in a dialog

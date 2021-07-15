@@ -30,6 +30,7 @@ const char * const opt_csource   = "-csource";
 const char * const opt_varname     = "-var=";
 const char * const opt_remap_pal   = "-pal=";
 const char * const opt_bank        = "-bank=";
+const char * const opt_tile_size   = "-tilesz=";
 const char * const opt_tileid_offset   = "-tileorg=";
 
 // user overrides for default settings
@@ -59,31 +60,21 @@ int main( int argc, char *argv[] )  {
 
 int convert_image() {
 
-    tile_process_options options = { .varname = {'\0'} };
-    color_data src_colors = { .pal = {0} }; // initialize all palette colors to zero
+    color_data src_colors;
     image_data src_image;
-    src_image.p_img_data = NULL;
 
-    // Process and export the image
-    // Has to happen before tilemap_options_load_defaults()
-    options.remap_pal = user_options.remap_pal;
-    strncpy(options.remap_pal_file, user_options.remap_pal_file, STR_FILENAME_MAX);
-    tilemap_options_set(&options); // This is a workaround for now, should be split to separate options group
+    // Call these before loading the image and potentially remapping it's palette
+    tilemap_image_and_colors_init(&src_image, &src_colors);
+    tilemap_image_set_palette_tile_size(&src_image, &user_options);
+    tilemap_options_set(&user_options);
+
     if (!tilemap_load_and_prep_image(&src_image, &src_colors, filename_in ))
         return false;
 
     // Load default options based on output image format and number of colors in source image
-    options.image_format = user_options.image_format;
-    options.gb_mode      = user_options.gb_mode;
-    tilemap_options_load_defaults(src_colors.color_count, &options);
-
-    // Apply any custom user settings from the command line
-    apply_user_options(&options);
-    // TODO: validate color count vs gb_mode
-
     // Apply the finalized options
-    tilemap_options_set(&options);
-
+    options_color_defaults_if_unset(src_colors.color_count, &user_options);
+    tilemap_options_set(&user_options);
 
     // Process and export the image
     if (!tilemap_process_and_save_image(&src_image, &src_colors, filename_out )) {
@@ -98,65 +89,12 @@ int convert_image() {
 }
 
 
-void apply_user_options(tile_process_options * p_options) {
-
-    if (user_options.map_tileid_offset != OPTION_UNSET)
-        p_options->map_tileid_offset = user_options.map_tileid_offset;
-
-    if (user_options.bank_num != OPTION_UNSET)
-        p_options->bank_num = user_options.bank_num;
-
-
-    if (user_options.gb_mode != OPTION_UNSET)
-        p_options->gb_mode = user_options.gb_mode;
-
-    if (user_options.tile_dedupe_enabled != OPTION_UNSET)
-        p_options->tile_dedupe_enabled = user_options.tile_dedupe_enabled;
-
-    if (user_options.tile_dedupe_flips != OPTION_UNSET)
-        p_options->tile_dedupe_flips = user_options.tile_dedupe_flips;
-
-    if (user_options.tile_dedupe_palettes != OPTION_UNSET)
-        p_options->tile_dedupe_palettes = user_options.tile_dedupe_palettes;
-
-    if (user_options.ignore_palette_errors != OPTION_UNSET)
-        p_options->ignore_palette_errors = user_options.ignore_palette_errors;
-
-    if (user_options.varname[0] != '\0')
-        snprintf(p_options->varname, STR_FILENAME_MAX, "%s", user_options.varname);
-}
-
-
-
-void clear_user_options() {
-
-    user_options.map_tileid_offset     = OPTION_UNSET;
-    user_options.bank_num              = OPTION_UNSET;
-    
-    user_options.remap_pal             = false;
-    user_options.remap_pal_file[0]     = '\0';
-    user_options.subpal_size           = OPTION_UNSET;
-
-    user_options.image_format          = OPTION_UNSET;
-    user_options.gb_mode               = OPTION_UNSET;
-    
-    user_options.tile_dedupe_enabled   = OPTION_UNSET;
-    user_options.tile_dedupe_flips     = OPTION_UNSET;
-    user_options.tile_dedupe_palettes  = OPTION_UNSET;
-    
-    user_options.ignore_palette_errors = OPTION_UNSET;
-
-    user_options.varname[0] = '\0';
-}
-
-
-
 int handle_args( int argc, char * argv[] ) {
 
     int i;
     char filename_noext[STR_FILENAME_MAX] = {'\0'};
     
-    clear_user_options();
+    options_reset(&user_options);
 
     if( argc < 3 ) {
         log_error("Error: At least two arguments are required\n\n");
@@ -207,6 +145,28 @@ int handle_args( int argc, char * argv[] ) {
             }
             else if (0 == strncmp(argv[i], opt_tileid_offset, strlen(opt_tileid_offset))) {
                 user_options.map_tileid_offset = strtol(argv[i] + strlen(opt_tileid_offset), NULL, 0);
+            }
+            else if (0 == strncmp(argv[i], opt_tile_size, strlen(opt_tile_size))) {
+                if (0 == strncmp(argv[i] + strlen(opt_tile_size), "8x8", strlen("8x8"))) {
+                    user_options.tile_width = 8;
+                    user_options.tile_height = 8;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_size), "8x16", strlen("8x16"))) {
+                    user_options.tile_width = 8;
+                    user_options.tile_height = 16;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_size), "16x16", strlen("16x16"))) {
+                    user_options.tile_width = 16;
+                    user_options.tile_height = 16;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_size), "32x32", strlen("32x32"))) {
+                    user_options.tile_width = 32;
+                    user_options.tile_height = 32;
+                } else {
+                    log_error("Error: Invalid tile size: %s\n\n", argv[i] + strlen(opt_tile_size));
+                    display_help();
+                    return false;
+                }
             }
             else {   
 
@@ -291,6 +251,7 @@ void display_help(void) {
             "  -var=[name]    Base name to use for export variables (otherwise filename)\n"
             "  -bank=[num]    Set bank number for all output modes\n"
             "  -tileorg=[num] Tile ID origin offset for maps (instead of zero)\n"
+            "  -tilesz=[size] Tile size (8x8, 8x16, 16x16, 32x32) \n"
             "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"

@@ -88,7 +88,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     GimpPixelRgn rgn;
 
     image_data app_image;
-    color_data app_colors = { .pal = {0} }; // initialize all palette colors to zero
+    color_data app_colors; // initialize all palette colors to zero
 
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
@@ -100,6 +100,9 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     // Load options
     tilemap_options_get(&plugin_options);
+
+    tilemap_image_and_colors_init(&app_image, &app_colors);
+    tilemap_image_set_palette_tile_size(&app_image, &plugin_options);
 
     // Get the drawable
     drawable = gimp_drawable_get(drawable_id);
@@ -155,6 +158,8 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
+    options_color_defaults_if_unset(app_colors.color_count, &plugin_options);
+    tilemap_options_set(&plugin_options);
 
     // For plugin, set output variable name as filename
     copy_filename_without_path_and_extension(plugin_options.varname, filename);
@@ -163,6 +168,12 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 //    if (status != 0) { };
 
     if (status) {
+
+        // Update any settings that might need it based on loaded image data (tile size, etc)
+        if ( ! tilemap_image_update_settings(&app_image, &app_colors) ) {
+//            tilemap_error_set(TILE_ID_INVALID_DIMENSIONS);
+            return (false); // Signal failure and exit
+        }
 
         switch (plugin_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:

@@ -19,6 +19,7 @@
 #include "image_remap.h"
 #include "color_space.h"
 #include "palette.h"
+#include "options.h"
 
 static bool pixel_get_rgb(color_rgb_LAB *, color_data *, uint8_t *, uint8_t);
 static bool image_validate_settings(image_data *);
@@ -40,6 +41,19 @@ static double tilexy_calc_subpal_distance(image_data *, color_data *, palette_rg
 // TODO: move this error checking farther up the stack              
 static bool image_validate_settings(image_data * p_image) {
 
+    // For GBM / GBR export, these have to have to match the 
+    // main tile size even when CGB would allow finer grain
+    // sub-palettes on 8x16 tiles for things like 16x16
+
+    // Use 8x8 if tile size is not set
+    // Otherwise they come from the main processing tile size
+    // via: tilemap_image_set_palette_tile_size
+    if (p_image->palette_tile_width == OPTION_UNSET)
+        p_image->palette_tile_width = 8;
+
+    if (p_image->palette_tile_height == OPTION_UNSET)
+        p_image->palette_tile_height = 8;
+
     if (!p_image->p_img_data) {
         log_error("Error: Failed to remap image to user palette: source image data empty\n");
         return false;
@@ -48,11 +62,19 @@ static bool image_validate_settings(image_data * p_image) {
         log_error("Error: Failed to remap image to user palette: data size error\n");
         return false;
     }                
-    else if (((p_image->width % p_image->tile_width) != 0) ||
-             ((p_image->height % p_image->tile_height) != 0)) {
-        log_error("Error: Tile width and height (%d x %d) must be even multiple of image width and height (%d x %d)\n", p_image->width, p_image->tile_height, p_image->width, p_image->height);
+    else if (((p_image->width % p_image->palette_tile_width) != 0) ||
+             ((p_image->height % p_image->palette_tile_height) != 0)) {
+        log_error("Error: Tile width and height (%d x %d) must be even multiple of image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
         return false;
-    }        
+    }
+    else if (((p_image->palette_tile_width % 8) != 0) ||
+             ((p_image->palette_tile_height % 8) != 0)) {
+        log_error("Error: Tile width and height (%d x %d) must be even multiple of 8\n", p_image->palette_tile_width, p_image->palette_tile_height);
+        return false;
+    }
+
+    log_verbose("Remapping image to palette: Tile width and height (%d x %d), Image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
+
     return true;
 }
 
@@ -61,9 +83,14 @@ static bool image_validate_settings(image_data * p_image) {
 static bool palette_validate_settings(palette_rgb_LAB * p_pal) {
 
     if ((p_pal->color_count % p_pal->subpal_size) != 0) {
-        log_error("Error: sub-pallet size (%d) must be even multiple of whole pallet size (%d)\n", p_pal->color_count, p_pal->subpal_size);
+        log_error("Error: sub-pallet size (%d) must be even multiple of whole pallet size (%d)\n", p_pal->subpal_size, p_pal->color_count);
+        return false;
+    }
+    else if (p_pal->subpal_size == 0) {
+        log_error("Error: sub-pallet size (%d) cannot be zero. Whole pallet size (%d)\n", p_pal->subpal_size, p_pal->color_count);
         return false;
     }        
+
     return true;
 }
 
@@ -165,7 +192,7 @@ static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_
     color_rgb_LAB  pixel_col;
 
     // Get pixel in first row and column of tile
-    uint32_t  tile_start_offset = (tile_id_x * p_src_image->tile_width) + ((tile_id_y * p_src_image->tile_height) * p_src_image->width);
+    uint32_t  tile_start_offset = (tile_id_x * p_src_image->palette_tile_width) + ((tile_id_y * p_src_image->palette_tile_height) * p_src_image->width);
     uint8_t * p_src_pixel = p_src_image->p_img_data + (tile_start_offset * p_src_image->bytes_per_pixel);
     uint8_t * p_dst_pixel = p_remapped_image + tile_start_offset; // Always 8 BPP indexed
 
@@ -175,8 +202,8 @@ static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_
     p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
 
     // Loop through all pixels in a given tile
-    for (uint32_t tile_y = 0; tile_y < p_src_image->tile_height; tile_y++) {
-        for (uint32_t tile_x = 0; tile_x < p_src_image->tile_width; tile_x++) {
+    for (uint32_t tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
+        for (uint32_t tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
         
             // extract color data for current source pixel
             if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
@@ -192,8 +219,8 @@ static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_
         } // End Tile Y loop
 
         // Move to start of next tile row (in source and remapped image)
-        p_src_pixel += (p_src_image->width - p_src_image->tile_width) * p_src_image->bytes_per_pixel;
-        p_dst_pixel += (p_src_image->width - p_src_image->tile_width); // Always 8 BPP indexed
+        p_src_pixel += (p_src_image->width - p_src_image->palette_tile_width) * p_src_image->bytes_per_pixel;
+        p_dst_pixel += (p_src_image->width - p_src_image->palette_tile_width); // Always 8 BPP indexed
 
     } // End Tile X loop
 
@@ -215,7 +242,7 @@ static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data *
     color_rgb_LAB  pixel_col;
 
     // Get pixel in first row and column of tile
-    uint32_t  tile_start_offset = (tile_id_x * p_src_image->tile_width) + ((tile_id_y * p_src_image->tile_height) * p_src_image->width);
+    uint32_t  tile_start_offset = (tile_id_x * p_src_image->palette_tile_width) + ((tile_id_y * p_src_image->palette_tile_height) * p_src_image->width);
     uint8_t * p_src_pixel = p_src_image->p_img_data + (tile_start_offset * p_src_image->bytes_per_pixel);
 
 
@@ -224,8 +251,8 @@ static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data *
     p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
 
     // Loop through all pixels in a given tile
-    for (uint32_t tile_y = 0; tile_y < p_src_image->tile_height; tile_y++) {
-        for (uint32_t tile_x = 0; tile_x < p_src_image->tile_width; tile_x++) {
+    for (uint32_t tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
+        for (uint32_t tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
         
             // extract color data for current source pixel
             if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
@@ -242,7 +269,7 @@ static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data *
         } // End Tile Y loop
 
         // Move to start of next tile row
-        p_src_pixel += (p_src_image->width - p_src_image->tile_width) * p_src_image->bytes_per_pixel;
+        p_src_pixel += (p_src_image->width - p_src_image->palette_tile_width) * p_src_image->bytes_per_pixel;
 
     } // End Tile X loop
 
@@ -273,8 +300,8 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
     uint8_t * p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
                     
     // Loop through all tiles of the image
-    for (uint32_t tile_id_y = 0; tile_id_y < (p_src_image->height / p_src_image->tile_height); tile_id_y++) {
-        for (uint32_t tile_id_x = 0; tile_id_x < (p_src_image->width / p_src_image->tile_width); tile_id_x++) {
+    for (uint32_t tile_id_y = 0; tile_id_y < (p_src_image->height / p_src_image->palette_tile_height); tile_id_y++) {
+        for (uint32_t tile_id_x = 0; tile_id_x < (p_src_image->width / p_src_image->palette_tile_width); tile_id_x++) {
 
             // Loop through all palettes
             // Test each one to calculate total distance for that pixel
@@ -287,7 +314,7 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
                 if (color_distance_total < min_distance) {
                     min_distance = color_distance_total;
                     subpal_best_match = subpal_id;
-                }
+                }                
             }
 
             // Remap tile to best matched sub-palette
@@ -308,34 +335,32 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
 }
 
 
+bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_colors, char * user_colors_filename) {
 
-bool image_remap_to_user_palette (image_data * p_src_image, color_data * p_src_colors, char * user_colors_filename) {
+    // TODO: merge LAB into the main palette and convert to type: color_data
+    palette_rgb_LAB user_palette;
+    user_palette.subpal_size = p_src_colors->subpal_size;
 
-    palette_rgb_LAB user_palette[USER_PAL_MAX_COLORS];
+    image_validate_settings(p_src_image);
 
-// TODO: connect these to arguments/etc        
-        p_src_image->tile_width = 8;
-        p_src_image->tile_height = 8;
-        user_palette->subpal_size = 4;
+    if (palette_load_from_file(&user_palette, user_colors_filename)) {
 
-    image_validate_settings(p_src_image); // TODO: move further up stack
-    palette_validate_settings(user_palette); // TODO: move further up stack
+        if (palette_validate_settings(&user_palette)) {
 
-    if (palette_load_from_file(user_palette, user_colors_filename)) {
+            // Pre-convert user palette to LAB for better distance calc performance later
+            palette_convert_to_lab(&user_palette);
 
-        // Pre-convert user palette to LAB for better distance calc performance later
-        palette_convert_to_lab(user_palette);
+            // Non-sub-palette mapping is disabled for now since CGB requires it
+            // // rewrites p_src_image and p_src_colors if successful
+            // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
+            //     return true; // Success
+            // }
 
-// TODO: implement switch here between full and sub-palette remapping
-        // // rewrites p_src_image and p_src_colors if successful
-        // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
-        //     return true; // Success
-        // }
-
-        // rewrites p_src_image and p_src_colors if successful
-        if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, user_palette)) {
-            return true; // Success
-        }        
+            // rewrites p_src_image and p_src_colors if successful
+            if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_palette)) {
+                return true; // Success
+            }
+        }
     }
 
     return false;

@@ -27,7 +27,7 @@
 // Load an image for processing
 // Remap the palette if requested by the user
 
-bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_colors, char * filename_user_pal_in) {
+bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_colors, char * image_filename) {
 
     tile_process_options options;
 
@@ -35,7 +35,7 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
     tilemap_options_get(&options);
 
     // Load source image (from first argument)
-    if (!image_load(p_src_image, p_src_colors, filename_user_pal_in)) {
+    if (!image_load(p_src_image, p_src_colors, image_filename)) {
         log_error("Error: Failed to load image\n\n");
         return false;
     }
@@ -52,9 +52,6 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
         return false;
     }
 
-    // TODO
-    // options.repair_tile_palettes
-    // image_repair_tile_pals()
     return true;
 }
 
@@ -70,6 +67,12 @@ bool tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src
 
     // Load options
     tilemap_options_get(&options);
+
+    // Update any settings that might need it based on loaded image data (tile size, etc)
+    if ( ! tilemap_image_update_settings(p_src_image, p_src_colors)) {
+        tilemap_error_set(TILE_ID_INVALID_DIMENSIONS);
+        return (false); // Signal failure and exit
+    }
 
     switch (options.image_format) {
 

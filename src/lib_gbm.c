@@ -106,7 +106,7 @@ int32_t gbm_save(const char * filename, image_data * p_src_image, color_data * p
             p_src_image->width, p_src_image->height,
             plugin_options.gb_mode,
             plugin_options.tile_dedupe_enabled, plugin_options.tile_dedupe_flips, plugin_options.tile_dedupe_palettes,
-            plugin_options.tile_dedupe_palettes);
+            plugin_options.ignore_palette_errors);
 
     status = tilemap_export_process(p_src_image, p_colors);
     log_verbose("(gbm) tilemap_export_process: status= %d\n", status);

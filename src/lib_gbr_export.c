@@ -343,7 +343,7 @@ int32_t gbr_export_tileset_calc_tile_count_padding(gbr_record * p_gbr) {
     }
 
 
-log_verbose("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new=%d\npadding=%d\n",
+    log_verbose("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new=%d\npadding=%d\n",
                                          tile_size_bytes,
                                          tile_buf_size_current,
                                          tile_buf_size_new,
@@ -356,54 +356,71 @@ log_verbose("GBR: Export: Padding :\ntile size=%d\ntile buf cur=%d\ntile buf new
 
 int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_image) {
 
-    // TODO: make tile size an export setting : 8x8, 8,x16, 16x16, 32x32 -- AND/OR SENSE FROM LOADED GBR INFO
-    if (p_image->width == 32) {
-            // 32x32 tiles
-            p_gbr->tile_data.width  = 32;
-            p_gbr->tile_data.height = 32;
-            p_gbr->tile_data.count  = p_image->height / 32;
+    log_verbose("gbr_export_tileset_calc_dimensions() tile size (%d x %d), image size (%d x %d) \n",
+        p_image->tile_width, p_image->tile_height,
+        p_image->width, p_image->height);
 
-            if ((p_image->height % 32) != 0)
-                return false; // FAILED: export image must be even multiple of tile size
-    }
-    else if (p_image->width == 16) {
-            // 16x16 tiles
-            p_gbr->tile_data.width  = 16;
-            p_gbr->tile_data.height = 16;
-            p_gbr->tile_data.count  = p_image->height / 16;
+    // Validate image dimensions
+    if ( ((p_image->width  % p_image->tile_width)  != 0) ||
+         ((p_image->height % p_image->tile_height) != 0) ) {
 
-            if ((p_image->height % 16) != 0)
-                return false; // FAILED: export image must be even multiple of tile size
-    }
-    else if (p_image->width == 8) {
-
-            p_gbr->tile_data.width  = 8;
-
-            // TODO: re-enable 8x16 tiles
-            /*
-            if ((p_image->height % 16) == 0) {
-                // 8x16 tiles
-                p_gbr->tile_data.height = 16;
-                p_gbr->tile_data.count  = p_image->height / 16;
-            }
-            else if ((p_image->height % 8) == 0) {
-                // 8x8 tiles
-                p_gbr->tile_data.height = 8;
-                p_gbr->tile_data.count  = p_image->height / 8;
-            }
-            */
-            if ((p_image->height % 8) == 0) {
-                // 8x8 tiles
-                p_gbr->tile_data.height = 8;
-                p_gbr->tile_data.count  = p_image->height / 8;
-            }
-            else
-                return false; // FAILED: export image must be even multiple of tile size
-    } else {
-        // TODO: Support using a default tile size (8x8) that is a multiple of the image width
-        return false; // Failed to find suitable tile size based on image width
+        return false; // FAILED: export image must be even multiple of tile size
     }
 
+    // Validate GBR compatible tile sizing
+    if ( ((p_image->tile_width == 8)  && (p_image->tile_height == 8))  ||
+         ((p_image->tile_width == 8)  && (p_image->tile_height == 16)) ||
+         ((p_image->tile_width == 16) && (p_image->tile_height == 16)) ||
+         ((p_image->tile_width == 32) && (p_image->tile_height == 32)) ) {
+
+        p_gbr->tile_data.width  = p_image->tile_width;
+        p_gbr->tile_data.height = p_image->tile_height;
+    }
+    else
+        return false;
+
+    p_gbr->tile_data.count  = p_image->height / p_gbr->tile_data.height;
+
+    return true;
+}
+
+
+bool gbr_export_extract_tiles_from_image(gbr_record * p_gbr, image_data * p_image, uint16_t gb_mode, uint16_t ignore_palette_errors) {
+
+    uint16_t  tile_size = p_gbr->tile_data.width * p_gbr->tile_data.height;
+    uint8_t   tile_buf[tile_size];
+    uint16_t  t_idx, img_idx;
+    uint16_t  tile_id = 0;
+
+    // Loop through all tiles in the image
+    for (uint32_t tile_id_y = 0; tile_id_y < (p_image->height / p_gbr->tile_data.height); tile_id_y++) {
+        for (uint32_t tile_id_x = 0; tile_id_x < (p_image->width / p_gbr->tile_data.width); tile_id_x++) {
+
+            // Extract A tile
+            // Source data is expected to always be 8bpp indexed
+            t_idx = 0;
+            img_idx = (tile_id_x * p_gbr->tile_data.width) + ((tile_id_y * p_gbr->tile_data.height) * p_image->width);
+
+            // log_verbose("gbr_export_extract_tiles_from_image() tile:%3d x %3d -> %d \n", tile_id_x, tile_id_y, img_idx);
+
+            // Copy the pixels from the source image into the tile one tile row at a time
+            for (uint32_t tile_y = 0; tile_y < p_gbr->tile_data.height; tile_y++) {
+                for (uint32_t tile_x = 0; tile_x < p_gbr->tile_data.width; tile_x++) {
+
+                    tile_buf[t_idx++] = p_image->p_img_data[img_idx++];
+                }
+                // Move to start of next tile row
+                img_idx += (p_image->width - p_gbr->tile_data.width);
+            }
+
+            // Save the tile
+            if (!gbr_tile_set_buf(&tile_buf[0], p_gbr, tile_id,
+                                  gb_mode, ignore_palette_errors))
+                return false;
+
+            tile_id++;
+        } // end for: tile_id_x
+    } // end for: tile_id_y
 
     return true;
 }
@@ -448,8 +465,6 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
     int16_t tile_id;
     int32_t offset;
 
-    // p_image->bytes_per_pixel = 1; // TODO: IS THIS T
-
     if ((!gbr_validate_palette_size(p_colors, gb_mode)) &&
         (!ignore_palette_errors))
         return false;
@@ -458,7 +473,7 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
 
     // Sets up tile data count/etc (used below)
     if (!gbr_export_tileset_calc_dimensions(p_gbr, p_image)) {
-        log_error("Error: invalid image dimensions for GBR. Entire image must be 8, 16 or 32 pixels wide\n");
+        log_error("Error: invalid image or tile dimensions for GBR. Image must be even multiple of tile size. Valid tile sizes: 8x8,8x16,16x16,32x32.\n");
         return false;
     }
 
@@ -469,22 +484,8 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         offset = 0;
 
         // SAVE IMAGE
-        // Extract tiles from buffer
-        // TODO: FIXME this is linear for now and assumes an 8/16/32 x N dest image
-        // TODO: Support using a default tile size (8x8) that is a multiple of the image width
-
-        for (tile_id=0; tile_id < p_gbr->tile_data.count; tile_id++) {
-            // log_verbose("EXPORT Tile:%d, offset=%d\n", tile_id, offset);
-
-            if (!gbr_tile_set_buf(&p_image->p_img_data[offset],
-                                  p_gbr,
-                                  tile_id,
-                                  gb_mode, ignore_palette_errors))
-                return false;
-
-            offset += p_gbr->tile_data.width * p_gbr->tile_data.height * p_image->bytes_per_pixel;
-        }
-
+        if (!gbr_export_extract_tiles_from_image(p_gbr, p_image, gb_mode, ignore_palette_errors))
+            return false;
 
         // Now add padding tiles to achieve the minimum required size
         for (tile_id=p_gbr->tile_data.count; tile_id < (p_gbr->tile_data.count + p_gbr->tile_data.padding_tile_count); tile_id++) {

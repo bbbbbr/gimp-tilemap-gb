@@ -26,6 +26,9 @@
         uint8_t  * p_img_data;
         uint16_t   tile_width;  // should be even multiple of width 
         uint16_t   tile_height; // should be even multiple of height
+
+        uint16_t   palette_tile_width;  // should be even multiple of width 
+        uint16_t   palette_tile_height; // should be even multiple of height
     } image_data;
 
 

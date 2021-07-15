@@ -36,6 +36,7 @@
     #define TILE_CGB_COLORS_MAX (TILE_CGB_PALETTE_COUNT * TILE_COLORS_PER_PALETTE)
 
 
+    // See: tile_id_messages[]
     enum tile_id_status {
         TILE_ID_OK,
         TILE_ID_NOT_FOUND,
@@ -130,9 +131,12 @@
     } tile_set_data;
 
 
-    void           tilemap_options_set(tile_process_options * p_src_plugin_options);
-    void           tilemap_options_get(tile_process_options * p_dest_plugin_options);
-    void           tilemap_options_load_defaults(int color_count, tile_process_options * p_dest_plugin_options);
+    void           tilemap_options_get(tile_process_options * p_options);
+    void           tilemap_options_set(tile_process_options * p_options);
+
+    void           tilemap_image_and_colors_init(image_data * p_img, color_data * p_colors);
+    void           tilemap_image_set_palette_tile_size(image_data * p_img, tile_process_options * p_options);
+    bool           tilemap_image_update_settings(image_data * p_img, color_data * p_colors);
 
     void           tilemap_free_tile_set(void);
     void           tilemap_free_resources(void);

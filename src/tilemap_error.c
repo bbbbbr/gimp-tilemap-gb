@@ -20,7 +20,7 @@ const char * tile_id_messages[] = {
         "Error: Failed to encode tile",
         "Error: Color count in tile exceeded DMG or CGB Limit",
         "Error: More than one 4-color-adjacent palette used in tile",
-        "Error: Invalid image dimensions. Must be multiples of tile size"
+        "Error: Invalid image or tile dimensions. Image size must be even multiple of tile size"
     };
 
 

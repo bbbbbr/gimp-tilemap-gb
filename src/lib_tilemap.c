@@ -21,84 +21,110 @@ tile_set_data tile_set;
 color_data  * p_colors = NULL;
 
 
-void tilemap_options_set(tile_process_options * p_src_plugin_options) {
+// Call after initial user options have been set, but before remapping any colors
+void tilemap_image_and_colors_init(image_data * p_img, color_data * p_colors) {
 
-    memcpy(&tile_map.options, p_src_plugin_options, sizeof(tile_process_options));
-}
+    for (int c; c < COLOR_DATA_PAL_SIZE; c++)
+        p_colors->pal[c] = 0; // default is black for all colors/components
 
+    p_colors->subpal_size = 4;
 
-void tilemap_options_get(tile_process_options * p_dest_plugin_options) {
+    p_img->p_img_data = NULL;
 
-    memcpy(p_dest_plugin_options, &tile_map.options, sizeof(tile_process_options));
+    p_img->tile_width = OPTION_UNSET;
+    p_img->tile_height = OPTION_UNSET;
 
-    log_verbose("==== tilemap_options_get() ====\n");
-    log_verbose("map_tileid_offset:     %d\n", p_dest_plugin_options->map_tileid_offset);
-    log_verbose("bank_num:              %d\n", p_dest_plugin_options->bank_num);
-    log_verbose("image_format:          %d\n", p_dest_plugin_options->image_format);
-    log_verbose("gb_mode:               %d\n", p_dest_plugin_options->gb_mode);
-    log_verbose("tile_dedupe_enabled:   %d\n", p_dest_plugin_options->tile_dedupe_enabled);
-    log_verbose("tile_dedupe_flips:     %d\n", p_dest_plugin_options->tile_dedupe_flips);
-    log_verbose("tile_dedupe_palettes:  %d\n", p_dest_plugin_options->tile_dedupe_palettes);
-    log_verbose("ignore_palette_errors: %d\n", p_dest_plugin_options->ignore_palette_errors);
-    log_verbose("varname: %s\n", p_dest_plugin_options->varname);
-    log_verbose("\n");
+    p_img->palette_tile_width = OPTION_UNSET;
+    p_img->palette_tile_height = OPTION_UNSET;
 
 }
 
 
-void tilemap_options_load_defaults(int color_count, tile_process_options * p_dest_plugin_options) {
+// Call after initial user options have been set, but before trying to remap colors
+void tilemap_image_set_palette_tile_size(image_data * p_img, tile_process_options * p_options) {
 
-    p_dest_plugin_options->ignore_palette_errors = false;
+    if (p_options->tile_width != OPTION_UNSET)
+        p_img->palette_tile_width = p_options->tile_width;
+    if (p_options->tile_height != OPTION_UNSET)
+        p_img->palette_tile_height = p_options->tile_height;
+}
 
-    if ((p_dest_plugin_options->gb_mode == MODE_CGB_32_COLOR) || (color_count > TILE_DMG_COLORS_MAX)) {
 
-        p_dest_plugin_options->gb_mode = MODE_CGB_32_COLOR;
-        p_dest_plugin_options->dmg_possible = true; //false;
-        p_dest_plugin_options->cgb_possible = true;
+// Call after the source image is loaded and user options have been applied via tilemap_options_set()
+// Sets image tile width and height, returns error if invalid
+bool tilemap_image_update_settings(image_data * p_img, color_data * p_colors) {
 
-        // only enable dedupe on GBM export (all types)
-        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
-        p_dest_plugin_options->tile_dedupe_flips    = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
-        p_dest_plugin_options->tile_dedupe_palettes = (p_dest_plugin_options->image_format == FORMAT_GBM) || (p_dest_plugin_options->image_format == FORMAT_GBDK_C_SOURCE);
+    if ((tile_map.options.tile_width != OPTION_UNSET) &&
+        (tile_map.options.tile_height != OPTION_UNSET)) {
+        // Load in user defaults
+        p_img->tile_width = tile_map.options.tile_width;
+        p_img->tile_height = tile_map.options.tile_height;
     }
-    else if ((p_dest_plugin_options->gb_mode == MODE_DMG_4_COLOR) || (color_count <= TILE_DMG_COLORS_MAX)) {
-        p_dest_plugin_options->gb_mode = MODE_DMG_4_COLOR;
-        p_dest_plugin_options->dmg_possible = true;
-        p_dest_plugin_options->cgb_possible = true;
-
-        // only enable dedupe on GBM export (basic tiled edupe only)
-        p_dest_plugin_options->tile_dedupe_enabled  = (p_dest_plugin_options->image_format == FORMAT_GBM);
-        p_dest_plugin_options->tile_dedupe_flips    = false;
-        p_dest_plugin_options->tile_dedupe_palettes = false;
-    }  
     else {
-        // Too many colors
-        p_dest_plugin_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
-        p_dest_plugin_options->dmg_possible = false;
-        p_dest_plugin_options->cgb_possible = false;
-    
-        p_dest_plugin_options->tile_dedupe_enabled  = false;
-        p_dest_plugin_options->tile_dedupe_flips    = false;
-        p_dest_plugin_options->tile_dedupe_palettes = false;
-    
+
+        // Only GBR formats support tile sizes larger than 8x8...?
+        // TODO - what about C source for sprites?
+        if  ((tile_map.options.image_format == FORMAT_GBR) ||
+             (tile_map.options.image_format == FORMAT_GBDK_C_SOURCE)) {
+
+            if ((p_img->width == 32) && ((p_img->height % 32) != 0)) {
+                // 32x32 tiles
+                p_img->tile_width = 32;
+                p_img->tile_height = 32;
+            }
+            if ((p_img->width == 16) && ((p_img->height % 16) != 0)) {
+                // 16x16 tiles
+                p_img->tile_width = 16;
+                p_img->tile_height = 16;
+            }
+            else if ((p_img->width % 8) == 0) {
+                // 8x8 tiles (default when possible)
+                p_img->tile_width  = 8;
+                p_img->tile_height = 8;
+            } 
+            else {
+                // Invalid image size (not a multiple of 8)
+                return false;
+            }
+        }
+        // GBM format defaults to 8x8
+        else if ((p_img->width % 8) == 0) {
+            // 8x8 tiles (default for maps)
+            p_img->tile_width  = 8;
+            p_img->tile_height = 8;
+        }
+        else {
+            // Invalid image size (not a multiple of 8)
+            return false;
+        }
     }
 
-    p_dest_plugin_options->map_tileid_offset = OPTION_UNSET;
-    p_dest_plugin_options->bank_num = OPTION_UNSET;
-    p_dest_plugin_options->varname[0] = '\0';
+    if ( ((p_img->width  % p_img->tile_width ) != 0) ||
+         ((p_img->height % p_img->tile_height) != 0) ) {
+
+        // Invalid image size (not a multiple of tile size)
+        return false;
+    }
+
+    log_verbose("tilemap_image_update_settings() tile size (%d x %d), image size (%d x %d) \n",
+        p_img->tile_width, p_img->tile_height,
+        p_img->width, p_img->height);
+
+    return true;
+}
 
 
-    log_verbose("==== tilemap_options_load_defaults() ====\n");
-    log_verbose("map_tileid_offset:    %d\n", p_dest_plugin_options->map_tileid_offset);
-    log_verbose("bank_num:             %d\n", p_dest_plugin_options->bank_num);
-    log_verbose("color_count:          %d\n", color_count);
-    log_verbose("image_format:         %d\n", p_dest_plugin_options->image_format);
-    log_verbose("gb_mode:              %d\n", p_dest_plugin_options->gb_mode);
-    log_verbose("tile_dedupe_enabled:  %d\n", p_dest_plugin_options->tile_dedupe_enabled);
-    log_verbose("tile_dedupe_flips:    %d\n", p_dest_plugin_options->tile_dedupe_flips);
-    log_verbose("tile_dedupe_palettes: %d\n", p_dest_plugin_options->tile_dedupe_palettes);
-    log_verbose("varname: %s\n", p_dest_plugin_options->varname);
-    log_verbose("\n");
+void tilemap_options_get(tile_process_options * p_options) {
+
+    memcpy(p_options, &tile_map.options, sizeof(tile_process_options));
+
+    options_log("tilemap_options_get() ", p_options);
+}
+
+
+void tilemap_options_set(tile_process_options * p_options) {
+
+    memcpy(&tile_map.options, p_options, sizeof(tile_process_options));
 }
 
 
@@ -110,8 +136,8 @@ int tilemap_initialize(image_data * p_src_img) {
     tile_map.map_width   = p_src_img->width;
     tile_map.map_height  = p_src_img->height;
 
-    tile_map.tile_width  = TILE_WIDTH_DEFAULT;
-    tile_map.tile_height = TILE_HEIGHT_DEFAULT;
+    tile_map.tile_width  = p_src_img->tile_width;
+    tile_map.tile_height = p_src_img->tile_height;
 
     tile_map.width_in_tiles  = tile_map.map_width  / tile_map.tile_width;
     tile_map.height_in_tiles = tile_map.map_height / tile_map.tile_height;
@@ -141,8 +167,8 @@ int tilemap_initialize(image_data * p_src_img) {
 
     // Tile Set
     tile_set.tile_bytes_per_pixel = p_src_img->bytes_per_pixel;
-    tile_set.tile_width  = TILE_WIDTH_DEFAULT;
-    tile_set.tile_height = TILE_HEIGHT_DEFAULT;
+    tile_set.tile_width  = p_src_img->tile_width;
+    tile_set.tile_height = p_src_img->tile_height;
     tile_set.tile_size   = tile_set.tile_width * tile_set.tile_height * tile_set.tile_bytes_per_pixel;
     tile_set.tile_count  = 0;
 
@@ -157,7 +183,7 @@ int tilemap_initialize(image_data * p_src_img) {
 unsigned char tilemap_export_process(image_data * p_src_img, color_data * p_src_colors) {
 
     if ( check_dimensions_valid(p_src_img) ) {
-        if (!tilemap_initialize(p_src_img)) { // Success, prep for processing
+        if ( ! tilemap_initialize(p_src_img)) { // Success, prep for processing
 
             tilemap_error_set(TILE_ID_OUT_OF_SPACE);
             return (false); // Signal failure and exit
@@ -298,11 +324,12 @@ unsigned char process_tiles(image_data * p_src_img) {
 int32_t check_dimensions_valid(image_data * p_src_img) {
 
     // Image dimensions must be exact multiples of tile size
-    if ( ((p_src_img->width % TILE_WIDTH_DEFAULT) != 0) ||
-         ((p_src_img->height % TILE_HEIGHT_DEFAULT ) != 0))
+    if ( ((p_src_img->width % p_src_img->tile_width) != 0) ||
+         ((p_src_img->height % p_src_img->tile_height) != 0)) {
         return false; // Fail
-    else
+    } else {
         return true;  // Success
+    }
 }
 
 
@@ -389,10 +416,12 @@ int32_t tilemap_get_image_of_deduped_tile_set(image_data * p_img) {
     // Set up image to store deduplicated tile set
     p_img->width  = tile_map.tile_width;
     p_img->height = tile_map.tile_height * tile_set.tile_count;
+    p_img->tile_width  = tile_map.tile_width;
+    p_img->tile_height = tile_map.tile_height;
     p_img->size   = tile_set.tile_size   * tile_set.tile_count;
     p_img->bytes_per_pixel = tile_set.tile_bytes_per_pixel;
 
-    log_verbose("== COPY TILES INTO COMPOSITE BUF %d x %d, total size=%d\n", p_img->width, p_img->height, p_img->size);
+    log_verbose("== Copy tiles into composite buf %d x %d, total size=%d, Tils size %d x %d\n", p_img->width, p_img->height, p_img->size,  p_img->tile_width,  p_img->tile_height);
 
     // Allocate a buffer for the image
     p_img->p_img_data = (uint8_t *)malloc(p_img->size);
