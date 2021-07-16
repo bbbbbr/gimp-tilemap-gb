@@ -16,6 +16,7 @@
 
 #include "image_load.h"
 #include "image_remap.h"
+#include "palette.h"
 
 #include "tilemap_error.h"
 #include "lib_tilemap.h"
@@ -30,6 +31,8 @@
 bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_colors, char * image_filename) {
 
     tile_process_options options;
+    color_data user_palette;
+    user_palette.subpal_size = p_src_colors->subpal_size;
 
     // Load options
     tilemap_options_get(&options);
@@ -40,9 +43,13 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
         return false;
     }
 
+
     // Remap the image to a user specified palette if requested
     if (options.remap_pal) {
-        if ( !image_remap_to_user_palette(p_src_image, p_src_colors, options.remap_pal_file) ) {
+        if (!palette_load_from_file(&user_palette, options.remap_pal_file))
+            return false;
+
+        if ( !image_remap_to_user_palette(p_src_image, p_src_colors, &user_palette) ) {
             log_error("Error: remapping png to user palette failed!\n");
             return false;
         }            

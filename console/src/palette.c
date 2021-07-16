@@ -30,24 +30,43 @@
 
 // TODO: ====== START palette.c ====
 
-void palette_copy(color_data * p_dest_pal, palette_rgb_LAB * p_src_pal) {
 
-    p_dest_pal->color_count = p_src_pal->color_count;
-    p_dest_pal->size        = p_src_pal->color_count * COLOR_DATA_BYTES_PER_COLOR;
+void palette_copy_rgblab_to_colordata_format(color_data * p_dst_pal, palette_rgb_LAB * p_src_pal) {
+
+    p_dst_pal->color_count = p_src_pal->color_count;
+    p_dst_pal->size        = p_src_pal->color_count * COLOR_DATA_BYTES_PER_COLOR;
 
     for (int c=0; c < p_src_pal->color_count; c++) {
-        p_dest_pal->pal[(c * 3)    ]  = p_src_pal->colors[c].r;
-        p_dest_pal->pal[(c * 3) + 1]  = p_src_pal->colors[c].g;
-        p_dest_pal->pal[(c * 3) + 2]  = p_src_pal->colors[c].b;
+        p_dst_pal->pal[(c * 3)    ]  = p_src_pal->colors[c].r;
+        p_dst_pal->pal[(c * 3) + 1]  = p_src_pal->colors[c].g;
+        p_dst_pal->pal[(c * 3) + 2]  = p_src_pal->colors[c].b;
     }
+}
+
+
+// This can get removed once conversion RGB-LAB format gets merged into color_data
+void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_rgb_LAB * p_dst_colors) {
+
+    for(int c = 0; c < p_src_colors->color_count; c++) {
+
+        p_dst_colors->colors[c].r = p_src_colors->pal[(c * 3) + 0];
+        p_dst_colors->colors[c].g = p_src_colors->pal[(c * 3) + 1];
+        p_dst_colors->colors[c].b = p_src_colors->pal[(c * 3) + 2];
+    }
+
+    p_dst_colors->color_count   = p_src_colors->color_count;
+    p_dst_colors->compare_start = 0;
+    p_dst_colors->compare_last  = p_src_colors->color_count - 1;
+    p_dst_colors->subpal_size   = p_src_colors->subpal_size;
 }
 
 
 // Convert a palette to LAB format
 void palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
-    // TODO N COL
-    for (int c=0; c < p_user_pal->color_count; c++)
+
+    for (int c=0; c < p_user_pal->color_count; c++) {
         color_rgb2LAB( &(p_user_pal->colors[c]) );
+    }
 }
 
 
@@ -57,7 +76,7 @@ void palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
 //   #afb680
 //   #707a55
 //   #414425
-bool palette_load_from_file(palette_rgb_LAB * pal, char * filename) {
+bool palette_load_from_file(color_data * p_colors, char * filename) {
 
     uint32_t r,g,b; // Would prefer this be a uint8_t, but mingw sscanf("%2hhx") has a buffer overflow that corrupts adjacent data
     int      pal_index = 0;;
@@ -72,7 +91,7 @@ bool palette_load_from_file(palette_rgb_LAB * pal, char * filename) {
         while ( (fgets(strline_in, sizeof(strline_in), pal_file) != NULL) &&
                 (pal_index <= USER_PAL_MAX_COLORS) ) {
 
-// TODO: improve empty line detection
+            // TODO: improve empty line detection
             if (strlen(strline_in) >= 6) {
                 // Read a RGB hex triplet in text format
                 // If first try fails, try again and ignore unrelated characters
@@ -87,9 +106,9 @@ bool palette_load_from_file(palette_rgb_LAB * pal, char * filename) {
 
                 // Read succeeded
                 log_verbose("Pal from file: (%3d) = %02x, %02x, %02x\n", pal_index, r, g, b);
-                pal->colors[pal_index].r = (uint8_t)r;
-                pal->colors[pal_index].g = (uint8_t)g;
-                pal->colors[pal_index].b = (uint8_t)b;
+                p_colors->pal[(pal_index * 3) + 0] = (uint8_t)r;
+                p_colors->pal[(pal_index * 3) + 1] = (uint8_t)g;
+                p_colors->pal[(pal_index * 3) + 2] = (uint8_t)b;
                 pal_index++;
             }
         }
@@ -100,10 +119,8 @@ bool palette_load_from_file(palette_rgb_LAB * pal, char * filename) {
         return false;
     }
 
-    pal->color_count = pal_index;
-    pal->compare_start = 0;
-    pal->compare_last = pal->color_count - 1;
-    log_verbose("User Palette: Loaded %d colors\n", pal->color_count);
+    p_colors->color_count = pal_index;
+    log_verbose("User Palette: Loaded %d colors\n", p_colors->color_count);
 
     return true;
 }

@@ -82,7 +82,11 @@ static bool image_validate_settings(image_data * p_image) {
 // TODO: move this error checking farther up the stack        
 static bool palette_validate_settings(palette_rgb_LAB * p_pal) {
 
-    if ((p_pal->color_count % p_pal->subpal_size) != 0) {
+    if (p_pal->subpal_size == 0) {
+        log_error("Error: sub-pallet size (%d) cannot be zero\n",p_pal->color_count);
+        return false;
+    }
+    else if ((p_pal->color_count % p_pal->subpal_size) != 0) {
         log_error("Error: sub-pallet size (%d) must be even multiple of whole pallet size (%d)\n", p_pal->subpal_size, p_pal->color_count);
         return false;
     }
@@ -175,7 +179,7 @@ static bool image_remap_to_palette(image_data * p_src_image, color_data * p_src_
     // Now that processing is complete, free the old image and swap in the new one
     // And copy user palette into image palette
     image_replace_with_indexed_buffer(p_src_image, p_remapped_image, MODE_8_BIT_INDEXED);
-    palette_copy(p_src_pal, p_user_pal);
+    palette_copy_rgblab_to_colordata_format(p_src_pal, p_user_pal);
 
     return true;
 }
@@ -329,37 +333,34 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
     // Now that processing is complete, free the old image and swap in the new one
     // And copy user palette into image palette
     image_replace_with_indexed_buffer(p_src_image, p_remapped_image, MODE_8_BIT_INDEXED);
-    palette_copy(p_src_pal, p_user_pal);
+    palette_copy_rgblab_to_colordata_format(p_src_pal, p_user_pal);
 
     return true;
 }
 
 
-bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_colors, char * user_colors_filename) {
+bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_colors, color_data * p_user_colors) {
 
-    // TODO: merge LAB into the main palette and convert to type: color_data
-    palette_rgb_LAB user_palette;
-    user_palette.subpal_size = p_src_colors->subpal_size;
+    palette_rgb_LAB user_pal_rgblab;
+    
+    palette_copy_colordata_to_rgblab_format(p_user_colors, &user_pal_rgblab);
 
     if (image_validate_settings(p_src_image)) {
 
-        if (palette_load_from_file(&user_palette, user_colors_filename)) {
+        if (palette_validate_settings(&user_pal_rgblab)) {
 
-            if (palette_validate_settings(&user_palette)) {
+            // Pre-convert user palette to LAB for better distance calc performance later
+            palette_convert_to_lab(&user_pal_rgblab);
 
-                // Pre-convert user palette to LAB for better distance calc performance later
-                palette_convert_to_lab(&user_palette);
+            // Non-sub-palette mapping is disabled for now since CGB requires it
+            // // rewrites p_src_image and p_src_colors if successful
+            // if (image_remap_to_palette(p_src_image, p_src_colors, user_pal_rgblab)) {
+            //     return true; // Success
+            // }
 
-                // Non-sub-palette mapping is disabled for now since CGB requires it
-                // // rewrites p_src_image and p_src_colors if successful
-                // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
-                //     return true; // Success
-                // }
-
-                // rewrites p_src_image and p_src_colors if successful
-                if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_palette)) {
-                    return true; // Success
-                }
+            // rewrites p_src_image and p_src_colors if successful
+            if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_pal_rgblab)) {
+                return true; // Success
             }
         }
     }
