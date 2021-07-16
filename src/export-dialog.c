@@ -16,9 +16,17 @@ extern const char BINARY_NAME[];
 const char STR_OPT_GB_MODE_DMG[] = "DMG 4 Color";
 const char STR_OPT_GB_MODE_CGB[] = "CGB 32 Color";
 
+const char STR_OPT_TILE_SIZE_8x8[]   =  "8 x 8";
+const char STR_OPT_TILE_SIZE_8x16[]  =  "8 x 16";
+const char STR_OPT_TILE_SIZE_16x16[] = "16 x 16";
+const char STR_OPT_TILE_SIZE_32x32[] = "32 x 32";
+
 const char * tile_process_mode_strs[] = {STR_OPT_GB_MODE_DMG, STR_OPT_GB_MODE_CGB};
 
+const char * tile_process_tilesize_strs[] = {STR_OPT_TILE_SIZE_8x8, STR_OPT_TILE_SIZE_8x16, STR_OPT_TILE_SIZE_16x16, STR_OPT_TILE_SIZE_32x32};
+
 GtkWidget * combo_gb_mode;
+GtkWidget * combo_tilesize;
 GtkWidget * check_dedupe_tiles;
 GtkWidget * check_dedupe_on_flip;
 GtkWidget * check_dedupe_on_palette;
@@ -31,6 +39,7 @@ static void on_response(GtkDialog *, gint, gpointer);
 static void combo_set_active_entry_by_string(GtkWidget *combo, gchar * string_to_match);
 
 static void on_settings_gb_mode_combo_changed(GtkComboBox *combo, gpointer callback_data);
+static void on_settings_tilesize_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
 static void update_enabled_ui_controls(void);
 
@@ -96,23 +105,31 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
 
         // Create a combo/list box for selecting the mode
+        // Then add the mode select entries
         combo_gb_mode = gtk_combo_box_text_new();
-        // Add the mode select entries
         if (p_plugin_options->dmg_possible)
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_DMG);
-
         if (p_plugin_options->cgb_possible)
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_CGB);
-
         // Select default value
         // gtk_combo_box_set_active(GTK_COMBO_BOX(combo_gb_mode), p_plugin_options->gb_mode);
-
         combo_set_active_entry_by_string(combo_gb_mode, (gchar *) tile_process_mode_strs[p_plugin_options->gb_mode] );
-
-
         // Add it to the box for display and show it
         gtk_box_pack_start(GTK_BOX(vbox), combo_gb_mode, false, false, 2);
         gtk_widget_show(combo_gb_mode);
+
+
+        // TODO: For default tile size: GBR: try to use image width (8,16,32), GBM/C: use 8x8
+        int opt_tilesize = 0; // 8x8 is default for now
+        // Create a combo/list box for selecting tile size
+        // Then add the tile size select entries
+        // Then  it to the box for display and show it
+        combo_tilesize = gtk_combo_box_text_new();
+        for (int c = 0; c < sizeof(tile_process_tilesize_strs) / sizeof(tile_process_tilesize_strs[0]); c++)
+            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_tilesize), tile_process_tilesize_strs[c]);
+        combo_set_active_entry_by_string(combo_tilesize, (gchar *) tile_process_tilesize_strs[opt_tilesize]);
+        gtk_box_pack_start(GTK_BOX(vbox), combo_tilesize, false, false, 2);
+        gtk_widget_show(combo_tilesize);
 
 
         // == Map export options ==
@@ -165,6 +182,9 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         g_signal_connect(G_OBJECT(combo_gb_mode), "changed",
                          G_CALLBACK(on_settings_gb_mode_combo_changed), &(p_plugin_options->gb_mode));
+
+        g_signal_connect(G_OBJECT(combo_tilesize), "changed",
+                         G_CALLBACK(on_settings_tilesize_combo_changed), p_plugin_options);
 
         g_signal_connect(G_OBJECT(check_dedupe_tiles), "toggled",
                          G_CALLBACK(on_settings_checkbutton_changed), &(p_plugin_options->tile_dedupe_enabled)); // instead pass &(options.dedupe_tiles)
@@ -246,6 +266,33 @@ static void on_settings_gb_mode_combo_changed(GtkComboBox *combo, gpointer callb
     // else *((uint16_t *)callback_data) = -1; // Signal error
 
     update_enabled_ui_controls();
+}
+
+
+static void on_settings_tilesize_combo_changed(GtkComboBox *combo, gpointer callback_data)
+{
+    gchar * selected_string;
+
+    selected_string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(combo) );
+
+    // Match the string up to an output mode
+    if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_8x8))) {
+        ((tile_process_options *)callback_data)->tile_width = 8;
+        ((tile_process_options *)callback_data)->tile_height = 8;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_8x16))) {
+        ((tile_process_options *)callback_data)->tile_width = 8;
+        ((tile_process_options *)callback_data)->tile_height = 16;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_16x16))) {
+        ((tile_process_options *)callback_data)->tile_width = 16;
+        ((tile_process_options *)callback_data)->tile_height = 16;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_32x32))) {
+        ((tile_process_options *)callback_data)->tile_width = 32;
+        ((tile_process_options *)callback_data)->tile_height = 32;
+    }
+    // update_enabled_ui_controls();
 }
 
 

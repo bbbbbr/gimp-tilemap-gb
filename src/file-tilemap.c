@@ -33,6 +33,40 @@ static void query(void);
 static void run(const gchar *, gint, const GimpParam *, gint *, GimpParam **);
 static int plugin_get_image_format_from_string(const gchar * plugin_procedure_name);
 
+// Load arguments
+static const GimpParamDef load_arguments[] =
+{
+    { GIMP_PDB_INT32,  "run-mode",     "Interactive, non-interactive" },
+    { GIMP_PDB_STRING, "filename",     "The name of the file to load" },
+    { GIMP_PDB_STRING, "raw-filename", "The name entered" }
+};
+
+// Load return values
+static const GimpParamDef load_return_values[] =
+{
+    { GIMP_PDB_IMAGE, "image", "Output image" }
+};
+
+// Save arguments - should match if (nparams != 10)
+static const GimpParamDef save_arguments[] =
+{
+    { GIMP_PDB_INT32,    "run-mode",     "Interactive, non-interactive" },
+    { GIMP_PDB_IMAGE,    "image",        "Input image" },
+    { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
+    { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
+    { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
+//        { GIMP_PDB_FLOAT,    "image_format",  "Tilemap export format" }
+    { GIMP_PDB_INT16,    "gb_mode",              "Export type DMG 4 color or CGB 32 color" },
+    { GIMP_PDB_INT16,    "tile_dedupe_enabled",  "Deduplicate Tiles on Pattern" },
+    { GIMP_PDB_INT16,    "tile_dedupe_flips",    "Deduplicate Tiles on Flipped on X or Y (CGB only)" },
+    { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" },
+    { GIMP_PDB_INT16,    "tile_width",           "Tile Width" },
+    { GIMP_PDB_INT16,    "tile_height",          "Tile Height" },
+    { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" }
+
+};
+
+
 // Declare our plugin entry points
 GimpPlugInInfo PLUG_IN_INFO = {
     NULL,
@@ -46,37 +80,6 @@ MAIN()
 // The query function
 static void query(void)
 {
-    // Load arguments
-    static const GimpParamDef load_arguments[] =
-    {
-        { GIMP_PDB_INT32,  "run-mode",     "Interactive, non-interactive" },
-        { GIMP_PDB_STRING, "filename",     "The name of the file to load" },
-        { GIMP_PDB_STRING, "raw-filename", "The name entered" }
-    };
-
-    // Load return values
-    static const GimpParamDef load_return_values[] =
-    {
-        { GIMP_PDB_IMAGE, "image", "Output image" }
-    };
-
-    // Save arguments - should match if (nparams != 10)
-    static const GimpParamDef save_arguments[] =
-    {
-        { GIMP_PDB_INT32,    "run-mode",     "Interactive, non-interactive" },
-        { GIMP_PDB_IMAGE,    "image",        "Input image" },
-        { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to save" },
-        { GIMP_PDB_STRING,   "filename",     "The name of the file to save the image in" },
-        { GIMP_PDB_STRING,   "raw-filename", "The name entered" },
-//        { GIMP_PDB_FLOAT,    "image_format",  "Tilemap export format" }
-        { GIMP_PDB_INT16,    "gb_mode",              "Export type DMG 4 color or CGB 32 color" },
-        { GIMP_PDB_INT16,    "tile_dedupe_enabled",  "Deduplicate Tiles on Pattern" },
-        { GIMP_PDB_INT16,    "tile_dedupe_flips",    "Deduplicate Tiles on Flipped on X or Y (CGB only)" },
-        { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" },
-        { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" }
-
-    };
-
     // Install the load procedure for ".GBR" files
     gimp_install_procedure(LOAD_PROCEDURE_GBR,
                            "Load GBR Game Boy tileset",
@@ -278,7 +281,7 @@ static void run(const gchar * plugin_procedure_name,
         GimpExportReturn export_ret;
 
         // Check to make sure all of the parameters were supplied
-        if (nparams != 10) // Should match save_arguments[]
+        if (nparams != (sizeof(save_arguments) / sizeof(save_arguments[0]))) // Should match save_arguments[]
         {
             return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
             return;
@@ -321,7 +324,9 @@ static void run(const gchar * plugin_procedure_name,
                 plugin_options.tile_dedupe_enabled  = param[7].data.d_int16;
                 plugin_options.tile_dedupe_flips    = param[8].data.d_int16;
                 plugin_options.tile_dedupe_palettes = param[9].data.d_int16;
-                plugin_options.ignore_palette_errors = param[10].data.d_int16;
+                plugin_options.tile_width           = param[10].data.d_int16;
+                plugin_options.tile_height          = param[11].data.d_int16;
+                plugin_options.ignore_palette_errors = param[12].data.d_int16;
 
                 tilemap_options_set(&plugin_options);
                 break;
