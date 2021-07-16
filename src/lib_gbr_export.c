@@ -379,7 +379,7 @@ int32_t gbr_export_tileset_calc_dimensions(gbr_record * p_gbr, image_data * p_im
     else
         return false;
 
-    p_gbr->tile_data.count  = p_image->height / p_gbr->tile_data.height;
+    p_gbr->tile_data.count  = (p_image->height / p_gbr->tile_data.height) * (p_image->width / p_gbr->tile_data.width);
 
     return true;
 }
@@ -502,10 +502,13 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
         p_gbr->tile_data.tile_data_size = p_gbr->tile_data.width * p_gbr->tile_data.height
                                                                  * p_gbr->tile_data.count;
 
-        log_standard("gbr output: source image: %d x %d, tile size:%d x %d, tile count: %d\n", p_image->width, p_image->height,
-                                                  p_gbr->tile_data.width,
-                                                  p_gbr->tile_data.height,
-                                                  p_gbr->tile_data.count);
+        log_standard("gbr output: source image: %d x %d, tile size:%d x %d, tile count: %d (%d actual, %d as padding)\n",
+                      p_image->width, p_image->height,
+                      p_gbr->tile_data.width,
+                      p_gbr->tile_data.height,
+                      p_gbr->tile_data.count,
+                      p_gbr->tile_data.count - p_gbr->tile_data.padding_tile_count,
+                      p_gbr->tile_data.padding_tile_count);
 
         // SAVE COLOR MAP
         if (!gbr_export_tileset_palette(p_colors, p_gbr))
