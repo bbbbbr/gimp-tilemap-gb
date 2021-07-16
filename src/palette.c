@@ -122,6 +122,11 @@ bool palette_load_from_file(color_data * p_colors, char * filename) {
     p_colors->color_count = pal_index;
     log_verbose("User Palette: Loaded %d colors\n", p_colors->color_count);
 
+    if (p_colors->color_count > USER_PAL_MAX_COLORS) {
+        log_error("Error, maximum number of colors is %d\n", USER_PAL_MAX_COLORS);
+        return false;
+    }
+
     return true;
 }
 
