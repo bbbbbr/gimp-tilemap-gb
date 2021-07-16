@@ -359,9 +359,8 @@ bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_co
             // }
 
             // rewrites p_src_image and p_src_colors if successful
-            if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_pal_rgblab)) {
+            if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_pal_rgblab))
                 return true; // Success
-            }
         }
     }
 

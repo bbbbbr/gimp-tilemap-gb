@@ -62,7 +62,8 @@ static const GimpParamDef save_arguments[] =
     { GIMP_PDB_INT16,    "tile_dedupe_palettes", "Deduplicate Tiles on Alternate Palette (CGB only)" },
     { GIMP_PDB_INT16,    "tile_width",           "Tile Width" },
     { GIMP_PDB_INT16,    "tile_height",          "Tile Height" },
-    { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" }
+    { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" },
+    { GIMP_PDB_INT16,    "repair_palette_errors", "Repair Palette Errors" }
 
 };
 
@@ -327,6 +328,7 @@ static void run(const gchar * plugin_procedure_name,
                 plugin_options.tile_width           = param[10].data.d_int16;
                 plugin_options.tile_height          = param[11].data.d_int16;
                 plugin_options.ignore_palette_errors = param[12].data.d_int16;
+                plugin_options.remap_pal             = param[13].data.d_int16;
 
                 tilemap_options_set(&plugin_options);
                 break;
@@ -338,6 +340,7 @@ static void run(const gchar * plugin_procedure_name,
                 tilemap_options_set(&plugin_options);
                 break;
         }
+
 
         log_verbose("Handling export format: %d\n", plugin_options.image_format);
 

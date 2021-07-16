@@ -31,6 +31,7 @@ GtkWidget * check_dedupe_tiles;
 GtkWidget * check_dedupe_on_flip;
 GtkWidget * check_dedupe_on_palette;
 GtkWidget * check_ignore_palette_errors;
+GtkWidget * check_repair_palette_errors;
 
 static tile_process_options * p_plugin_options;
 
@@ -142,6 +143,15 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
                                          p_plugin_options->ignore_palette_errors);
 
 
+        // Repair palette errors works by way of remapping the image to it's own palette with
+        // a best-fit per-tile sub-palette restriction
+        check_repair_palette_errors = gtk_check_button_new_with_label("Try to Repair Palette Errors");
+            gtk_box_pack_start(GTK_BOX(vbox), check_repair_palette_errors, false, false, 2);
+            gtk_widget_show(check_repair_palette_errors);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors),
+                                         p_plugin_options->remap_pal);
+
+
 
 
         label_dedupe = gtk_label_new("\nDeduplicate Map Tiles on:\n\n(Note: If Tile Pattern dedupe is turned off, \nexport may create too many tiles and fail. )");
@@ -179,6 +189,9 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         g_signal_connect(G_OBJECT(check_ignore_palette_errors), "toggled",
                          G_CALLBACK(on_settings_checkbutton_changed), &(p_plugin_options->ignore_palette_errors));
+
+        g_signal_connect(G_OBJECT(check_repair_palette_errors), "toggled",
+                         G_CALLBACK(on_settings_checkbutton_changed), &(p_plugin_options->remap_pal));
 
         g_signal_connect(G_OBJECT(combo_gb_mode), "changed",
                          G_CALLBACK(on_settings_gb_mode_combo_changed), &(p_plugin_options->gb_mode));
@@ -321,12 +334,19 @@ static void update_enabled_ui_controls(void) {
 
         gtk_widget_set_sensitive((GtkWidget *) check_ignore_palette_errors, true); //false);
 
+        gtk_widget_set_sensitive((GtkWidget *) check_repair_palette_errors, false);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors), false);
+
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, false);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_on_flip), false);
+
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, false);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_on_palette), false);
     }
     else if (p_plugin_options->gb_mode == MODE_CGB_32_COLOR) {
 
         gtk_widget_set_sensitive((GtkWidget *) check_ignore_palette_errors, true);
+        gtk_widget_set_sensitive((GtkWidget *) check_repair_palette_errors, true);
 
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, p_plugin_options->tile_dedupe_enabled == true);
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, p_plugin_options->tile_dedupe_enabled == true);

@@ -34,6 +34,8 @@
 #include "logging.h"
 #include "options.h"
 
+#include "image_remap.h"
+
 
 static void tilemap_export_parasite_gbr(gint image_id) {
 
@@ -79,6 +81,16 @@ static void tilemap_export_parasite_gbm(gint image_id) {
 
 }
 
+static int tilemap_export_remap_colors(image_data * p_src_image, color_data * p_src_colors, color_data * p_remap_colors) {
+
+    if ( !image_remap_to_user_palette(p_src_image, p_src_colors, p_remap_colors) ) {
+        log_error("Error: remapping user palette failed!\n");
+        return false;
+    }
+
+    return true;
+}
+
 
 int write_tilemap(const char * filename, gint image_id, gint drawable_id, const gchar * name)
 {
@@ -89,6 +101,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     image_data app_image;
     color_data app_colors; // initialize all palette colors to zero
+    color_data remap_colors; // initialize all palette colors to zero
 
     guchar * p_cmap_buf;
     gint     cmap_num_colors;
@@ -152,11 +165,21 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     if (p_cmap_buf) {
         memcpy(app_colors.pal, p_cmap_buf, cmap_num_colors * 3);
         app_colors.color_count = cmap_num_colors;
+        // Make a duplicate, for remapping purposes
+        memcpy(remap_colors.pal, p_cmap_buf, cmap_num_colors * 3);
+        remap_colors.color_count = cmap_num_colors;
+        remap_colors.subpal_size = app_colors.subpal_size;
     }
     else
         status = false;
 
     log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
+
+    // Try to repair / remap palette if requested
+    if (plugin_options.remap_pal) {
+        if (!tilemap_export_remap_colors(&app_image, &app_colors, &remap_colors))
+            return (false); // Signal failure and exit
+    }
 
     options_color_defaults_if_unset(app_colors.color_count, &plugin_options);
     tilemap_options_set(&plugin_options);
