@@ -26,6 +26,7 @@ Or check [Releases](https://github.com/bbbbbr/gimp-tilemap-gb/releases)
 
 Features (DMG & CGB)
  * Tile deduplication (same colors/same pattern)
+ * Optional remapping of colors to a specific palette (to repair per-tile color limit errors)
 
 CGB only features
  * Flipped X/Y tile deduplication
@@ -57,13 +58,16 @@ Settings:
 
 ## Usage / Cautions:
  * Work on an 8x8 grid. It will save you time, trouble and ROM size later on.
- * Exported C Source / GBM Map Tilesets *always* use a tile size of 8x8 pixels, and the source image should be an even multiple of the tile size
- * Exported GBR tilesets should have an image width of 8, 16 or 32 pixels. Tile size width and height will auto set to be the same as the image width. This means 8x16 is not currently supported. (Maybe a dialog selecting export size later).
+ * Available tile sizes are: 8x8, 8x16, 16x16, 32x32
+ * The source image should be an even multiple of the tile size.
+ * While C Source / GBM Maps can export to all tile sizes, working with 8x8 is sometimes most practical for hardware (unless set up for meta-tiles).
  * Exported GBR should have no more than 4 colors (DMG) or 32 colors (CGB)
  * In CGB mode the 32 color palette is broken up into 8 separate, consecutive sub-palettes of 4 colors each
- * When exporting in CGB mode, tiles *should not* use colors from more than one sub-palette at a time. Export will fail if they do, unless "Ignore CGB Palette Errors" is enabled.
- * The only metadata preserved across import and later re-export for GBR / GBM files are the Tile/Map Export Settings. Other data such as recently used files, etc is not currently preserved when exporting back out. (Maybe later).
- * If you export using this path: GIMP -> GBTD or GBMB -> C source, then you'll need to set up the export options for GBTD (path, tiles to export, etc) and GBMB (path, location format, etc).
+ * When exporting in CGB mode, tiles *should not* use colors from more than one sub-palette at a time. Export will fail if they do, unless one of the following is enabled:
+   * "Ignore CGB Palette Errors"
+   * "Try to Repair Palette Errors" are enabled.
+ * The only metadata preserved across import and later re-export for GBR / GBM files are the Tile/Map Export Settings. Other data such as recently used files, etc are not currently preserved when exporting back out. (Maybe later).
+ * If you export using this path: GIMP -> GBTD or GBMB -> C source, then you'll need to set up the export options for GBTD (path, tiles to export, etc) and GBMB (path, location format, etc). Some, but not all, of them will be pre-populated.
 
 ## Quick instructions:
 
@@ -91,7 +95,9 @@ Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-r
 
 
 ## Requirements:
-* Image must be indexed color and not have more colors than output format supports
+* Image must be indexed color and not have more colors than output format supports, unless one of the following is enabled:
+   * "Ignore CGB Palette Errors"
+   * "Try to Repair Palette Errors" are enabled.
 
 ## Known limitations & Issues:
 * GBMB Export only populates the Export Location Format if it was present on a preceding Import. Otherwise it must be done manually.
