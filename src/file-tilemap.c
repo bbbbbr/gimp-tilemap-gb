@@ -213,11 +213,14 @@ static void run(const gchar * plugin_procedure_name,
     GimpRunMode   run_mode;
     tile_process_options plugin_options;
 
+    options_reset(&plugin_options);
+
+
     *nreturn_vals = 1;
     *return_vals  = return_values;
     run_mode      = param[0].data.d_int32;
 
-log_set_level(OUTPUT_LEVEL_VERBOSE);
+    log_set_level(OUTPUT_LEVEL_VERBOSE);
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
@@ -297,12 +300,7 @@ log_set_level(OUTPUT_LEVEL_VERBOSE);
                 // Only pop up the export dialog if it's interactive mode
                 // Set defaults first
 
-                options_reset(&plugin_options);
-// TODO: verify that this works as expected                
                 options_color_defaults_if_unset(colormap_size_get(image_id), &plugin_options);
-// TODO: delete ME                
-                // tilemap_options_load_defaults(colormap_size_get(image_id), &plugin_options);
-
 
                 // Prompt the user for export options in a dialog
                 // // Allow user to override the defaults
@@ -336,8 +334,7 @@ log_set_level(OUTPUT_LEVEL_VERBOSE);
                 break;
         }
 
-
-
+        log_verbose("Handling export format: %d\n", plugin_options.image_format);
 
         // TODO: consolidate different format handling below
 
@@ -368,10 +365,17 @@ log_set_level(OUTPUT_LEVEL_VERBOSE);
                                                "GBM",
                                                GIMP_EXPORT_CAN_HANDLE_INDEXED);
                 break;
+
+            default:
+                log_error("Invalid export format: %d\n", plugin_options.image_format);
+                return_values[0].data.d_status = GIMP_PDB_CALLING_ERROR;
+                return;
+                break;
         }
 
 
-        log_verbose("export_ret=%d\n", export_ret);
+        log_verbose("gimp_export_image: returned:%d (GIMP_EXPORT_EXPORT=%d, GIMP_EXPORT_IGNORE=%d, GIMP_EXPORT_CANCEL=%d)\n", export_ret,
+                     GIMP_EXPORT_EXPORT, GIMP_EXPORT_IGNORE);
 
         switch(export_ret)
         {
