@@ -341,24 +341,25 @@ bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_co
     palette_rgb_LAB user_palette;
     user_palette.subpal_size = p_src_colors->subpal_size;
 
-    image_validate_settings(p_src_image);
+    if (image_validate_settings(p_src_image)) {
 
-    if (palette_load_from_file(&user_palette, user_colors_filename)) {
+        if (palette_load_from_file(&user_palette, user_colors_filename)) {
 
-        if (palette_validate_settings(&user_palette)) {
+            if (palette_validate_settings(&user_palette)) {
 
-            // Pre-convert user palette to LAB for better distance calc performance later
-            palette_convert_to_lab(&user_palette);
+                // Pre-convert user palette to LAB for better distance calc performance later
+                palette_convert_to_lab(&user_palette);
 
-            // Non-sub-palette mapping is disabled for now since CGB requires it
-            // // rewrites p_src_image and p_src_colors if successful
-            // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
-            //     return true; // Success
-            // }
+                // Non-sub-palette mapping is disabled for now since CGB requires it
+                // // rewrites p_src_image and p_src_colors if successful
+                // if (image_remap_to_palette(p_src_image, p_src_colors, user_palette)) {
+                //     return true; // Success
+                // }
 
-            // rewrites p_src_image and p_src_colors if successful
-            if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_palette)) {
-                return true; // Success
+                // rewrites p_src_image and p_src_colors if successful
+                if (image_tiles_remap_to_subpalettes(p_src_image, p_src_colors, &user_palette)) {
+                    return true; // Success
+                }
             }
         }
     }
