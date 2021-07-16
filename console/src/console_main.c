@@ -166,7 +166,7 @@ int handle_args( int argc, char * argv[] ) {
                     log_error("Error: Invalid tile size: %s\n\n", argv[i] + strlen(opt_tile_size));
                     display_help();
                     return false;
-                }
+                }        
             }
             else {   
 
@@ -260,7 +260,7 @@ void display_help(void) {
             "Examples\n"
             "   png2gbtiles spritesheet.png -gbr spritesheet.gbr\n"
             "   png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm\n"
-            "   png2gbtiles worldmap.png -gbm \n");
+            "   png2gbtiles worldmap.png -gbm \n"
             "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"    
-            "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n";
+            "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n");
 }
