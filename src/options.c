@@ -46,9 +46,6 @@ void options_reset(tile_process_options * p_options) {
 
     p_options->ignore_palette_errors = OPTION_UNSET;
 
-    p_options->dmg_possible          = OPTION_UNSET;
-    p_options->cgb_possible          = OPTION_UNSET;
-
     p_options->remap_pal             = false;
     p_options->remap_pal_file[0]     = '\0';
     p_options->subpal_size           = OPTION_UNSET;
@@ -87,11 +84,6 @@ void options_color_defaults_if_unset(int color_count, tile_process_options * p_o
 
     if (p_options->ignore_palette_errors == OPTION_UNSET)
         p_options->ignore_palette_errors  = false;
-
-    // Always allow CGB export
-    p_options->cgb_possible = true;
-    p_options->dmg_possible = true;
-    // p_options->dmg_possible = (color_count <= TILE_DMG_COLORS_MAX); //  || (p_options.remap_pal == true); // Color count gets reduced before this is called even if remapping
 
     options_log("options_color_defaults_if_unset() ", p_options);
 }

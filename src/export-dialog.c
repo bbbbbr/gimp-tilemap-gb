@@ -108,10 +108,8 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         // Create a combo/list box for selecting the mode
         // Then add the mode select entries
         combo_gb_mode = gtk_combo_box_text_new();
-        if (p_plugin_options->dmg_possible)
-            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_DMG);
-        if (p_plugin_options->cgb_possible)
-            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_CGB);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_DMG);
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_gb_mode), STR_OPT_GB_MODE_CGB);
         // Select default value
         // gtk_combo_box_set_active(GTK_COMBO_BOX(combo_gb_mode), p_plugin_options->gb_mode);
         combo_set_active_entry_by_string(combo_gb_mode, (gchar *) tile_process_mode_strs[p_plugin_options->gb_mode] );
