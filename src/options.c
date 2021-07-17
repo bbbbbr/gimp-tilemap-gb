@@ -28,7 +28,7 @@ void options_log(const char * str_heading, tile_process_options * p_options) {
     log_verbose("bank_num:              %d\n", p_options->bank_num);
     log_verbose("varname:               %s\n", p_options->varname);
     log_verbose("\n");
-}    
+}
 
 
 void options_reset(tile_process_options * p_options) {
@@ -36,19 +36,19 @@ void options_reset(tile_process_options * p_options) {
 
     p_options->gb_mode               = OPTION_UNSET;
     p_options->image_format          = OPTION_UNSET;
-    
+
     p_options->tile_dedupe_enabled   = OPTION_UNSET;
     p_options->tile_dedupe_flips     = OPTION_UNSET;
     p_options->tile_dedupe_palettes  = OPTION_UNSET;
-    
+
     p_options->tile_width            = OPTION_UNSET;
     p_options->tile_height           = OPTION_UNSET;
-    
+
     p_options->ignore_palette_errors = OPTION_UNSET;
 
     p_options->dmg_possible          = OPTION_UNSET;
     p_options->cgb_possible          = OPTION_UNSET;
-    
+
     p_options->remap_pal             = false;
     p_options->remap_pal_file[0]     = '\0';
     p_options->subpal_size           = OPTION_UNSET;
@@ -61,30 +61,14 @@ void options_reset(tile_process_options * p_options) {
 
 
 void options_color_defaults_if_unset(int color_count, tile_process_options * p_options) {
-    
-    // Palette remapping should have been performed by the time this is called
-    // so it should be ok to enfore DMG 4 color limit
-    if ((p_options->gb_mode == MODE_DMG_4_COLOR) && (color_count > TILE_DMG_COLORS_MAX)) {
-        // Too many colors
-        p_options->gb_mode = MODE_ERROR_TOO_MANY_COLORS;
-        p_options->dmg_possible = false;
-        p_options->cgb_possible = false;
-    
-        p_options->tile_dedupe_enabled  = false;
-        p_options->tile_dedupe_flips    = false;
-        p_options->tile_dedupe_palettes = false;
-
-        log_standard("Warning: DMG 4-color mode with more than 4 colors (%d)", color_count);
-        return;
-    }
 
     if (p_options->gb_mode == OPTION_UNSET) {
 
         if  (color_count > TILE_DMG_COLORS_MAX)
             p_options->gb_mode = MODE_CGB_32_COLOR;
-        else 
+        else
             p_options->gb_mode = MODE_DMG_4_COLOR;
-    }  
+    }
 
     if (p_options->tile_dedupe_enabled == OPTION_UNSET)
         p_options->tile_dedupe_enabled  = (p_options->image_format != FORMAT_GBR);
@@ -96,16 +80,18 @@ void options_color_defaults_if_unset(int color_count, tile_process_options * p_o
     }
 
     if (p_options->tile_dedupe_flips == OPTION_UNSET)
-        p_options->tile_dedupe_flips  = true;
+        p_options->tile_dedupe_flips  = (p_options->gb_mode == MODE_DMG_4_COLOR);
 
     if (p_options->tile_dedupe_palettes == OPTION_UNSET)
-        p_options->tile_dedupe_palettes  = true;
+        p_options->tile_dedupe_palettes  = (p_options->gb_mode == MODE_DMG_4_COLOR);
 
     if (p_options->ignore_palette_errors == OPTION_UNSET)
         p_options->ignore_palette_errors  = false;
 
+    // Always allow CGB export
     p_options->cgb_possible = true;
-    p_options->dmg_possible = (color_count <= TILE_DMG_COLORS_MAX); //  || (p_options.remap_pal == true); // Color count gets reduced before this is called even if remapping
+    p_options->dmg_possible = true;
+    // p_options->dmg_possible = (color_count <= TILE_DMG_COLORS_MAX); //  || (p_options.remap_pal == true); // Color count gets reduced before this is called even if remapping
 
     options_log("options_color_defaults_if_unset() ", p_options);
 }

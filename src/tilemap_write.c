@@ -201,7 +201,6 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
-
     if (status) {
         // Try to repair / remap palette if requested
         if (plugin_options.remap_pal) {
@@ -226,6 +225,18 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
             status = false; // Signal failure and exit
         }
     }
+
+
+    // Enforce 4 color limit if no overrides present
+    if ((plugin_options.gb_mode == MODE_DMG_4_COLOR) &&
+        (app_colors.color_count > TILE_DMG_COLORS_MAX)) {
+
+        char error_str[1024];
+        snprintf(error_str, 1024, "Error: Too many colors (%d) for 4 color export mode.\n\nTry Palette Remapping with a palette file with only 4 colors, or reduce the number of colors in the image.", app_colors.color_count);
+        gimp_message(error_str);
+        status = false; // Signal failure and exit
+    }
+
 
     if (status) {
 

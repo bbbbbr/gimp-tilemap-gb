@@ -84,9 +84,6 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
     // Copy options into local glboal
     p_plugin_options = p_src_plugin_options;
 
-    // Only show the dialog contents if there aren't too many colors
-    if (p_plugin_options->gb_mode != MODE_ERROR_TOO_MANY_COLORS) {
-
         // === Create the Export Dialog ===
 
         // If Exporting use the export dialog convenience function
@@ -149,7 +146,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         // == Map export options ==
 
 
-        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore Palette Errors");
+        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore CGB Palette Errors");
             gtk_box_pack_start(GTK_BOX(vbox), check_ignore_palette_errors, false, false, 2);
             gtk_widget_show(check_ignore_palette_errors);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_ignore_palette_errors),
@@ -251,11 +248,6 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         gtk_widget_destroy(dialog);
 
-    } else {
-        // MODE_ERROR_TOO_MANY_COLORS
-
-        gimp_message("Error!\n\nImage must have 32 or fewer colors");
-    }
 
     log_verbose("Dialog Exit with %d\n",response);
     return response;
