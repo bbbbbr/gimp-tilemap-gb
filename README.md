@@ -97,7 +97,7 @@ Guide for [Cross-compiling to Windows on Linux](https://github.com/bbbbbr/gimp-r
 ## Requirements:
 * Image must be indexed color and not have more colors than output format supports, unless one of the following is enabled:
    * "Ignore CGB Palette Errors"
-   * "Try to Repair Palette Errors" are enabled.
+   * "Remap/Repair Palette Errors" and "Remap using a Palette File".
 
 ## Known limitations & Issues:
 * GBMB Export only populates the Export Location Format if it was present on a preceding Import. Otherwise it must be done manually.

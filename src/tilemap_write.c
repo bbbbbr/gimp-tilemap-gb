@@ -145,13 +145,6 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     log_verbose("write-tilemap.c: bytes per pixel= %d\n", app_image.bytes_per_pixel);
 
-    // Abort if it's not 1 or 2 bytes per pixel
-    // TODO: handle both 1 (no alpha) and 2 (has alpha) byte-per-pixel mode
-    if (app_image.bytes_per_pixel > IMG_BITDEPTH_INDEXED_ALPHA) {
-
-        return false;
-    }
-
     // Get a pixel region from the layer
     gimp_pixel_rgn_init(&rgn,
                         drawable,
@@ -175,40 +168,66 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
                             drawable->height);
 
 
-    // Load the color map and copy it to a working buffer
-    p_cmap_buf = gimp_image_get_colormap(image_id, &cmap_num_colors);
+    // Handle Color Maps / Non-indexed color images
+    //
+    if (gimp_drawable_is_indexed(drawable_id))  {
 
-    if (p_cmap_buf) {
-        memcpy(app_colors.pal, p_cmap_buf, cmap_num_colors * 3);
-        app_colors.color_count = cmap_num_colors;
+        // Require palette remapping for indexed when it has an alpha channel
+        if  (gimp_drawable_has_alpha(drawable_id) && (plugin_options.remap_pal == false)) {
+            gimp_message("Error: Remapping to a Palette MUST be enabled when exporting indexed images with Alpha masks\n");
+            status = false;
+        }
+
+        // For indexed color images: Load the color map and copy it to a working buffer
+        p_cmap_buf = gimp_image_get_colormap(image_id, &cmap_num_colors);
+
+        if (p_cmap_buf) {
+            memcpy(app_colors.pal, p_cmap_buf, cmap_num_colors * 3);
+            app_colors.color_count = cmap_num_colors;
+        }
+        else {
+            gimp_message("Error: Unable to load palette from image\n");
+            status = false;
+        }
+
     }
-    else
-        status = false;
+    else {
+        // Require palette remapping WITH a file for non-indexed RGB
+        if  ((plugin_options.remap_pal == false) || (plugin_options.remap_pal_file[0] == '\0')) {
+            gimp_message("Error: Remapping to a Palette File MUST be enabled when exporting images in Greyscale, RGB (non-indexed) or with Alpha masks\n");
+            status = false;
+        }
+    }
 
     log_verbose("gimp_image_get_colormap: status= %d, colors=%d\n", status, cmap_num_colors);
 
-    // Try to repair / remap palette if requested
-    if (plugin_options.remap_pal) {
-        if (!tilemap_export_remap_colors(&app_image, &app_colors, &remap_colors, plugin_options.remap_pal_file))
-            return (false); // Signal failure and exit
-    }
-
-    options_color_defaults_if_unset(app_colors.color_count, &plugin_options);
-    tilemap_options_set(&plugin_options);
-
-    // For plugin, set output variable name as filename
-    copy_filename_without_path_and_extension(plugin_options.varname, filename);
-
-    // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
-//    if (status != 0) { };
 
     if (status) {
+        // Try to repair / remap palette if requested
+        if (plugin_options.remap_pal) {
+            if (!tilemap_export_remap_colors(&app_image, &app_colors, &remap_colors, plugin_options.remap_pal_file))
+                status = false; // Signal failure and exit
+        }
+    }
+
+    if (status) {
+        options_color_defaults_if_unset(app_colors.color_count, &plugin_options);
+        tilemap_options_set(&plugin_options);
+
+        // For plugin, set output variable name as filename
+        copy_filename_without_path_and_extension(plugin_options.varname, filename);
+
+        // TODO: Check colormap size and throw a warning if it's too large (4bpp vs 2bpp, etc)
+
 
         // Update any settings that might need it based on loaded image data (tile size, etc)
         if ( ! tilemap_image_update_settings(&app_image, &app_colors) ) {
-//            tilemap_error_set(TILE_ID_INVALID_DIMENSIONS);
-            return (false); // Signal failure and exit
+            // tilemap_error_set(TILE_ID_INVALID_DIMENSIONS);
+            status = false; // Signal failure and exit
         }
+    }
+
+    if (status) {
 
         switch (plugin_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:

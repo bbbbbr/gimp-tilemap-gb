@@ -121,7 +121,7 @@ static void query(void)
                            "Copyright --",
                            "2019",
                            "Tilemap & Tileset",
-                           "INDEXED*",
+                           "INDEXED*, RGB*", // , GREYSCALE*", // TODO
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
                            0,
@@ -136,7 +136,7 @@ static void query(void)
                            "Copyright --",
                            "2019",
                            "GBR Game Boy tileset image",
-                           "INDEXED*",
+                           "INDEXED*, RGB*", // , GREYSCALE*", // TODO
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
                            0,
@@ -151,7 +151,7 @@ static void query(void)
                            "Copyright --",
                            "2019",
                            "GBM Game Boy tileset map image",
-                           "INDEXED*",
+                           "INDEXED*, RGB*", // , GREYSCALE*", // TODO
                            GIMP_PLUGIN,
                            G_N_ELEMENTS(save_arguments),
                            0,
@@ -342,19 +342,19 @@ static void run(const gchar * plugin_procedure_name,
                 break;
         }
 
-
         log_verbose("Handling export format: %d\n", plugin_options.image_format);
 
         // TODO: consolidate different format handling below
 
         // Determine image file format by load type
         // Prepare app image for export in the desired format
-        // (if it's not indexed this will auto-convert it to that)
         switch (plugin_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
                                                "TMAP",
+                                               // GIMP_EXPORT_CAN_HANDLE_GRAY | // TODO
+                                               GIMP_EXPORT_CAN_HANDLE_RGB |
                                                GIMP_EXPORT_CAN_HANDLE_INDEXED |
                                                GIMP_EXPORT_CAN_HANDLE_ALPHA);
                 break;
@@ -364,7 +364,10 @@ static void run(const gchar * plugin_procedure_name,
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
                                                "GBR",
-                                               GIMP_EXPORT_CAN_HANDLE_INDEXED);
+                                               // GIMP_EXPORT_CAN_HANDLE_GRAY | // TODO
+                                               GIMP_EXPORT_CAN_HANDLE_RGB |
+                                               GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                               GIMP_EXPORT_CAN_HANDLE_ALPHA);
                 break;
 
             case FORMAT_GBM:
@@ -372,7 +375,10 @@ static void run(const gchar * plugin_procedure_name,
                 export_ret = gimp_export_image(&image_id,
                                                &drawable_id,
                                                "GBM",
-                                               GIMP_EXPORT_CAN_HANDLE_INDEXED);
+                                               // GIMP_EXPORT_CAN_HANDLE_GRAY | // TODO
+                                               GIMP_EXPORT_CAN_HANDLE_RGB |
+                                               GIMP_EXPORT_CAN_HANDLE_INDEXED |
+                                               GIMP_EXPORT_CAN_HANDLE_ALPHA);
                 break;
 
             default:

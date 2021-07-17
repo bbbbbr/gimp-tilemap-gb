@@ -7,9 +7,10 @@
 #ifndef IMAGE_INFO_HEADER
 #define IMAGE_INFO_HEADER
 
-    #define MODE_8_BIT_INDEXED  ( 8 / 8)
-    #define MODE_24_BIT_RGB     (24 / 8)
-    #define MODE_32_BIT_RGBA    (32 / 8)
+    #define MODE_8_BIT_INDEXED        ( 8 / 8)
+    #define MODE_8_BIT_INDEXED_ALPHA  (16 / 8)
+    #define MODE_24_BIT_RGB           (24 / 8)
+    #define MODE_32_BIT_RGBA          (32 / 8)
 
     #define COLOR_DATA_PAL_MAX_COUNT   256 // 255 Colors max for indexed
     #define COLOR_DATA_BYTES_PER_COLOR 3   // RGB 1 byte per color

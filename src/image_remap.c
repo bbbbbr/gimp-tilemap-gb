@@ -101,13 +101,15 @@ static bool palette_validate_settings(palette_rgb_LAB * p_pal) {
 
 static bool pixel_get_rgb(color_rgb_LAB * pixel_col, color_data * p_src_pal, uint8_t * p_src_pixel, uint8_t bytes_per_pixel) {
     
-    if (bytes_per_pixel == MODE_8_BIT_INDEXED) {
+    if ((bytes_per_pixel == MODE_8_BIT_INDEXED) ||
+        (bytes_per_pixel == MODE_8_BIT_INDEXED_ALPHA)) {
         if (*p_src_pixel >= p_src_pal->color_count) {
             log_error("Error: Failed to remap image to user palette: referenced index color larger than palette size\n");
             return false;
         }
 
         // Look up RGB data from palette
+        // Skips alpha channel when present
         pixel_col->r = p_src_pal->pal[ (*p_src_pixel * 3)    ]; // R
         pixel_col->g = p_src_pal->pal[ (*p_src_pixel * 3) + 1]; // G
         pixel_col->b = p_src_pal->pal[ (*p_src_pixel * 3) + 2]; // B

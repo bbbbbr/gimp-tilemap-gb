@@ -359,8 +359,8 @@ static void update_enabled_ui_controls(void) {
 
         gtk_widget_set_sensitive((GtkWidget *) check_ignore_palette_errors, true); //false);
 
-        gtk_widget_set_sensitive((GtkWidget *) check_repair_palette_errors, false);
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors), false);
+        gtk_widget_set_sensitive((GtkWidget *) check_repair_palette_errors, true);
+        // gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors), false);
 
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_flip, false);
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_dedupe_on_flip), false);
