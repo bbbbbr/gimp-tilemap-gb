@@ -26,7 +26,7 @@ Or check [Releases](https://github.com/bbbbbr/gimp-tilemap-gb/releases)
 
 Features (DMG & CGB)
  * Tile deduplication (same colors/same pattern)
- * Optional remapping of colors to a specific palette (to repair per-tile color limit errors)
+ * Optional remapping of colors to a specific palette (user supplied palette or to repair per-tile color limit errors with the images current palette)
 
 CGB only features
  * Flipped X/Y tile deduplication

@@ -250,7 +250,7 @@ void display_help(void) {
             "\n"
             "  -var=[name]    Base name to use for export variables (otherwise filename)\n"
             "  -bank=[num]    Set bank number for all output modes\n"
-            "  -tileorg=[num] Tile ID origin offset for maps (instead of zero)\n"
+            "  -tileorg=[num] Tile index offset for maps (instead of zero)\n"
             "  -tilesz=[size] Tile size (8x8, 8x16, 16x16, 32x32) \n"
             "\n"
             "  -q          Quiet, suppress all output\n"

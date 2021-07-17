@@ -24,7 +24,7 @@ Options
 
   -var=[name]    Base name to use for export variables (otherwise filename)
   -bank=[num]    Set bank number for all output modes
-  -tileorg=[num] Tile ID origin offset for maps (instead of zero)
+  -tileorg=[num] Tile index offset for maps (instead of zero)
   -tilesz=[size] Tile size (8x8, 8x16, 16x16, 32x32) 
 
   -q          Quiet, suppress all output
