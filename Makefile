@@ -3,9 +3,12 @@ CC      = gcc
 TARGET  = file-tilemap
 SRC_DIR = src
 OBJ_DIR = obj
+# -Wno-deprecated, -Wno-deprecated-declarations is just for gtk warnings for now (migration to GEGL)
 CFLAGS  = $(shell pkg-config --cflags gtk+-2.0) \
           $(shell pkg-config --cflags gimp-2.0) \
-          -Wno-format-truncation
+          -Wno-format-truncation \
+          -Wno-deprecated \
+          -Wno-deprecated-declarations
 LFLAGS  = $(shell pkg-config --libs glib-2.0) \
           $(shell pkg-config --libs gtk+-2.0) \
           $(shell pkg-config --libs gimp-2.0) \
