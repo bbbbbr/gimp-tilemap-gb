@@ -1,7 +1,7 @@
 // palette.c
 
 //
-// Support for remapping an image (8 bit/full color) to 
+// Support for remapping an image (8 bit/full color) to
 // 8-bit indexed with a user specified palette
 //
 
@@ -36,10 +36,17 @@ void palette_copy_rgblab_to_colordata_format(color_data * p_dst_pal, palette_rgb
     p_dst_pal->color_count = p_src_pal->color_count;
     p_dst_pal->size        = p_src_pal->color_count * COLOR_DATA_BYTES_PER_COLOR;
 
-    for (int c=0; c < p_src_pal->color_count; c++) {
+    for (int c = 0; c < p_src_pal->color_count; c++) {
         p_dst_pal->pal[(c * 3)    ]  = p_src_pal->colors[c].r;
         p_dst_pal->pal[(c * 3) + 1]  = p_src_pal->colors[c].g;
         p_dst_pal->pal[(c * 3) + 2]  = p_src_pal->colors[c].b;
+    }
+
+    // overwrite unused colors with black
+    for (int c = p_src_pal->color_count; c < USER_PAL_MAX_COLORS; c++) {
+        p_dst_pal->pal[(c * 3)    ]  = 0;
+        p_dst_pal->pal[(c * 3) + 1]  = 0;
+        p_dst_pal->pal[(c * 3) + 2]  = 0;
     }
 }
 
@@ -47,11 +54,19 @@ void palette_copy_rgblab_to_colordata_format(color_data * p_dst_pal, palette_rgb
 // This can get removed once conversion RGB-LAB format gets merged into color_data
 void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_rgb_LAB * p_dst_colors) {
 
-    for(int c = 0; c < p_src_colors->color_count; c++) {
+    for (int c = 0; c < p_src_colors->color_count; c++) {
 
         p_dst_colors->colors[c].r = p_src_colors->pal[(c * 3) + 0];
         p_dst_colors->colors[c].g = p_src_colors->pal[(c * 3) + 1];
         p_dst_colors->colors[c].b = p_src_colors->pal[(c * 3) + 2];
+    }
+
+    // overwrite unused colors with black
+    for (int c = p_src_colors->color_count; c < USER_PAL_MAX_COLORS; c++) {
+
+        p_dst_colors->colors[c].r = 0;
+        p_dst_colors->colors[c].g = 0;
+        p_dst_colors->colors[c].b = 0;
     }
 
     p_dst_colors->color_count   = p_src_colors->color_count;
@@ -85,9 +100,9 @@ bool palette_load_from_file(color_data * p_colors, char * filename) {
     log_standard("Loading palette from file: %s\n", filename);
 
     FILE * pal_file = fopen(filename, "r");
-    
+
     if (pal_file) {
-                // Read one line at a time into \0 terminated string
+        // Read one line at a time into \0 terminated string
         while ( (fgets(strline_in, sizeof(strline_in), pal_file) != NULL) &&
                 (pal_index <= USER_PAL_MAX_COLORS) ) {
 
@@ -113,7 +128,7 @@ bool palette_load_from_file(color_data * p_colors, char * filename) {
             }
         }
         fclose(pal_file);
-    } 
+    }
     else {
         log_error("Error: User Palette not found, unable to open: %s\n", filename);
         return false;
