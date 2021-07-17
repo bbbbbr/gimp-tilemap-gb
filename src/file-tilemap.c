@@ -303,6 +303,7 @@ static void run(const gchar * plugin_procedure_name,
             case GIMP_RUN_INTERACTIVE:
                 // Only pop up the export dialog if it's interactive mode
                 // Set defaults first
+                gimp_get_data (plugin_procedure_name, &plugin_options);
 
                 options_color_defaults_if_unset(colormap_size_get(image_id), &plugin_options);
 

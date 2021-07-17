@@ -32,8 +32,11 @@ GtkWidget * check_dedupe_on_flip;
 GtkWidget * check_dedupe_on_palette;
 GtkWidget * check_ignore_palette_errors;
 GtkWidget * check_repair_palette_errors;
+GtkWidget * check_use_remap_pal_file;
 
 static tile_process_options * p_plugin_options;
+
+static GtkWidget * dialog;
 
 static void on_response(GtkDialog *, gint, gpointer);
 
@@ -42,9 +45,10 @@ static void combo_set_active_entry_by_string(GtkWidget *combo, gchar * string_to
 static void on_settings_gb_mode_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_tilesize_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
+static void on_settings_remap_pal_file_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
 static void update_enabled_ui_controls(void);
 
-static void on_response(GtkDialog * dialog, gint response_id, gpointer user_data) {
+static void on_response(GtkDialog * this_dialog, gint response_id, gpointer user_data) {
 
     // Quit the loop
     gtk_main_quit(); // TODO: delete?
@@ -73,7 +77,6 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
     int response = false;
 
-    GtkWidget * dialog;
     GtkWidget * vbox;
     GtkWidget * label;
     GtkWidget * label_dedupe;
@@ -122,6 +125,16 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         // TODO: For default tile size: GBR: try to use image width (8,16,32), GBM/C: use 8x8
         int opt_tilesize = 0; // 8x8 is default for now
+
+        if ((p_plugin_options->tile_width == 8) && (p_plugin_options->tile_height == 8))
+            opt_tilesize = 0;
+        else if ((p_plugin_options->tile_width == 8) && (p_plugin_options->tile_height == 16))
+            opt_tilesize = 1;
+        else if ((p_plugin_options->tile_width == 16) && (p_plugin_options->tile_height == 16))
+            opt_tilesize = 2;
+        else if ((p_plugin_options->tile_width == 32) && (p_plugin_options->tile_height == 32))
+            opt_tilesize = 3;
+
         // Create a combo/list box for selecting tile size
         // Then add the tile size select entries
         // Then  it to the box for display and show it
@@ -145,12 +158,21 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         // Repair palette errors works by way of remapping the image to it's own palette with
         // a best-fit per-tile sub-palette restriction
-        check_repair_palette_errors = gtk_check_button_new_with_label("Try to Repair Palette Errors");
+        check_repair_palette_errors = gtk_check_button_new_with_label("Remap/Repair Palette Errors");
             gtk_box_pack_start(GTK_BOX(vbox), check_repair_palette_errors, false, false, 2);
             gtk_widget_show(check_repair_palette_errors);
             gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors),
                                          p_plugin_options->remap_pal);
 
+
+
+        // Repair palette errors works by way of remapping the image to it's own palette with
+        // a best-fit per-tile sub-palette restriction
+        check_use_remap_pal_file = gtk_check_button_new_with_label("Remap using a Palette File");
+            gtk_box_pack_start(GTK_BOX(vbox), check_use_remap_pal_file, false, false, 2);
+            gtk_widget_show(check_use_remap_pal_file);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_use_remap_pal_file),
+                                         (p_plugin_options->remap_pal_file[0] != '\0'));
 
 
 
@@ -192,6 +214,9 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         g_signal_connect(G_OBJECT(check_repair_palette_errors), "toggled",
                          G_CALLBACK(on_settings_checkbutton_changed), &(p_plugin_options->remap_pal));
+
+        g_signal_connect(G_OBJECT(check_use_remap_pal_file), "toggled",
+                         G_CALLBACK(on_settings_remap_pal_file_changed), p_plugin_options);
 
         g_signal_connect(G_OBJECT(combo_gb_mode), "changed",
                          G_CALLBACK(on_settings_gb_mode_combo_changed), &(p_plugin_options->gb_mode));
@@ -352,6 +377,71 @@ static void update_enabled_ui_controls(void) {
         gtk_widget_set_sensitive((GtkWidget *) check_dedupe_on_palette, p_plugin_options->tile_dedupe_enabled == true);
     }
 
+
+    // Make sure remap checkboxs are in sync with the option requirenments
+
+    // If pal file string is empty, turn off it's check box
+    if (p_plugin_options->remap_pal_file[0] != '\0') {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_use_remap_pal_file), true);
+    }
+    else if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check_use_remap_pal_file))) {
+        // If pal file checkbox is on and file string is populated
+        // then turn on Palette Remapping/Repair to go along with the file
+        p_plugin_options->remap_pal = true;
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors), p_plugin_options->remap_pal);
+    }
+
+    // Turn off the palette file check box and clear the file string if remapping is disabled
+    if (!p_plugin_options->remap_pal) {
+        p_plugin_options->remap_pal_file[0] != '\0';
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_use_remap_pal_file), false);
+    }
+}
+
+
+static void on_settings_remap_pal_file_changed(GtkToggleButton * p_togglebutton, gpointer callback_data) {
+
+    GtkWidget * file_dialog;
+    gint res;
+
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(p_togglebutton))) {
+
+        file_dialog = gtk_file_chooser_dialog_new (
+                        "Open Palette File (#RRGGBB text format)",
+                        GTK_WINDOW (dialog),
+                        GTK_FILE_CHOOSER_ACTION_OPEN,
+                        GTK_STOCK_CANCEL,
+                        GTK_RESPONSE_CANCEL,
+                        GTK_STOCK_OPEN,
+                        GTK_RESPONSE_ACCEPT,
+                        NULL);//(void *) 0);
+
+        res = gtk_dialog_run (GTK_DIALOG (file_dialog));
+        if (res == GTK_RESPONSE_ACCEPT)
+        {
+            char *filename;
+            GtkFileChooser *chooser = GTK_FILE_CHOOSER (file_dialog);
+            filename = gtk_file_chooser_get_filename (chooser);
+            strncpy( ((tile_process_options *)callback_data)->remap_pal_file, // Dest
+                     filename,                                               // Src
+                     STR_FILENAME_MAX);
+            // // Turn on palette repair -> now handled in update_enabled_ui_controls()
+            // p_plugin_options->remap_pal = true;
+            // gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors), p_plugin_options->remap_pal);
+        } else {
+            // Clear checkbox and filename if something went wrong
+            ((tile_process_options *)callback_data)->remap_pal_file[0] = '\0';
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p_togglebutton), false);
+        }
+        gtk_widget_destroy (file_dialog);
+
+    } else {
+        // Zero out the filename string
+        ((tile_process_options *)callback_data)->remap_pal_file[0] = '\0';
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(p_togglebutton), false);
+    }
+
+    update_enabled_ui_controls();
 }
 
 

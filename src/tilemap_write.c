@@ -35,6 +35,7 @@
 #include "options.h"
 
 #include "image_remap.h"
+#include "palette.h"
 
 
 static void tilemap_export_parasite_gbr(gint image_id) {
@@ -81,7 +82,22 @@ static void tilemap_export_parasite_gbm(gint image_id) {
 
 }
 
-static int tilemap_export_remap_colors(image_data * p_src_image, color_data * p_src_colors, color_data * p_remap_colors) {
+
+static int tilemap_export_remap_colors(image_data * p_src_image, color_data * p_src_colors, color_data * p_remap_colors, char * remap_pal_file) {
+
+    // Determine where the palette should come from (file vs copy from source image)
+    if (remap_pal_file[0] != '\0') {
+        if (!palette_load_from_file(p_remap_colors, remap_pal_file))
+            return false;
+    }
+    else {
+        // Make a duplicate of source image colors, for remapping purposes
+        memcpy(p_remap_colors->pal, p_src_colors->pal, p_src_colors->color_count * 3);
+        p_remap_colors->color_count = p_src_colors->color_count;
+    }
+
+    // Subpal size needs to get copied from the source image (even though it's always 4)
+    p_remap_colors->subpal_size = p_src_colors->subpal_size;
 
     if ( !image_remap_to_user_palette(p_src_image, p_src_colors, p_remap_colors) ) {
         log_error("Error: remapping user palette failed!\n");
@@ -165,10 +181,6 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     if (p_cmap_buf) {
         memcpy(app_colors.pal, p_cmap_buf, cmap_num_colors * 3);
         app_colors.color_count = cmap_num_colors;
-        // Make a duplicate, for remapping purposes
-        memcpy(remap_colors.pal, p_cmap_buf, cmap_num_colors * 3);
-        remap_colors.color_count = cmap_num_colors;
-        remap_colors.subpal_size = app_colors.subpal_size;
     }
     else
         status = false;
@@ -177,7 +189,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
 
     // Try to repair / remap palette if requested
     if (plugin_options.remap_pal) {
-        if (!tilemap_export_remap_colors(&app_image, &app_colors, &remap_colors))
+        if (!tilemap_export_remap_colors(&app_image, &app_colors, &remap_colors, plugin_options.remap_pal_file))
             return (false); // Signal failure and exit
     }
 
