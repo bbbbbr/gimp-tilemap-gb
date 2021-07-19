@@ -56,47 +56,16 @@ int main( int argc, char *argv[] )  {
 
         if (user_options.image_format == FORMAT_PNG_OUT) {
 
-            if (console_tilemap_to_imagefile(filename_in, filename_out))
+            if (console_tileformat_to_image_file(filename_in, filename_out))
                 return 0; // Exit with Success
         } else {
 
-            if (convert_image_from_png())
+            if (console_image_to_tileformat_file(&user_options, filename_in, filename_out))
                 return 0; // Exit with Success
         }
     }
 
     return 1; // Exit with failure
-}
-
-
-int convert_image_from_png() {
-
-    color_data src_colors;
-    image_data src_image;
-
-    // Call these before loading the image and potentially remapping it's palette
-    tilemap_image_and_colors_init(&src_image, &src_colors);
-    tilemap_image_set_palette_tile_size(&src_image, &user_options);
-    tilemap_options_set(&user_options);
-
-    if (!console_import_imagefile(&src_image, &src_colors, filename_in ))
-        return false;
-
-    // Load default options based on output image format and number of colors in source image
-    // Apply the finalized options
-    options_color_defaults_if_unset(src_colors.color_count, &user_options);
-    tilemap_options_set(&user_options);
-
-    // Process and export the image
-    if (!console_image_to_tilemap(&src_image, &src_colors, filename_out )) {
-
-        if (tilemap_error_get() != TILE_ID_OK) {
-            log_error("%s\n", tilemap_error_get_string() );
-        }
-        return false;
-    }
-
-    return true;
 }
 
 

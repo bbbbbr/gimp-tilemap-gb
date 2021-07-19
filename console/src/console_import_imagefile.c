@@ -25,9 +25,12 @@
 #include "lib_rom_bin.h"
 
 
+static bool console_import_imagefile(image_data * p_src_image, color_data * p_src_colors, char * image_filename);
+static bool save_image_to_tileformat(image_data * p_src_image, color_data * p_src_colors, char * filename_out);
+
+
 // Load an image for processing
 // Remap the palette if requested by the user
-
 bool console_import_imagefile(image_data * p_src_image, color_data * p_src_colors, char * image_filename) {
 
     tile_process_options options;
@@ -65,7 +68,7 @@ bool console_import_imagefile(image_data * p_src_image, color_data * p_src_color
 
 // Process a loaded image into a tilemap and/or tileset
 // Then write it out to the desired format
-bool console_image_to_tilemap(image_data * p_src_image, color_data * p_src_colors, char * filename_out) {
+bool save_image_to_tileformat(image_data * p_src_image, color_data * p_src_colors, char * filename_out) {
 
     int status = true;
     tile_process_options options;
@@ -122,4 +125,35 @@ bool console_image_to_tilemap(image_data * p_src_image, color_data * p_src_color
 
 
     return status;
+}
+
+
+bool console_image_to_tileformat_file(tile_process_options * p_user_options, char * filename_in, char * filename_out) {
+
+    color_data src_colors;
+    image_data src_image;
+
+    // Call these before loading the image and potentially remapping it's palette
+    tilemap_image_and_colors_init(&src_image, &src_colors);
+    tilemap_image_set_palette_tile_size(&src_image, p_user_options);
+    tilemap_options_set(p_user_options);
+
+    if (!console_import_imagefile(&src_image, &src_colors, filename_in ))
+        return false;
+
+    // Load default options based on output image format and number of colors in source image
+    // Apply the finalized options
+    options_color_defaults_if_unset(src_colors.color_count, p_user_options);
+    tilemap_options_set(p_user_options);
+
+    // Process and export the image
+    if (!save_image_to_tileformat(&src_image, &src_colors, filename_out )) {
+
+        if (tilemap_error_get() != TILE_ID_OK) {
+            log_error("%s\n", tilemap_error_get_string() );
+        }
+        return false;
+    }
+
+    return true;
 }

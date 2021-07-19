@@ -22,6 +22,9 @@
 static bool console_import_tilefiles(image_data ** pp_image, color_data ** p_p_colors, char * filename_in, uint16_t * p_file_in_type);
 static bool save_image_to_png(image_data * p_image, color_data * p_colors, char * filename_out);
 
+
+// Load .gbr and .gbm files
+// Convert them to an indexed color image with a palette
 static bool console_import_tilefiles(image_data ** pp_image, color_data ** pp_colors, char * filename_in, uint16_t * p_file_in_type) {
 
     int status = false;
@@ -31,9 +34,7 @@ static bool console_import_tilefiles(image_data ** pp_image, color_data ** pp_co
         *p_file_in_type = FORMAT_GBR;
         status = gbr_load(filename_in);
 
-        if (!status) {
-            log_verbose("gbr_load load failed\n");
-        } else {
+        if (status) {
             log_verbose("Loaded gbr file\n");
             *pp_image = gbr_get_image();
             *pp_colors = gbr_get_colors();
@@ -45,9 +46,7 @@ static bool console_import_tilefiles(image_data ** pp_image, color_data ** pp_co
         *p_file_in_type = FORMAT_GBM;
         status = gbm_load(filename_in);
 
-        if (!status) {
-            log_verbose("gbm_load load failed\n");
-        } else {
+        if (status) {
             log_verbose("Loaded gbm file\n");
             *pp_image = gbm_get_image();
             *pp_colors = gbm_get_colors();
@@ -61,6 +60,7 @@ static bool console_import_tilefiles(image_data ** pp_image, color_data ** pp_co
 }
 
 
+// Save an indexed color image in png format
 static bool save_image_to_png(image_data * p_image, color_data * p_colors, char * filename_out) {
 
     LodePNGState png_state;
@@ -126,7 +126,7 @@ static bool save_image_to_png(image_data * p_image, color_data * p_colors, char 
 }
 
 
-bool console_tilemap_to_imagefile(char * filename_in, char * filename_out) {
+bool console_tileformat_to_image_file(char * filename_in, char * filename_out) {
 
     uint16_t file_in_type = FORMAT_UNKNOWN;
     int status;
