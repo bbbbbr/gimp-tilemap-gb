@@ -56,6 +56,8 @@ int32_t gbm_load(const char * filename) {
         snprintf(gbr_path, STR_FILENAME_MAX, "%s%s",  path_without_filename, gbm.map.tile_file);
         log_verbose("calling gbr load:%s:\n", gbr_path);
         status = gbr_load(gbr_path);
+        if (!status)
+            log_error("GBM: Loading the GBR tileset from %s failed.\n", gbr_path);
     }
     else
         log_verbose("Load GBM failed\n");

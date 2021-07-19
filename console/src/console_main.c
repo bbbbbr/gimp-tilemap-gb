@@ -13,7 +13,10 @@
 
 #include "lib_tilemap.h"
 #include "tilemap_error.h"
-#include "tilemap_console.h"
+
+#include "console_import_imagefile.h"
+#include "console_export_imagefile.h"
+
 #include "tilemap_path_ops.h"
 
 #include "image_remap.h"
@@ -26,6 +29,7 @@
 const char * const opt_gbr = "-gbr";
 const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
+const char * const opt_png_out   = "-png";
 
 const char * const opt_varname     = "-var=";
 const char * const opt_remap_pal   = "-pal=";
@@ -38,19 +42,26 @@ tile_process_options user_options;
 char filename_in[STR_FILENAME_MAX] = {'\0'};
 char filename_out[STR_FILENAME_MAX] = {'\0'};
 
-int convert_image(void);
+int convert_image_from_png(void);
 void apply_user_options(tile_process_options *);;
 void clear_user_options(void);
 int handle_args(int, char * []);
 void display_help(void);
 
 
+
 int main( int argc, char *argv[] )  {
 
     if (handle_args(argc, argv)) {
 
-        if (convert_image()) {
-            return 0; // Exit with Success
+        if (user_options.image_format == FORMAT_PNG_OUT) {
+
+            if (console_tilemap_to_imagefile(filename_in, filename_out))
+                return 0; // Exit with Success
+        } else {
+
+            if (convert_image_from_png())
+                return 0; // Exit with Success
         }
     }
 
@@ -58,7 +69,7 @@ int main( int argc, char *argv[] )  {
 }
 
 
-int convert_image() {
+int convert_image_from_png() {
 
     color_data src_colors;
     image_data src_image;
@@ -68,7 +79,7 @@ int convert_image() {
     tilemap_image_set_palette_tile_size(&src_image, &user_options);
     tilemap_options_set(&user_options);
 
-    if (!tilemap_load_and_prep_image(&src_image, &src_colors, filename_in ))
+    if (!console_import_imagefile(&src_image, &src_colors, filename_in ))
         return false;
 
     // Load default options based on output image format and number of colors in source image
@@ -77,14 +88,14 @@ int convert_image() {
     tilemap_options_set(&user_options);
 
     // Process and export the image
-    if (!tilemap_process_and_save_image(&src_image, &src_colors, filename_out )) {
+    if (!console_image_to_tilemap(&src_image, &src_colors, filename_out )) {
 
         if (tilemap_error_get() != TILE_ID_OK) {
             log_error("%s\n", tilemap_error_get_string() );
         }
         return false;
     }
-    
+
     return true;
 }
 
@@ -93,7 +104,7 @@ int handle_args( int argc, char * argv[] ) {
 
     int i;
     char filename_noext[STR_FILENAME_MAX] = {'\0'};
-    
+
     options_reset(&user_options);
 
     if( argc < 3 ) {
@@ -114,6 +125,9 @@ int handle_args( int argc, char * argv[] ) {
 
     } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_csource, sizeof(opt_csource))) {
         user_options.image_format = FORMAT_GBDK_C_SOURCE;
+
+    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_png_out, sizeof(opt_png_out))) {
+        user_options.image_format = FORMAT_PNG_OUT;
 
     } else {
 
@@ -166,9 +180,9 @@ int handle_args( int argc, char * argv[] ) {
                     log_error("Error: Invalid tile size: %s\n\n", argv[i] + strlen(opt_tile_size));
                     display_help();
                     return false;
-                }        
+                }
             }
-            else {   
+            else {
 
                 // Single char arguments
                 switch (*(argv[i]+1)) {
@@ -207,6 +221,7 @@ int handle_args( int argc, char * argv[] ) {
     if (filename_out[0] == '\0') {
 
         copy_filename_without_extension(filename_noext, argv[ARG_INPUT_FILE]);
+log_verbose("Filename out is empty\n");
 
         switch (user_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:
@@ -219,6 +234,11 @@ int handle_args( int argc, char * argv[] ) {
 
             case FORMAT_GBM:
                 snprintf(&filename_out[0], STR_FILENAME_MAX, "%s%s",  &filename_noext[0], ".gbm");
+                break;
+
+            case FORMAT_PNG_OUT:
+                snprintf(&filename_out[0], STR_FILENAME_MAX, "%s%s",  &filename_noext[0], ".png");
+log_verbose("Filename out is now: %s\n", filename_out);
                 break;
         }
     }
@@ -235,6 +255,8 @@ void display_help(void) {
 
     log_standard("Usage\n"
             "   png2gbtiles input_file.png -gbr|-gbm|-csource [options] [output_file]\n"
+            "\n"
+            "   png2gbtiles input_file.gbm|.gbr -png [output_file]\n"
             "\n"
             "Options\n"
             "\n"
@@ -257,10 +279,14 @@ void display_help(void) {
             "  -e          Errors only, suppress all non-error output\n"
             "  -v          Verbose output during conversion\n"
             "\n"
-            "Examples\n"
+            "png -> gbr/gbm Examples\n"
             "   png2gbtiles spritesheet.png -gbr spritesheet.gbr\n"
             "   png2gbtiles worldmap.png -gbm -d -f -p worldmap.gbm\n"
             "   png2gbtiles worldmap.png -gbm \n"
-            "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"    
-            "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n");
+            "   png2gbtiles worldmap.png -gbm -c -pal=mypal.pal -bank=4 -tileorg=64\n"
+            "Remap Palette format: RGB in hex text, 1 color per line (ex: FF0080)\n"
+            "\n"
+            "gbr/gbm -> Example\n"
+            "   png2gbtiles worlmap.gbm -png worlmap.png\n"
+            );
 }

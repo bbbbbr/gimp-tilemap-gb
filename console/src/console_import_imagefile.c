@@ -28,7 +28,7 @@
 // Load an image for processing
 // Remap the palette if requested by the user
 
-bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_colors, char * image_filename) {
+bool console_import_imagefile(image_data * p_src_image, color_data * p_src_colors, char * image_filename) {
 
     tile_process_options options;
     color_data user_palette;
@@ -52,9 +52,9 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
         if ( !image_remap_to_user_palette(p_src_image, p_src_colors, &user_palette) ) {
             log_error("Error: remapping png to user palette failed!\n");
             return false;
-        }            
-    } 
-    else if (p_src_image->bytes_per_pixel != MODE_8_BIT_INDEXED) { 
+        }
+    }
+    else if (p_src_image->bytes_per_pixel != MODE_8_BIT_INDEXED) {
         log_error("Error: non-indexed color images are only supported when remapping to a user palette (-pal=)!\n");
         return false;
     }
@@ -65,7 +65,7 @@ bool tilemap_load_and_prep_image(image_data * p_src_image, color_data * p_src_co
 
 // Process a loaded image into a tilemap and/or tileset
 // Then write it out to the desired format
-bool tilemap_process_and_save_image(image_data * p_src_image, color_data * p_src_colors, char * filename_out) {
+bool console_image_to_tilemap(image_data * p_src_image, color_data * p_src_colors, char * filename_out) {
 
     int status = true;
     tile_process_options options;

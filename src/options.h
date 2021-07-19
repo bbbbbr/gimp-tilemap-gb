@@ -18,6 +18,8 @@ enum image_formats {
     FORMAT_GBR,  // For: Game Boy Tile Designer / GBTD
     FORMAT_GBM,  // For: Game Boy Map Builder / GBMB
     FORMAT_GBDK_C_SOURCE,  // For : GBDK/ZGB Game Boy Dev Kit
+    FORMAT_PNG_OUT,
+    FORMAT_UNKNOWN,
     FORMAT_LAST
 };
 

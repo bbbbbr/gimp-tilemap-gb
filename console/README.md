@@ -1,14 +1,24 @@
-png2gbtiles: a standalone, command line tool for converting png tilesets and tilemaps to .gbr and .gbm (and possibly .c) files
+
+png2gbtiles: a standalone, command line tool for converting between (to and from) png tilesets and tilemaps .gbr and .gbm (and .c) files
 ===========
 
 Builds available for Linux and Windows
 
 See notes about Usage & Cautions in the main project's [Readme](https://github.com/bbbbbr/gimp-tilemap-gb/blob/master/README.md)
 
+Supported conversions:
+* .png -> .gbm + .gbr
+* .png -> .gbr
+* .png -> .c source
+* .gbm + .gbr -> .png
+* .gbr -> .png
+
 
 ```
 Usage
    png2gbtiles input_file.png -gbr|-gbm|-csource [options] [output_file]
+
+   png2gbtiles input_file.gbm|.gbr -png [output_png_file]
 
 Options
 

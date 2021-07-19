@@ -93,7 +93,7 @@ int tilemap_read(const char * filename, uint16_t image_format)
     GimpDrawable * drawable;
     GimpPixelRgn rgn;
 
-    image_data * p_loaded_image; // TODO: rename?
+    image_data * p_loaded_image;
     color_data * p_loaded_colors;
 
 
@@ -110,7 +110,6 @@ int tilemap_read(const char * filename, uint16_t image_format)
             break;
 
         case FORMAT_GBM:
-            // TODO: gbm load
             status = gbm_load(filename);
             if (!status)
                 log_verbose("gbm_load load failed \n");

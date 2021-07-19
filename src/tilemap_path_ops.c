@@ -117,3 +117,14 @@ void copy_filename_without_extension(char * path_out, const char * path_in)
 }
 
 
+// Case insensitive
+bool matches_extension(char * filename, char * extension) {
+
+    if (strlen(filename) >= strlen(extension)) {
+        char * str_ext = filename + (strlen(filename) - strlen(extension));
+
+        return (strncasecmp(str_ext, extension, strlen(extension)) == 0);
+    }
+    else
+        return false;
+}
