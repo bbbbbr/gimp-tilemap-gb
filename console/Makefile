@@ -7,6 +7,9 @@ OUTDIR = bin
 INCS = -I"$(SRCDIR)" -I"$(LODEPNGDIR)" -I"$(TILEMAPGBDIR)"
 CFLAGS = $(INCS) -Wno-format-truncation
 
+BIN = png2gbtiles
+BIN_WIN = $(BIN).exe
+
 # Add all c source files
 CALL = $(wildcard src/*.c) \
 		$(wildcard lodepng/*.c) \
@@ -16,32 +19,61 @@ CEXCLUDE = $(TILEMAPGBDIR)/tilemap_write.c $(TILEMAPGBDIR)/tilemap_read.c $(TILE
 CFILES = $(filter-out $(CEXCLUDE),$(CALL))
 COBJ = $(CFILES:.c=.o)
 
+all: linux
 
 info:
-	@echo "--> Please specify target, 'make png2gbtiles' (Linux build) or 'make png2gbtiles.exe' (MinGW Windows build)"
+	@echo "--> Please specify target, 'make linux' or 'make wincross' (MinGW Windows build)"
 
 
 # Linux MinGW build for Windows
 # -lb for math.h
 # (static linking to avoid DLL dependencies)
-png2gbtiles.exe : TARGET=i686-w64-mingw32
-png2gbtiles.exe : CC = $(TARGET)-g++
-png2gbtiles.exe : LDFLAGS = -s -static -lm
-png2gbtiles.exe: $(COBJ)
+wincross: TARGET=i686-w64-mingw32
+wincross: CC = $(TARGET)-g++
+wincross: LDFLAGS = -s -static -lm
+wincross: $(COBJ)
 	mkdir -p $(OUTDIR)
-	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(BIN_WIN) $^ $(LDFLAGS)
 
 # Linux build
 # -lb for math.h
-png2gbtiles : CC = gcc
-png2gbtiles : LDFLAGS = -s -lm
-png2gbtiles: $(COBJ)
+macos: linux
+linux : CC = gcc
+linux : LDFLAGS = -s -lm
+linux: $(COBJ)
 	mkdir -p $(OUTDIR)
-	$(CC) $(CFLAGS) -o $(OUTDIR)/$@ $^ $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(BIN) $^ $(LDFLAGS)
 
 cleanobj:
 	$(DEL) $(COBJ)
 
 clean:
-	$(DEL) $(COBJ) $(OUTDIR)/png2gbtiles.exe $(OUTDIR)/png2gbtiles
+	$(DEL) $(COBJ) $(BIN) $(BIN_WIN)
+
+macoszip: macos
+	mkdir -p bin
+	mkdir -p bin/macos
+	zip $(BIN)-macos.zip $(BIN)
+	mv $(BIN)-macos.zip bin
+	cp $(BIN) bin/macos
+
+linuxzip: linux
+	mkdir -p bin
+	mkdir -p bin/linux
+	zip $(BIN)-linux.zip $(BIN)
+	mv $(BIN)-linux.zip bin
+	cp $(BIN) bin
+
+wincrosszip: wincross
+	mkdir -p bin
+	mkdir -p bin/windows
+	zip $(BIN)-windows.zip $(BIN_WIN)
+	mv $(BIN)-windows.zip bin
+	cp $(BIN_WIN) bin
+
+package:
+	${MAKE} clean
+	${MAKE} wincrosszip
+	${MAKE} clean
+	${MAKE} linuxzip
 
