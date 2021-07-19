@@ -25,12 +25,13 @@ static bool image_validate_type(unsigned int, uint8_t, uint8_t *);
 static void image_unbitpack(uint8_t * p_src_image, uint8_t * p_dest_image, uint8_t bitdepth, long src_size_bytes) {
 
     int pixels_per_byte;
+    int c, b;
 
     pixels_per_byte = (8 / bitdepth);
 
-    for (int c=0; c < src_size_bytes; c++) {
+    for (c = 0; c < src_size_bytes; c++) {
 
-        for (int b = 0; b < pixels_per_byte; b++) {
+        for (b = 0; b < pixels_per_byte; b++) {
 
             *p_dest_image = *p_src_image >> (8 - bitdepth); // Extract pixel bits
             p_dest_image++; // Move to next pixel in destination image
@@ -47,7 +48,9 @@ static void image_unbitpack(uint8_t * p_src_image, uint8_t * p_dest_image, uint8
 // loaded png image may be bitpacked. So instead, unpack it.
 static void image_greyscale_to_rgb(uint8_t * p_src_image, uint8_t * p_dest_image, long src_size_bytes, bool is_alpha) {
 
-    for (int c=0; c < src_size_bytes; c++) {
+    int c;
+
+    for (c = 0; c < src_size_bytes; c++) {
         *p_dest_image++ = *p_src_image; // -> R
         *p_dest_image++ = *p_src_image; // -> G
         *p_dest_image++ = *p_src_image; // -> B

@@ -80,6 +80,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
     GtkWidget * vbox;
     GtkWidget * label;
     GtkWidget * label_dedupe;
+    int         c;
 
     // Copy options into local glboal
     p_plugin_options = p_src_plugin_options;
@@ -134,7 +135,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         // Then add the tile size select entries
         // Then  it to the box for display and show it
         combo_tilesize = gtk_combo_box_text_new();
-        for (int c = 0; c < sizeof(tile_process_tilesize_strs) / sizeof(tile_process_tilesize_strs[0]); c++)
+        for (c = 0; c < sizeof(tile_process_tilesize_strs) / sizeof(tile_process_tilesize_strs[0]); c++)
             gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_tilesize), tile_process_tilesize_strs[c]);
         combo_set_active_entry_by_string(combo_tilesize, (gchar *) tile_process_tilesize_strs[opt_tilesize]);
         gtk_box_pack_start(GTK_BOX(vbox), combo_tilesize, false, false, 2);

@@ -24,7 +24,9 @@ color_data  * p_colors = NULL;
 // Call after initial user options have been set, but before remapping any colors
 void tilemap_image_and_colors_init(image_data * p_img, color_data * p_colors) {
 
-    for (int c; c < COLOR_DATA_PAL_SIZE; c++)
+    int c;
+
+    for (c = 0; c < COLOR_DATA_PAL_SIZE; c++)
         p_colors->pal[c] = 0; // default is black for all colors/components
 
     p_colors->subpal_size = 4;

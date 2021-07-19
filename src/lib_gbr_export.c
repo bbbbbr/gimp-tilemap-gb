@@ -391,10 +391,12 @@ bool gbr_export_extract_tiles_from_image(gbr_record * p_gbr, image_data * p_imag
     uint8_t   tile_buf[tile_size];
     uint16_t  t_idx, img_idx;
     uint16_t  tile_id = 0;
+    uint32_t  tile_id_x, tile_id_y;
+    uint32_t  tile_x, tile_y;
 
     // Loop through all tiles in the image
-    for (uint32_t tile_id_y = 0; tile_id_y < (p_image->height / p_gbr->tile_data.height); tile_id_y++) {
-        for (uint32_t tile_id_x = 0; tile_id_x < (p_image->width / p_gbr->tile_data.width); tile_id_x++) {
+    for (tile_id_y = 0; tile_id_y < (p_image->height / p_gbr->tile_data.height); tile_id_y++) {
+        for (tile_id_x = 0; tile_id_x < (p_image->width / p_gbr->tile_data.width); tile_id_x++) {
 
             // Extract A tile
             // Source data is expected to always be 8bpp indexed
@@ -404,8 +406,8 @@ bool gbr_export_extract_tiles_from_image(gbr_record * p_gbr, image_data * p_imag
             // log_verbose("gbr_export_extract_tiles_from_image() tile:%3d x %3d -> %d \n", tile_id_x, tile_id_y, img_idx);
 
             // Copy the pixels from the source image into the tile one tile row at a time
-            for (uint32_t tile_y = 0; tile_y < p_gbr->tile_data.height; tile_y++) {
-                for (uint32_t tile_x = 0; tile_x < p_gbr->tile_data.width; tile_x++) {
+            for (tile_y = 0; tile_y < p_gbr->tile_data.height; tile_y++) {
+                for (tile_x = 0; tile_x < p_gbr->tile_data.width; tile_x++) {
 
                     tile_buf[t_idx++] = p_image->p_img_data[img_idx++];
                 }

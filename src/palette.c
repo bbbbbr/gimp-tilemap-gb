@@ -33,17 +33,19 @@
 
 void palette_copy_rgblab_to_colordata_format(color_data * p_dst_pal, palette_rgb_LAB * p_src_pal) {
 
+    int c;
+
     p_dst_pal->color_count = p_src_pal->color_count;
     p_dst_pal->size        = p_src_pal->color_count * COLOR_DATA_BYTES_PER_COLOR;
 
-    for (int c = 0; c < p_src_pal->color_count; c++) {
+    for (c = 0; c < p_src_pal->color_count; c++) {
         p_dst_pal->pal[(c * 3)    ]  = p_src_pal->colors[c].r;
         p_dst_pal->pal[(c * 3) + 1]  = p_src_pal->colors[c].g;
         p_dst_pal->pal[(c * 3) + 2]  = p_src_pal->colors[c].b;
     }
 
     // overwrite unused colors with black
-    for (int c = p_src_pal->color_count; c < USER_PAL_MAX_COLORS; c++) {
+    for (c = p_src_pal->color_count; c < USER_PAL_MAX_COLORS; c++) {
         p_dst_pal->pal[(c * 3)    ]  = 0;
         p_dst_pal->pal[(c * 3) + 1]  = 0;
         p_dst_pal->pal[(c * 3) + 2]  = 0;
@@ -54,7 +56,9 @@ void palette_copy_rgblab_to_colordata_format(color_data * p_dst_pal, palette_rgb
 // This can get removed once conversion RGB-LAB format gets merged into color_data
 void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_rgb_LAB * p_dst_colors) {
 
-    for (int c = 0; c < p_src_colors->color_count; c++) {
+    int c;
+
+    for (c = 0; c < p_src_colors->color_count; c++) {
 
         p_dst_colors->colors[c].r = p_src_colors->pal[(c * 3) + 0];
         p_dst_colors->colors[c].g = p_src_colors->pal[(c * 3) + 1];
@@ -62,7 +66,7 @@ void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_
     }
 
     // overwrite unused colors with black
-    for (int c = p_src_colors->color_count; c < USER_PAL_MAX_COLORS; c++) {
+    for (c = p_src_colors->color_count; c < USER_PAL_MAX_COLORS; c++) {
 
         p_dst_colors->colors[c].r = 0;
         p_dst_colors->colors[c].g = 0;
@@ -79,7 +83,9 @@ void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_
 // Convert a palette to LAB format
 void palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
 
-    for (int c=0; c < p_user_pal->color_count; c++) {
+    int c;
+
+    for (c = 0; c < p_user_pal->color_count; c++) {
         color_rgb2LAB( &(p_user_pal->colors[c]) );
     }
 }

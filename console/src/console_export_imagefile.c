@@ -69,11 +69,12 @@ static bool save_image_to_png(image_data * p_image, color_data * p_colors, char 
     unsigned char * p_png = NULL;
     unsigned char * p_png_image = NULL;
     size_t          png_size_bytes = 0;
+    int             c;
 
     lodepng_state_init(&png_state);
 
     // Loop through colors and add them to the png palette
-    for (int c = 0; c < p_colors->color_count; c++) {
+    for (c = 0; c < p_colors->color_count; c++) {
         log_verbose("PNG adding color %d : %3d, %3d, %3d\n", c,
                             p_colors->pal[(c * 3) + 0], // r
                             p_colors->pal[(c * 3) + 1], // g

@@ -40,11 +40,13 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     uint32_t total_bytes_tiles = 0;
     uint32_t total_bytes_map = 0;
 
+    int pal_index;
+
     uint16_t tileid_offset = (tile_map->options.map_tileid_offset != OPTION_UNSET) ? tile_map->options.map_tileid_offset : 0;
 
     log_verbose("Writing to gbdk C source files...\n");
 
-    // Strip extension from filename to 
+    // Strip extension from filename to
     copy_filename_without_extension(filename_noext, filename);
 
     snprintf(filename_tiles_c, STR_FILENAME_MAX, "%s_tiles.c", filename_noext);
@@ -112,11 +114,11 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     "/*\n"
     "// Optional CGB Palette\n"
     "\n"
-    "const unsigned int %s_pal_cgb[%d] = {\n  ", 
+    "const unsigned int %s_pal_cgb[%d] = {\n  ",
     varname,
     p_colors->color_count);
 
-    for (int pal_index = 0; pal_index < p_colors->color_count; pal_index++) {
+    for (pal_index = 0; pal_index < p_colors->color_count; pal_index++) {
 
         // Downshift 3 bits per color component since CGB colors are 5:5:5 bit RGB.
         // Then they're bit-packed into a u16
@@ -128,7 +130,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
         if (pal_index && (((pal_index + 1) % 4) == 0))
             fprintf(file, "  // Palette %d \n  ", (pal_index + 1) / 4); // Line break between every palette
 
-    }    
+    }
 
     // Close the array
     fprintf(file, "};"
@@ -188,7 +190,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     varname,
     tile_set->tile_count,
     varname,
-    total_bytes_tiles, 
+    total_bytes_tiles,
     varname);
 
 
@@ -206,8 +208,8 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     "// Optional CGB Palette\n"
     "#define %s_num_pals %d\n"
     "extern const unsigned int %s_pal_cgb[];\n"
-    "*/\n", 
-    varname, 
+    "*/\n",
+    varname,
     ((p_colors->color_count + 1) / 4),
     varname);
 
@@ -285,7 +287,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     fprintf(file, " };\n");
 
 
-    fprintf(file, 
+    fprintf(file,
     "\n\n"
     "const unsigned char %s_map_attr[%d] = \n"
     "{\n",
