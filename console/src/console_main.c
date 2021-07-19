@@ -86,16 +86,16 @@ int handle_args( int argc, char * argv[] ) {
     strncpy(filename_in, argv[ARG_INPUT_FILE], STR_FILENAME_MAX);
 
     // Select output mode (from second argument)
-    if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbr, sizeof(opt_gbr))) {
+    if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbr, strlen(opt_gbr))) {
         user_options.image_format = FORMAT_GBR;
 
-    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbm, sizeof(opt_gbr))) {
+    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_gbm, strlen(opt_gbr))) {
         user_options.image_format = FORMAT_GBM;
 
-    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_csource, sizeof(opt_csource))) {
+    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_csource, strlen(opt_csource))) {
         user_options.image_format = FORMAT_GBDK_C_SOURCE;
 
-    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_png_out, sizeof(opt_png_out))) {
+    } else if (0 == strncmp(argv[ARG_OUTPUT_MODE], opt_png_out, strlen(opt_png_out))) {
         user_options.image_format = FORMAT_PNG_OUT;
 
     } else {
