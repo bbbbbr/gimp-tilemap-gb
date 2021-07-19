@@ -100,12 +100,16 @@ void palette_convert_to_lab(palette_rgb_LAB * p_user_pal) {
 bool palette_load_from_file(color_data * p_colors, char * filename) {
 
     uint32_t r,g,b; // Would prefer this be a uint8_t, but mingw sscanf("%2hhx") has a buffer overflow that corrupts adjacent data
-    int      pal_index = 0;;
-    char     strline_in[PAL_MAX_STR_LEN] = "";
+    int      pal_index;
+    char     strline_in[PAL_MAX_STR_LEN];
+    FILE * pal_file;
 
     log_standard("Loading palette from file: %s\n", filename);
 
-    FILE * pal_file = fopen(filename, "r");
+    strline_in[0] = '\0';
+    pal_file = fopen(filename, "r");
+
+    pal_index = 0;
 
     if (pal_file) {
         // Read one line at a time into \0 terminated string
