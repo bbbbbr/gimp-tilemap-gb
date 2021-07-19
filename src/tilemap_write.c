@@ -158,7 +158,7 @@ int write_tilemap(const char * filename, gint image_id, gint drawable_id, const 
     app_image.width      = drawable->width;
     app_image.height     = drawable->height;
     app_image.size       = drawable->width * drawable->height * app_image.bytes_per_pixel;
-    app_image.p_img_data = malloc(app_image.size);
+    app_image.p_img_data = (unsigned char *) malloc(app_image.size);
 
     // Get the image data
     gimp_pixel_rgn_get_rect(&rgn,
