@@ -62,18 +62,19 @@ linuxzip: linux
 	mkdir -p bin/linux
 	zip $(BIN)-linux.zip $(BIN)
 	mv $(BIN)-linux.zip bin
-	cp $(BIN) bin
+	cp $(BIN) bin/linux
 
 wincrosszip: wincross
 	mkdir -p bin
 	mkdir -p bin/windows
 	zip $(BIN)-windows.zip $(BIN_WIN)
 	mv $(BIN)-windows.zip bin
-	cp $(BIN_WIN) bin
+	cp $(BIN_WIN) bin/windows
 
 package:
 	${MAKE} clean
 	${MAKE} wincrosszip
 	${MAKE} clean
 	${MAKE} linuxzip
+	${MAKE} clean
 
