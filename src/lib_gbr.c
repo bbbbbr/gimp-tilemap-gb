@@ -204,8 +204,10 @@ int32_t gbr_load_file(const char * filename) {
             } // end: if gbr_write_version
         } // end: if gbr_write_header_key
     } // end: if ((p_file != NULL) && (obj.p_data))
-    else
+    else {
+        log_error("Failed to open gbr file: %s\n", filename);
         status = false;
+    }
 
     if (p_file)
         fclose(p_file);

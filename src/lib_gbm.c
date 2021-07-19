@@ -59,8 +59,6 @@ int32_t gbm_load(const char * filename) {
         if (!status)
             log_error("GBM: Loading the GBR tileset from %s failed.\n", gbr_path);
     }
-    else
-        log_verbose("Load GBM failed\n");
 
     if (status) {
         p_gbr = gbr_get_ptr();
@@ -264,9 +262,13 @@ int32_t gbm_load_file(const char * filename) {
                                           break;
                     }
                 } // end: while (gbm_read_object_from_file(&obj, p_file))
-            } // end: if gbm_write_version
-        } // end: if gbm_write_header_key
+            } // end: if gbm_read_version
+        } // end: if gbm_read_header_key
     } // end: if ((p_file != NULL) && (obj.p_data))
+    else {
+        log_error("Failed to open gbm file: %s\n", filename);
+        status = false;
+    }
 
     if (p_file)
         fclose(p_file);
