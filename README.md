@@ -35,12 +35,12 @@ CGB only features
  * Alternate Palette tile deduplication
 
 Tile Map export formats:
-* GBM (Game Boy Map Builder http://www.devrs.com/gb/hmgd/gbmb.html )
+* GBM (Game Boy Map Builder https://github.com/gbdk-2020/GBTD_GBMB )
 * C Source (GBDK / ZGB)
 
 Tile Set export formats:
  * C (GBDK / ZGB)
- * GBR (Game Boy Tile Designer http://www.devrs.com/gb/hmgd/gbtd.html )
+ * GBR (Game Boy Tile Designer https://github.com/gbdk-2020/GBTD_GBMB )
 
 Tile Set & Map import formats:
  * GBR
