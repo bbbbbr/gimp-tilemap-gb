@@ -68,7 +68,7 @@ static bool save_image_to_png(image_data * p_image, color_data * p_colors, char 
     unsigned int error;
     unsigned char * p_png = NULL;
     unsigned char * p_png_image = NULL;
-    long            png_size_bytes = 0;
+    size_t          png_size_bytes = 0;
 
     lodepng_state_init(&png_state);
 
@@ -101,7 +101,7 @@ static bool save_image_to_png(image_data * p_image, color_data * p_colors, char 
     // Sample both the raw image and the expected PNG image use that palette.
     png_state.info_png.color.colortype = LCT_PALETTE;
     png_state.info_png.color.bitdepth = 8;
-    png_state.encoder.auto_convert = 0;  // Specify exactly what output PNG color mode we want
+    png_state.encoder.auto_convert = LAC_NO;  // Specify exactly what output PNG color mode we want
 
    // Encode and save
     error = lodepng_encode(&p_png_image,
@@ -114,7 +114,7 @@ static bool save_image_to_png(image_data * p_image, color_data * p_colors, char 
         status = false;
     }
     else {
-        log_standard("Writing output image to png file: %d x %d, %d bytes to %s\n", p_image->width, p_image->height, png_size_bytes, filename_out);
+        log_standard("Writing output image to png file: %d x %d, %d bytes to %s\n", p_image->width, p_image->height, (int)png_size_bytes, filename_out);
         lodepng_save_file(p_png_image, png_size_bytes, filename_out);
         status = true;
     }
