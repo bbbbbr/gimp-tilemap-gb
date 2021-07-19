@@ -27,7 +27,7 @@ static bool palette_validate_settings(palette_rgb_LAB *);
 
 static void image_replace_with_indexed_buffer(image_data *, uint8_t *, uint8_t);
 
-static bool image_remap_to_palette(image_data *, color_data *, palette_rgb_LAB *);
+//static bool image_remap_to_palette(image_data *, color_data *, palette_rgb_LAB *);
 static bool image_tiles_remap_to_subpalettes(image_data *, color_data *, palette_rgb_LAB *);
 
 static bool tilexy_remap_to_subpal(image_data *, color_data *, palette_rgb_LAB *, uint8_t *, uint32_t, uint32_t, int);
@@ -141,6 +141,8 @@ static void image_replace_with_indexed_buffer(image_data * p_image, uint8_t * p_
     p_image->size            = p_image->width * p_image->height;
 }
 
+/*
+// Not currently used, instead see: image_tiles_remap_to_subpalettes()
 
 // Input image (indexed, 24bit rgb, etc)
 // Output remapped image (indexed only)
@@ -148,8 +150,10 @@ static bool image_remap_to_palette(image_data * p_src_image, color_data * p_src_
 
     uint8_t      * p_src_pixel = p_src_image->p_img_data;
     uint8_t      * p_dst_pixel;
+    uint8_t      * p_remapped_image;
     color_rgb_LAB  pixel_col;
     double         color_distance; // unused, but required for shared call
+    uint32_t       x,y;
 
 
 // TODO: fixme, handle this better
@@ -158,12 +162,12 @@ static bool image_remap_to_palette(image_data * p_src_image, color_data * p_src_
     p_user_pal->compare_last =  p_user_pal->color_count - 1;
 
     // Allocate a 1 byte per pixel indexed color image as output
-    uint8_t * p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
+    p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
     p_dst_pixel = p_remapped_image; // dst pixels are 8 bit indexed pal values
 
     // Convert all pixels in the image
-    for (uint32_t y = 0; y < p_src_image->height; y++) {
-        for (uint32_t x = 0; x < p_src_image->width; x++) {
+    for (y = 0; y < p_src_image->height; y++) {
+        for (x = 0; x < p_src_image->width; x++) {
 
             // extract color data for current source pixel
             if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
@@ -185,6 +189,7 @@ static bool image_remap_to_palette(image_data * p_src_image, color_data * p_src_
 
     return true;
 }
+*/
 
 
 
@@ -196,6 +201,7 @@ static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_
 
     double         color_distance;
     color_rgb_LAB  pixel_col;
+    uint32_t       tile_x, tile_y;
 
     // Get pixel in first row and column of tile
     uint32_t  tile_start_offset = (tile_id_x * p_src_image->palette_tile_width) + ((tile_id_y * p_src_image->palette_tile_height) * p_src_image->width);
@@ -208,8 +214,8 @@ static bool tilexy_remap_to_subpal(image_data * p_src_image, color_data * p_src_
     p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
 
     // Loop through all pixels in a given tile
-    for (uint32_t tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
-        for (uint32_t tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
+    for (tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
+        for (tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
 
             // extract color data for current source pixel
             if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
@@ -246,6 +252,7 @@ static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data *
     double         color_distance;
     double         color_distance_total = 0;
     color_rgb_LAB  pixel_col;
+    uint32_t       tile_x, tile_y;
 
     // Get pixel in first row and column of tile
     uint32_t  tile_start_offset = (tile_id_x * p_src_image->palette_tile_width) + ((tile_id_y * p_src_image->palette_tile_height) * p_src_image->width);
@@ -257,8 +264,8 @@ static double tilexy_calc_subpal_distance(image_data * p_src_image, color_data *
     p_user_pal->compare_last  = p_user_pal->compare_start + p_user_pal->subpal_size - 1;
 
     // Loop through all pixels in a given tile
-    for (uint32_t tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
-        for (uint32_t tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
+    for (tile_y = 0; tile_y < p_src_image->palette_tile_height; tile_y++) {
+        for (tile_x = 0; tile_x < p_src_image->palette_tile_width; tile_x++) {
 
             // extract color data for current source pixel
             if (!pixel_get_rgb(&pixel_col, p_src_pal, p_src_pixel, p_src_image->bytes_per_pixel))
@@ -300,6 +307,7 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
     double         color_distance_total;
     double         min_distance;
     int            subpal_id;
+    uint32_t       tile_id_x, tile_id_y;
 
     int            subpal_count = INT_RND_UP(p_user_pal->color_count, p_user_pal->subpal_size);
 
@@ -307,8 +315,8 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
     uint8_t * p_remapped_image = (uint8_t *)malloc(p_src_image->width * p_src_image->height);
 
     // Loop through all tiles of the image
-    for (uint32_t tile_id_y = 0; tile_id_y < (p_src_image->height / p_src_image->palette_tile_height); tile_id_y++) {
-        for (uint32_t tile_id_x = 0; tile_id_x < (p_src_image->width / p_src_image->palette_tile_width); tile_id_x++) {
+    for (tile_id_y = 0; tile_id_y < (p_src_image->height / p_src_image->palette_tile_height); tile_id_y++) {
+        for (tile_id_x = 0; tile_id_x < (p_src_image->width / p_src_image->palette_tile_width); tile_id_x++) {
 
             // Loop through all palettes
             // Test each one to calculate total distance for that pixel

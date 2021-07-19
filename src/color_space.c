@@ -25,6 +25,7 @@
 bool color_find_closest_LAB(palette_rgb_LAB * color_list, color_rgb_LAB * p_match_color, uint8_t * p_match_id, double * p_color_distance) {
 
     int color_distance_min;
+    int c;
 
     if (color_list->color_count <= 0) {
         log_error("color_find_closest_LAB: empty color list: count=%d\n",color_list->color_count);
@@ -36,7 +37,6 @@ bool color_find_closest_LAB(palette_rgb_LAB * color_list, color_rgb_LAB * p_matc
     color_distance_min = *p_color_distance;
     *p_match_id = color_list->compare_start;
 
-    int c;
     for (c = color_list->compare_start + 1; c <= color_list->compare_last; c++) {
 
         *p_color_distance = color_distance_LAB_CIE76(&(color_list->colors[c]), p_match_color);

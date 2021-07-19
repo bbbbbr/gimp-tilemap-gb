@@ -80,7 +80,9 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
     GtkWidget * vbox;
     GtkWidget * label;
     GtkWidget * label_dedupe;
+
     int         c;
+    int opt_tilesize;
 
     // Copy options into local glboal
     p_plugin_options = p_src_plugin_options;
@@ -120,7 +122,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
 
         // TODO: For default tile size: GBR: try to use image width (8,16,32), GBM/C: use 8x8
-        int opt_tilesize = 0; // 8x8 is default for now
+        opt_tilesize = 0; // 8x8 is default for now
 
         if ((p_plugin_options->tile_width == 8) && (p_plugin_options->tile_height == 8))
             opt_tilesize = 0;
@@ -384,7 +386,7 @@ static void update_enabled_ui_controls(void) {
 
     // Turn off the palette file check box and clear the file string if remapping is disabled
     if (!p_plugin_options->remap_pal) {
-        p_plugin_options->remap_pal_file[0] != '\0';
+        p_plugin_options->remap_pal_file[0] = '\0';
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_use_remap_pal_file), false);
     }
 }

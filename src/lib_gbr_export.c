@@ -465,7 +465,6 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
 int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, color_data * p_colors, uint16_t gb_mode, uint16_t ignore_palette_errors) {
 
     int16_t tile_id;
-    int32_t offset;
 
     if ((!gbr_validate_palette_size(p_colors, gb_mode)) &&
         (!ignore_palette_errors))
@@ -482,8 +481,6 @@ int32_t gbr_convert_image_to_tileset(gbr_record * p_gbr, image_data * p_image, c
     gbr_export_tileset_calc_tile_count_padding(p_gbr);
 
     if (p_image->p_img_data) {
-
-        offset = 0;
 
         // SAVE IMAGE
         if (!gbr_export_extract_tiles_from_image(p_gbr, p_image, gb_mode, ignore_palette_errors))

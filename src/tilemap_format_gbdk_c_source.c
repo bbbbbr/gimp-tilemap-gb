@@ -28,7 +28,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     int t,c;
     FILE * file;
 
-    char path_without_filename[STR_FILENAME_MAX];
+    // char path_without_filename[STR_FILENAME_MAX];
     char filename_noext[STR_FILENAME_MAX];
 
     char filename_tiles_c[STR_FILENAME_MAX];
@@ -38,7 +38,6 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     char varname[STR_FILENAME_MAX];
 
     uint32_t total_bytes_tiles = 0;
-    uint32_t total_bytes_map = 0;
 
     int pal_index;
 
