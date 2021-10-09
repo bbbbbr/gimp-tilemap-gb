@@ -121,7 +121,6 @@ int handle_args( int argc, char * argv[] ) {
             }
             else if (0 == strncmp(argv[i], opt_varname, strlen(opt_varname))) {
                 snprintf(user_options.varname, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_varname));
-                user_options.remap_pal = true;
             }
             else if (0 == strncmp(argv[i], opt_bank, strlen(opt_bank))) {
                 user_options.bank_num = strtol(argv[i] + strlen(opt_bank), NULL, 0);
