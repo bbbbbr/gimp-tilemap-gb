@@ -121,18 +121,42 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
         // Downshift 3 bits per color component since CGB colors are 5:5:5 bit RGB.
         // Then they're bit-packed into a u16
-        fprintf(file, "0x%04x,",
+        fprintf(file, "0x%04X,",
             ( ( cgb_limit(p_colors->pal[(pal_index * 3) + 0]) >> 3)       | // R
              (( cgb_limit(p_colors->pal[(pal_index * 3) + 1]) >> 3) << 5) | // G
              (( cgb_limit(p_colors->pal[(pal_index * 3) + 2]) >> 3) << 10))); // B
 
         if (pal_index && (((pal_index + 1) % 4) == 0))
-            fprintf(file, "  // Palette %d \n  ", (pal_index + 1) / 4); // Line break between every palette
+            fprintf(file, "  // Palette %d \n  ", ((pal_index + 1) / 4) -1); // Line break between every palette
 
     }
 
     // Close the array
     fprintf(file, "};"
+    "\n*/\n");
+
+
+    // ==== For SMS/GG compatibility mode: add a per-tile CGB palette number, but commented out ====
+    fprintf(file, "\n"
+    "/*\n"
+    "// Optional Per-tile CGB Pal number for SMS/GG Compatibility mode\n"
+    "\n"
+    "const unsigned char %s_tiles_pals[] = {\n",
+    varname);
+
+    // Write all the tile set data to a file
+    for (t = 0; t < tile_set->tile_count; t++) {
+        // Write the tile if it has data
+        if (tile_set->tiles[t].p_img_encoded) {
+            fprintf(file, " 0x%02X,", tile_set->tiles[t].palette_num);
+        }
+
+        if (t && (((t+1) % 8) == 0))
+            fprintf(file, "\n"); // Periodic line break
+    }
+
+    // Close the array
+    fprintf(file, "\n};\n"
     "\n*/\n");
 
 
@@ -150,7 +174,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
         if (tile_set->tiles[t].p_img_encoded) {
 
             for (c = 0; c < tile_set->tiles[t].encoded_size_bytes; c++) {
-                fprintf(file, " 0x%02x,", tile_set->tiles[t].p_img_encoded[c]);
+                fprintf(file, " 0x%02X,", tile_set->tiles[t].p_img_encoded[c]);
                 total_bytes_tiles++;
 
                 if (c && (((c+1) % 8) == 0))
@@ -162,6 +186,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
     // Close the array
     fprintf(file, "\n};\n");
+
 
     // Close the file
     fclose(file);
@@ -182,14 +207,21 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
     "\n"
     "#define %s_tiles_count %d\n"
     "#define %s_tiles_bytes %d\n"
+    "#define %s_num_pals %d\n"
+    "// extern const unsigned int %s_pal_cgb[];\n"
+    "// extern const unsigned char %s_tiles_pals[];\n"
     "/* Start of tile array */\n"
-    "extern unsigned char %s_tiles[];\n"
+    "extern const unsigned char %s_tiles[];\n"
     "\n",
     get_filename_from_path(filename_tiles_h),
     varname,
     tile_set->tile_count,
     varname,
     total_bytes_tiles,
+    varname,
+    ((p_colors->color_count + 1) / 4),
+    varname,
+    varname,
     varname);
 
 
@@ -201,16 +233,28 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
             "\n", varname);
 
 
-    // ==== Optional palette, but commented out ====
+    // CGB Palette defines as in GBTD export
     fprintf(file, "\n"
-    "/*\n"
-    "// Optional CGB Palette\n"
-    "#define %s_num_pals %d\n"
-    "extern const unsigned int %s_pal_cgb[];\n"
-    "*/\n",
-    varname,
-    ((p_colors->color_count + 1) / 4),
-    varname);
+    "// CGB Palette\n"
+    "\n");
+
+    for (pal_index = 0; pal_index < p_colors->color_count; pal_index++) {
+
+        if (((pal_index % 4) == 0))
+            fprintf(file, "// Palette %d \n", (pal_index + 1) / 4); // Line break between every palette
+
+        // Downshift 3 bits per color component since CGB colors are 5:5:5 bit RGB.
+        // Then they're bit-packed into a u16
+        fprintf(file, "#define %sCGBPal%dc%d 0x%04X\n",
+                        varname,
+                        (pal_index / 4), // Pal Index
+                        (pal_index % 4), // Color index in Pal
+             (( cgb_limit(p_colors->pal[(pal_index * 3) + 0]) >> 3)       | // R
+             (( cgb_limit(p_colors->pal[(pal_index * 3) + 1]) >> 3) << 5) | // G
+             (( cgb_limit(p_colors->pal[(pal_index * 3) + 2]) >> 3) << 10))); // B
+
+    }
+
 
     // Close the file
     fclose(file);
