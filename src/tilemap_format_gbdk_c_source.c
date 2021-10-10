@@ -245,7 +245,7 @@ int32_t tilemap_format_gbdk_c_source_save(const char * filename, tile_map_data *
 
         // Downshift 3 bits per color component since CGB colors are 5:5:5 bit RGB.
         // Then they're bit-packed into a u16
-        fprintf(file, "#define %sCGBPal%dc%d 0x%04X\n",
+        fprintf(file, "#define %s_tilesCGBPal%dc%d 0x%04X\n",
                         varname,
                         (pal_index / 4), // Pal Index
                         (pal_index % 4), // Color index in Pal
