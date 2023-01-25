@@ -284,12 +284,12 @@ int32_t gbm_object_tile_data_encode(gbm_record * p_gbm, gbm_file_object * p_obj)
     // TODO: what is the trailing data from 2160 -> 4800 bytes?
     gbm_write_padding(p_obj, GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
 
-    log_verbose("----- ENCODE MAP TILES %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
-    gbm_map_tiles_print(p_gbm);
-    log_verbose("----- ENCODE MAP TILES : FLIP X/Y %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
-    gbm_map_tiles_flip_print(p_gbm);
-    log_verbose("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
-    gbm_map_tiles_pal_print(p_gbm);
+    // log_verbose("----- ENCODE MAP TILES %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    // gbm_map_tiles_print(p_gbm);
+    // log_verbose("----- ENCODE MAP TILES : FLIP X/Y %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    // gbm_map_tiles_flip_print(p_gbm);
+    // log_verbose("----- ENCODE MAP TILES : MAP PAL OVERRIDES (0=default) %d -----\n", p_gbm->map_tile_data.length_bytes + GBM_MAP_TILE_DATA_PADDING_UNKNOWN);
+    // gbm_map_tiles_pal_print(p_gbm);
 
     return true;
 }

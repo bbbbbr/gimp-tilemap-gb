@@ -44,6 +44,9 @@ void options_reset(tile_process_options * p_options) {
     p_options->tile_width            = OPTION_UNSET;
     p_options->tile_height           = OPTION_UNSET;
 
+    p_options->palette_tile_width    = OPTION_UNSET;
+    p_options->palette_tile_height   = OPTION_UNSET;
+
     p_options->ignore_palette_errors = OPTION_UNSET;
 
     p_options->remap_pal             = false;

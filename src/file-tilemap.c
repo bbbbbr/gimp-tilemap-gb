@@ -63,8 +63,9 @@ static const GimpParamDef save_arguments[] =
     { GIMP_PDB_INT16,    "tile_width",           "Tile Width" },
     { GIMP_PDB_INT16,    "tile_height",          "Tile Height" },
     { GIMP_PDB_INT16,    "ignore_palette_errors", "Ignore Palette Errors" },
-    { GIMP_PDB_INT16,    "repair_palette_errors", "Repair Palette Errors" }
-
+    { GIMP_PDB_INT16,    "repair_palette_errors", "Repair Palette Errors" },
+    { GIMP_PDB_INT16,    "palette_tile_width",    "Tile Palette Width" },
+    { GIMP_PDB_INT16,    "palette_tile_height",   "Tile palette Height" },
 };
 
 
@@ -224,7 +225,9 @@ static void run(const gchar * plugin_procedure_name,
     *return_vals  = return_values;
     run_mode      = param[0].data.d_int32;
 
-    log_set_level(OUTPUT_LEVEL_VERBOSE);
+    // log_set_level(OUTPUT_LEVEL_VERBOSE);
+    // log_set_level(OUTPUT_LEVEL_ONLY_ERRORS);
+    log_set_level(OUTPUT_LEVEL_DEFAULT);
 
     // Set the return value to success by default
     return_values[0].type          = GIMP_PDB_STATUS;
@@ -330,6 +333,8 @@ static void run(const gchar * plugin_procedure_name,
                 plugin_options.tile_height          = param[11].data.d_int16;
                 plugin_options.ignore_palette_errors = param[12].data.d_int16;
                 plugin_options.remap_pal             = param[13].data.d_int16;
+                plugin_options.palette_tile_width    = param[14].data.d_int16;
+                plugin_options.palette_tile_height   = param[15].data.d_int16;
 
                 tilemap_options_set(&plugin_options);
                 break;

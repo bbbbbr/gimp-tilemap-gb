@@ -87,11 +87,13 @@ static int tilemap_export_remap_colors(image_data * p_src_image, color_data * p_
 
     // Determine where the palette should come from (file vs copy from source image)
     if (remap_pal_file[0] != '\0') {
+        log_standard(" --> load remap pal from FILE\n");
         if (!palette_load_from_file(p_remap_colors, remap_pal_file))
             return false;
     }
     else {
         // Make a duplicate of source image colors, for remapping purposes
+        log_standard(" --> load remap pal from SOURCE IMAGE\n");
         memcpy(p_remap_colors->pal, p_src_colors->pal, p_src_colors->color_count * 3);
         p_remap_colors->color_count = p_src_colors->color_count;
     }

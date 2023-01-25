@@ -34,6 +34,8 @@ typedef struct {
 
     uint16_t tile_width;
     uint16_t tile_height;
+    uint16_t palette_tile_width;
+    uint16_t palette_tile_height;
 
     uint16_t ignore_palette_errors; // only if (gb_mode == PROC_MODE_CGB_32_COLOR)
 

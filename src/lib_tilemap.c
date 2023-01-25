@@ -42,13 +42,24 @@ void tilemap_image_and_colors_init(image_data * p_img, color_data * p_colors) {
 }
 
 
+// Sets palette tile size to defaults if not already set
 // Call after initial user options have been set, but before trying to remap colors
 void tilemap_image_set_palette_tile_size(image_data * p_img, tile_process_options * p_options) {
 
-    if (p_options->tile_width != OPTION_UNSET)
-        p_img->palette_tile_width = p_options->tile_width;
-    if (p_options->tile_height != OPTION_UNSET)
-        p_img->palette_tile_height = p_options->tile_height;
+    // Try to load custom tile palette size if set
+    if ((p_options->palette_tile_width != OPTION_UNSET) &&
+        (p_options->palette_tile_height != OPTION_UNSET)) {
+        // Load in user settings
+        p_img->palette_tile_width = p_options->palette_tile_width;
+        p_img->palette_tile_height = p_options->palette_tile_height;
+    }
+    // Otherwise try to set equal to tile size if possible
+    else {
+        if (p_options->tile_width != OPTION_UNSET)
+            p_img->palette_tile_width = p_options->tile_width;
+        if (p_options->tile_height != OPTION_UNSET)
+            p_img->palette_tile_height = p_options->tile_height;
+    }
 }
 
 

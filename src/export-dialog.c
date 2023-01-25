@@ -27,6 +27,7 @@ const char * tile_process_tilesize_strs[] = {STR_OPT_TILE_SIZE_8x8, STR_OPT_TILE
 
 GtkWidget * combo_gb_mode;
 GtkWidget * combo_tilesize;
+GtkWidget * combo_tile_palette_size;
 GtkWidget * check_dedupe_tiles;
 GtkWidget * check_dedupe_on_flip;
 GtkWidget * check_dedupe_on_palette;
@@ -44,6 +45,7 @@ static void combo_set_active_entry_by_string(GtkWidget *combo, gchar * string_to
 
 static void on_settings_gb_mode_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_tilesize_combo_changed(GtkComboBox *combo, gpointer callback_data);
+static void on_settings_tile_palette_size_combo_changed(GtkComboBox *combo, gpointer callback_data);
 static void on_settings_checkbutton_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
 static void on_settings_remap_pal_file_changed(GtkToggleButton * p_togglebutton, gpointer callback_data);
 static void update_enabled_ui_controls(void);
@@ -83,6 +85,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
     int         c;
     int opt_tilesize;
+    int opt_tile_palette_size;
 
     // Copy options into local glboal
     p_plugin_options = p_src_plugin_options;
@@ -133,6 +136,7 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         else if ((p_plugin_options->tile_width == 32) && (p_plugin_options->tile_height == 32))
             opt_tilesize = 3;
 
+
         // Create a combo/list box for selecting tile size
         // Then add the tile size select entries
         // Then  it to the box for display and show it
@@ -143,6 +147,26 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         gtk_box_pack_start(GTK_BOX(vbox), combo_tilesize, false, false, 2);
         gtk_widget_show(combo_tilesize);
 
+
+        opt_tile_palette_size = 0; // 8x8 is default for now
+        if ((p_plugin_options->palette_tile_width == 8) && (p_plugin_options->palette_tile_height == 8))
+            opt_tile_palette_size = 0;
+        else if ((p_plugin_options->palette_tile_width == 8) && (p_plugin_options->palette_tile_height == 16))
+            opt_tile_palette_size = 1;
+        else if ((p_plugin_options->palette_tile_width == 16) && (p_plugin_options->palette_tile_height == 16))
+            opt_tile_palette_size = 2;
+        else if ((p_plugin_options->palette_tile_width == 32) && (p_plugin_options->palette_tile_height == 32))
+            opt_tile_palette_size = 3;
+
+        // Create a combo/list box for selecting tile size
+        // Then add the tile size select entries
+        // Then  it to the box for display and show it
+        combo_tile_palette_size = gtk_combo_box_text_new();
+        for (c = 0; c < sizeof(tile_process_tilesize_strs) / sizeof(tile_process_tilesize_strs[0]); c++)
+            gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo_tile_palette_size), tile_process_tilesize_strs[c]);
+        combo_set_active_entry_by_string(combo_tile_palette_size, (gchar *) tile_process_tilesize_strs[opt_tile_palette_size]);
+        gtk_box_pack_start(GTK_BOX(vbox), combo_tile_palette_size, false, false, 2);
+        gtk_widget_show(combo_tile_palette_size);
 
         // == Map export options ==
 
@@ -221,6 +245,9 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
 
         g_signal_connect(G_OBJECT(combo_tilesize), "changed",
                          G_CALLBACK(on_settings_tilesize_combo_changed), p_plugin_options);
+
+        g_signal_connect(G_OBJECT(combo_tile_palette_size), "changed",
+                         G_CALLBACK(on_settings_tile_palette_size_combo_changed), p_plugin_options);
 
         g_signal_connect(G_OBJECT(check_dedupe_tiles), "toggled",
                          G_CALLBACK(on_settings_checkbutton_changed), &(p_plugin_options->tile_dedupe_enabled)); // instead pass &(options.dedupe_tiles)
@@ -322,6 +349,32 @@ static void on_settings_tilesize_combo_changed(GtkComboBox *combo, gpointer call
     else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_32x32))) {
         ((tile_process_options *)callback_data)->tile_width = 32;
         ((tile_process_options *)callback_data)->tile_height = 32;
+    }
+    // update_enabled_ui_controls();
+}
+
+static void on_settings_tile_palette_size_combo_changed(GtkComboBox *combo, gpointer callback_data)
+{
+    gchar * selected_string;
+
+    selected_string = gtk_combo_box_text_get_active_text( GTK_COMBO_BOX_TEXT(combo) );
+
+    // Match the string up to an output mode
+    if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_8x8))) {
+        ((tile_process_options *)callback_data)->palette_tile_width = 8;
+        ((tile_process_options *)callback_data)->palette_tile_height = 8;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_8x16))) {
+        ((tile_process_options *)callback_data)->palette_tile_width = 8;
+        ((tile_process_options *)callback_data)->palette_tile_height = 16;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_16x16))) {
+        ((tile_process_options *)callback_data)->palette_tile_width = 16;
+        ((tile_process_options *)callback_data)->palette_tile_height = 16;
+    }
+    else if (!(g_strcmp0(selected_string, STR_OPT_TILE_SIZE_32x32))) {
+        ((tile_process_options *)callback_data)->palette_tile_width = 32;
+        ((tile_process_options *)callback_data)->palette_tile_height = 32;
     }
     // update_enabled_ui_controls();
 }

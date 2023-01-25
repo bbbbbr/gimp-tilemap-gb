@@ -41,13 +41,19 @@ static double tilexy_calc_subpal_distance(image_data *, color_data *, palette_rg
 // TODO: move this error checking farther up the stack
 static bool image_validate_settings(image_data * p_image) {
 
+    if ((p_image->palette_tile_width == 0) || (p_image->palette_tile_height == 0)) {
+        log_error("Error: Palette Tile width and height (%d x %d) cannot be zero\n", p_image->palette_tile_width, p_image->palette_tile_height);
+        return false;
+    }
+    log_verbose(" --> Using Palette Tile width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height);
+
     // For GBM / GBR export, these have to have to match the
     // main tile size even when CGB would allow finer grain
     // sub-palettes on 8x16 tiles for things like 16x16
 
     // Use 8x8 if tile size is not set
     // Otherwise they come from the main processing tile size
-    // via: tilemap_image_set_palette_tile_size
+    // via: tilemap_image_set_palette_tile_size()
     if (p_image->palette_tile_width == OPTION_UNSET)
         p_image->palette_tile_width = 8;
 
@@ -64,16 +70,20 @@ static bool image_validate_settings(image_data * p_image) {
     }
     else if (((p_image->width % p_image->palette_tile_width) != 0) ||
              ((p_image->height % p_image->palette_tile_height) != 0)) {
-        log_error("Error: Tile width and height (%d x %d) must be even multiple of image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
-        return false;
-    }
-    else if (((p_image->palette_tile_width % 8) != 0) ||
-             ((p_image->palette_tile_height % 8) != 0)) {
-        log_error("Error: Tile width and height (%d x %d) must be even multiple of 8\n", p_image->palette_tile_width, p_image->palette_tile_height);
+        log_error("Error: Palette Tile width and height (%d x %d) must be even multiple of image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
         return false;
     }
 
-    log_verbose("Remapping image to palette: Tile width and height (%d x %d), Image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
+    // With support for palette attribute repair size that differs from tile size,
+    // it no longer requires size to be a multiple of 8 x 8, so turn off this test.
+    //
+    // else if (((p_image->palette_tile_width % 8) != 0) ||
+    //          ((p_image->palette_tile_height % 8) != 0)) {
+    //     log_error("Error: Tile width and height (%d x %d) must be even multiple of 8\n", p_image->palette_tile_width, p_image->palette_tile_height);
+    //     return false;
+    // }
+
+    log_standard("Remapping image to palette: Palette Tile width and height (%d x %d), Image width and height (%d x %d)\n", p_image->palette_tile_width, p_image->palette_tile_height, p_image->width, p_image->height);
 
     return true;
 }
