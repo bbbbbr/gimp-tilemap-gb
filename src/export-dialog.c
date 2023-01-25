@@ -148,6 +148,24 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         gtk_widget_show(combo_tilesize);
 
 
+        // == Map export options ==
+
+
+        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore CGB Palette Errors");
+            gtk_box_pack_start(GTK_BOX(vbox), check_ignore_palette_errors, false, false, 2);
+            gtk_widget_show(check_ignore_palette_errors);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_ignore_palette_errors),
+                                         p_plugin_options->ignore_palette_errors);
+
+
+        // Repair palette errors works by way of remapping the image to it's own palette with
+        // a best-fit per-tile sub-palette restriction
+        check_repair_palette_errors = gtk_check_button_new_with_label("Remap/Repair Palette Errors");
+            gtk_box_pack_start(GTK_BOX(vbox), check_repair_palette_errors, false, false, 2);
+            gtk_widget_show(check_repair_palette_errors);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors),
+                                         p_plugin_options->remap_pal);
+
         opt_tile_palette_size = 0; // 8x8 is default for now
         if ((p_plugin_options->palette_tile_width == 8) && (p_plugin_options->palette_tile_height == 8))
             opt_tile_palette_size = 0;
@@ -167,25 +185,6 @@ int export_dialog(tile_process_options * p_src_plugin_options, const char * plug
         combo_set_active_entry_by_string(combo_tile_palette_size, (gchar *) tile_process_tilesize_strs[opt_tile_palette_size]);
         gtk_box_pack_start(GTK_BOX(vbox), combo_tile_palette_size, false, false, 2);
         gtk_widget_show(combo_tile_palette_size);
-
-        // == Map export options ==
-
-
-        check_ignore_palette_errors = gtk_check_button_new_with_label("Ignore CGB Palette Errors");
-            gtk_box_pack_start(GTK_BOX(vbox), check_ignore_palette_errors, false, false, 2);
-            gtk_widget_show(check_ignore_palette_errors);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_ignore_palette_errors),
-                                         p_plugin_options->ignore_palette_errors);
-
-
-        // Repair palette errors works by way of remapping the image to it's own palette with
-        // a best-fit per-tile sub-palette restriction
-        check_repair_palette_errors = gtk_check_button_new_with_label("Remap/Repair Palette Errors");
-            gtk_box_pack_start(GTK_BOX(vbox), check_repair_palette_errors, false, false, 2);
-            gtk_widget_show(check_repair_palette_errors);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check_repair_palette_errors),
-                                         p_plugin_options->remap_pal);
-
 
 
         // Repair palette errors works by way of remapping the image to it's own palette with
