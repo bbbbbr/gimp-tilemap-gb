@@ -30,11 +30,13 @@ const char * const opt_gbr = "-gbr";
 const char * const opt_gbm = "-gbm";
 const char * const opt_csource   = "-csource";
 const char * const opt_png_out   = "-png";
+const char * const opt_repair_pal  = "-repairpal";
 
 const char * const opt_varname     = "-var=";
 const char * const opt_remap_pal   = "-pal=";
 const char * const opt_bank        = "-bank=";
 const char * const opt_tile_size   = "-tilesz=";
+const char * const opt_tile_palette_size   = "-tilepalsz=";
 const char * const opt_tileid_offset   = "-tileorg=";
 
 // user overrides for default settings
@@ -118,6 +120,9 @@ int handle_args( int argc, char * argv[] ) {
                 // Extract filename for user supplied palette
                 snprintf(user_options.remap_pal_file, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_remap_pal));
                 user_options.remap_pal = true;
+            } else if (0 == strncmp(argv[i], opt_repair_pal, strlen(opt_repair_pal))) {
+                // Repair palette mode: Remap the palette, but use the images own palette
+                user_options.remap_pal = true;
             }
             else if (0 == strncmp(argv[i], opt_varname, strlen(opt_varname))) {
                 snprintf(user_options.varname, STR_FILENAME_MAX, "%s", argv[i] + strlen(opt_varname));
@@ -149,6 +154,30 @@ int handle_args( int argc, char * argv[] ) {
                     display_help();
                     return false;
                 }
+            }
+            else if (0 == strncmp(argv[i], opt_tile_palette_size, strlen(opt_tile_palette_size))) {
+                if (0 == strncmp(argv[i] + strlen(opt_tile_palette_size), "8x8", strlen("8x8"))) {
+                    user_options.palette_tile_width = 8;
+                    user_options.palette_tile_height = 8;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_palette_size), "8x16", strlen("8x16"))) {
+                    user_options.palette_tile_width = 8;
+                    user_options.palette_tile_height = 16;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_palette_size), "16x16", strlen("16x16"))) {
+                    user_options.palette_tile_width = 16;
+                    user_options.palette_tile_height = 16;
+                }
+                else if (0 == strncmp(argv[i] + strlen(opt_tile_palette_size), "32x32", strlen("32x32"))) {
+                    user_options.palette_tile_width = 32;
+                    user_options.palette_tile_height = 32;
+                } else {
+                    log_error("Error: Invalid palette tile size: %s\n\n", argv[i] + strlen(opt_tile_palette_size));
+                    display_help();
+                    return false;
+                }
+
+                printf("Tile width and height (%d x %d) \n", user_options.palette_tile_width, user_options.palette_tile_height);
             }
             else {
 
@@ -189,7 +218,7 @@ int handle_args( int argc, char * argv[] ) {
     if (filename_out[0] == '\0') {
 
         copy_filename_without_extension(filename_noext, argv[ARG_INPUT_FILE]);
-log_verbose("Filename out is empty\n");
+        log_verbose("Filename out is empty\n");
 
         switch (user_options.image_format) {
             case FORMAT_GBDK_C_SOURCE:
@@ -206,7 +235,7 @@ log_verbose("Filename out is empty\n");
 
             case FORMAT_PNG_OUT:
                 snprintf(&filename_out[0], STR_FILENAME_MAX, "%s%s",  &filename_noext[0], ".png");
-log_verbose("Filename out is now: %s\n", filename_out);
+                log_verbose("Filename out is now: %s\n", filename_out);
                 break;
         }
     }
@@ -236,12 +265,14 @@ void display_help(void) {
             "  -p          Turn OFF Map tile deduplication of ALTERNATE PALETTE (.gbm only)\n"
             "\n"
             "  -i          Ignore Palette Errors (CGB will use highest guessed palette #)\n"
+            "  -repairpal  Repair Palette Errors (Remap tile to best fit palette)\n"
             "  -pal=[file] Remap png to palette (pngs allowed: index and 24/32 bit RGB)\n"
             "\n"
             "  -var=[name]    Base name to use for export variables (otherwise filename)\n"
             "  -bank=[num]    Set bank number for all output modes\n"
             "  -tileorg=[num] Tile index offset for maps (instead of zero)\n"
             "  -tilesz=[size] Tile size (8x8, 8x16, 16x16, 32x32) \n"
+            "  -tilepalsz=[size] Tile Palette size (8x8, 8x16, 16x16, 32x32) \n"
             "\n"
             "  -q          Quiet, suppress all output\n"
             "  -e          Errors only, suppress all non-error output\n"

@@ -49,8 +49,18 @@ bool console_import_imagefile(image_data * p_src_image, color_data * p_src_color
 
     // Remap the image to a user specified palette if requested
     if (options.remap_pal) {
-        if (!palette_load_from_file(&user_palette, options.remap_pal_file))
-            return false;
+        log_standard(" --> options.remap_pal == true\n");
+        if (options.remap_pal_file[0] != '\0') {
+            log_standard(" --> load remap pal from FILE\n");
+            if (!palette_load_from_file(&user_palette, options.remap_pal_file))
+                return false;
+        }
+        else {
+            log_standard(" --> load remap pal from SOURCE IMAGE\n");
+            // Make a duplicate of source image colors, for remapping purposes
+            memcpy(user_palette.pal, p_src_colors->pal, p_src_colors->color_count * 3);
+            user_palette.color_count = p_src_colors->color_count;
+        }
 
         if ( !image_remap_to_user_palette(p_src_image, p_src_colors, &user_palette) ) {
             log_error("Error: remapping png to user palette failed!\n");
@@ -132,6 +142,14 @@ bool console_image_to_tileformat_file(tile_process_options * p_user_options, cha
 
     color_data src_colors;
     image_data src_image;
+
+    // Need default tile size for setting default palette tile size *before* png image load & remapping,
+    // but those defaults are typically set after image load with others based on image properties.
+    // So, just set default tile size here as a workaround
+    if ((p_user_options->tile_width == OPTION_UNSET) && (p_user_options->tile_height == OPTION_UNSET)) {
+        p_user_options->tile_width = 8;
+        p_user_options->tile_height = 8;
+    }
 
     // Call these before loading the image and potentially remapping it's palette
     tilemap_image_and_colors_init(&src_image, &src_colors);
