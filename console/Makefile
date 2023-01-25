@@ -53,6 +53,7 @@ clean:
 macoszip: macos
 	mkdir -p bin
 	mkdir -p bin/macos
+	strip $(BIN)
 	zip $(BIN)-macos.zip $(BIN)
 	mv $(BIN)-macos.zip bin
 	cp $(BIN) bin/macos
@@ -60,6 +61,7 @@ macoszip: macos
 linuxzip: linux
 	mkdir -p bin
 	mkdir -p bin/linux
+	strip $(BIN)
 	zip $(BIN)-linux.zip $(BIN)
 	mv $(BIN)-linux.zip bin
 	cp $(BIN) bin/linux
@@ -67,6 +69,7 @@ linuxzip: linux
 wincrosszip: wincross
 	mkdir -p bin
 	mkdir -p bin/windows
+	strip $(BIN_WIN)
 	zip $(BIN)-windows.zip $(BIN_WIN)
 	mv $(BIN)-windows.zip bin
 	cp $(BIN_WIN) bin/windows
