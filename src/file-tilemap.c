@@ -20,6 +20,8 @@
 
 #include "export-dialog.h"
 
+#include "options.h"
+
 const char SAVE_PROCEDURE_TMAP_C_SOURCE[] = "file-save-tilemap-c-source";
 const char SAVE_PROCEDURE_GBR[] = "file-save-gbr";
 const char LOAD_PROCEDURE_GBR[] = "file-load-gbr";
