@@ -48,7 +48,12 @@ file_tilemap_export_SOURCES = \
 	export-dialog.c \
 	tilemap_error.c \
 	logging.c \
-	hash.c
+	hash.c \
+	options.c \
+	color_space.c \
+	image_remap.c \
+	palette.c
+
 
 
 INCLUDES = \
