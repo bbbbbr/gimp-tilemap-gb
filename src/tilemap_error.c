@@ -18,7 +18,7 @@ const char * tile_id_messages[] = {
         "Error: Memory allocation failed",
         "Error: Tile count exceeded limit",
         "Error: Failed to encode tile",
-        "Error: Color count in tile exceeded DMG or CGB Limit",
+        "Error: Color count in tile exceeded DMG or CGB Limit (4 max for GB, 32 max for CGB)",
         "Error: More than one 4-color-adjacent palette used in tile",
         "Error: Invalid image or tile dimensions. Image size must be even multiple of tile size"
     };

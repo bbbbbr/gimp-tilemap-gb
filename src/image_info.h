@@ -47,7 +47,7 @@
 
     typedef struct {
         int           color_count;
-        color_rgb_LAB colors[USER_PAL_MAX_COLORS];
+        color_rgb_LAB colors[COLOR_DATA_PAL_MAX_COUNT]; //[USER_PAL_MAX_COLORS]; // This should be 256 instead of 32 so that images > 32 don't get rejected
         uint8_t       subpal_size; // should be even multiple of color_count
         uint8_t       compare_start; // zero based
         uint8_t       compare_last;  // zero based

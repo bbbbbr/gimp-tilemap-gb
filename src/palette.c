@@ -66,7 +66,7 @@ void palette_copy_colordata_to_rgblab_format(color_data * p_src_colors, palette_
     }
 
     // overwrite unused colors with black
-    for (c = p_src_colors->color_count; c < USER_PAL_MAX_COLORS; c++) {
+    for (c = p_src_colors->color_count; c < COLOR_DATA_PAL_MAX_COUNT; c++) {
 
         p_dst_colors->colors[c].r = 0;
         p_dst_colors->colors[c].g = 0;

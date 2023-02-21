@@ -65,7 +65,8 @@ static bool image_validate_settings(image_data * p_image) {
         return false;
     }
     else if (p_image->size != (p_image->width * p_image->height * p_image->bytes_per_pixel)) {
-        log_error("Error: Failed to remap image to user palette: data size error\n");
+        log_error("Error: Failed to remap image to user palette: data size error (buffer size:%d does not match w:%d x h:%d x bpp:%d)\n",
+                   p_image->size, p_image->width, p_image->height, p_image->bytes_per_pixel);
         return false;
     }
     else if (((p_image->width % p_image->palette_tile_width) != 0) ||
@@ -363,6 +364,13 @@ static bool image_tiles_remap_to_subpalettes(image_data * p_src_image, color_dat
 bool image_remap_to_user_palette(image_data * p_src_image, color_data * p_src_colors, color_data * p_user_colors) {
 
     palette_rgb_LAB user_pal_rgblab;
+
+    if (p_src_colors->color_count > COLOR_DATA_PAL_MAX_COUNT) {
+        log_error("Error: indexed palette color count %d exceeds Max %d\n", p_src_colors->color_count, COLOR_DATA_PAL_MAX_COUNT);
+        return false;
+    }
+    else if (p_src_colors->color_count > USER_PAL_MAX_COLORS)
+        log_standard("Warning, indexed palette color count %d exceeds CGB Max %d\n", p_src_colors->color_count, USER_PAL_MAX_COLORS);
 
     palette_copy_colordata_to_rgblab_format(p_user_colors, &user_pal_rgblab);
 

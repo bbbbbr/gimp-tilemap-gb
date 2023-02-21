@@ -9,6 +9,8 @@
 #include "lib_gbr_ops.h"
 
 #include "tilemap_path_ops.h"
+#include "lib_tilemap.h"
+#include "tilemap_error.h"
 
 #include "options.h"
 
@@ -435,6 +437,7 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
 
         if (p_colors->color_count > GBR_TILE_DATA_PALETTE_SIZE_CGB) {
             log_error("Error: Too many colors for CGB Mode: %d\n", p_colors->color_count);
+            tilemap_error_set(TILE_ID_TOO_MANY_COLORS);
             return false; // FAILED, too many colors
         } else {
 
@@ -448,6 +451,7 @@ int32_t gbr_validate_palette_size(color_data * p_colors, uint16_t gb_mode) {
 
         if (p_colors->color_count > GBR_TILE_DATA_PALETTE_SIZE_DMG) {
             log_error("Error: too many colors for DMG Mode: %d\n", p_colors->color_count);
+            tilemap_error_set(TILE_ID_TOO_MANY_COLORS);
             return false; // FAILED, too many colors
         } else {
 
