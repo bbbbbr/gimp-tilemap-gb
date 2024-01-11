@@ -14,7 +14,7 @@
 #ifndef LIB_TILEMAP_HEADER
 #define LIB_TILEMAP_HEADER
 
-    #define TILES_MAX_DEFAULT 255 // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t -> uint32_t
+    #define TILES_MAX_DEFAULT 256  // Eventually this should support the full CGB 384
 
     #define TILE_WIDTH_DEFAULT  8
     #define TILE_HEIGHT_DEFAULT 8
@@ -80,7 +80,7 @@
 
     // Tile Map Entry records
     typedef struct {
-        uint16_t id; // if TILES_MAX_DEFAULT > 255, this must be larger than uint8_t
+        uint16_t id; // Limit is TILES_MAX_DEFAULT
         uint8_t  flip_bits;
         uint8_t  palette_num;
         uint8_t  status;
@@ -97,7 +97,7 @@
         uint16_t map_width;
         uint16_t map_height;
         uint32_t size;
-        uint16_t * tile_id_list; // if TILES_MAX_DEFAULT > 255, this must be larger than uint8_t
+        uint16_t * tile_id_list; // Limit is TILES_MAX_DEFAULT
         uint8_t * flip_bits_list;
         uint8_t * palette_num_list;
         uint8_t * cgb_attrib_list;

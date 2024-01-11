@@ -160,7 +160,7 @@ int tilemap_initialize(image_data * p_src_img) {
     tile_map.size = (tile_map.width_in_tiles * tile_map.height_in_tiles);
 
     // See struct: tile_map_entry
-    // if TILES_MAX_DEFAULT > 255, tile_id_list must be larger than uint8_t (it is)
+    // Limit is TILES_MAX_DEFAULT
     tile_map.tile_id_list = (uint16_t *)malloc(tile_map.size * sizeof(uint16_t));
     if (!tile_map.tile_id_list)
             return(false);
