@@ -14,19 +14,35 @@
 
 const char kExtensionSeparator = '.';
 const char kPathSeparator =
+
 #ifdef _WIN32
+  #ifndef _WIN32
+     #define __WIN32__
+  #endif
+#endif
+
+#ifdef __WIN32__
                             '\\';
 #else
                             '/';
 #endif
 
+const char kPathSeparator_unix = '/';
 
 const char * get_filename_from_path(const char * path)
 {
     size_t i;
 
-   for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == kPathSeparator) {
+    // Returns string starting at last occurrance of path separator char
+    for(i = strlen(path) - 1; i; i--) {
+
+    // Add trailing slash to path if needed (Windows needs both for when running under linix like env)
+    #ifdef __WIN32__
+        if ((path[i] == kPathSeparator) || (path[i] == kPathSeparator_unix))
+    #else
+        if (path[i] == kPathSeparator)
+    #endif
+        {
             return &path[i+1];
         }
     }
@@ -41,15 +57,22 @@ int32_t get_path_without_filename(const char * path, char * path_only, uint32_t 
         return false;
 
    for(i = strlen(path) - 1; i; i--) {
-        if (path[i] == kPathSeparator) {
 
+    // Add trailing slash to path if needed (Windows needs both for when running under linix like env)
+    #ifdef __WIN32__
+        if ((path[i] == kPathSeparator) || (path[i] == kPathSeparator_unix))
+    #else
+        if (path[i] == kPathSeparator)
+    #endif
+        {
             memcpy(path_only, path, i+1 );
             path_only[i+1] = '\0';
             return true;
         }
     }
-
-    memcpy(path_only, path, strlen(path));
+    // memcpy(path_only, path, strlen(path));
+    // No separater found, so no path
+    path_only[0] = '\0';
     return true;
 }
 
